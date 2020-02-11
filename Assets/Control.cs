@@ -14,5 +14,8 @@ public class Control : MonoBehaviour
         var t = gameObject.transform;
         t.localRotation = Quaternion.Euler(0, h * 180, 0);
         t.localScale = v * Vector3.one;
+
+        if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
+            Application.Quit();
     }
 }
