@@ -3,27 +3,29 @@
 public class Highlightable : MonoBehaviour
 {
     public Material highlightMaterial;
+    Material originalMaterial;
 
-    private Renderer ownRenderer = null;
-    private Material originalMaterial;
+    Renderer ownRenderer;
+    AudioSource ownSound;
 
-    private void Start()
+    void Start()
     {
+        ownSound = GetComponent<AudioSource>();
         ownRenderer = GetComponent<Renderer>();
         originalMaterial = ownRenderer?.material;
     }
 
-    private void OnMouseEnter()
+    void OnMouseEnter()
     {
-        if (!ownRenderer)
-            return;
-        ownRenderer.material = highlightMaterial;
+        if (ownRenderer)
+            ownRenderer.material = highlightMaterial;
+        if (ownSound)
+            ownSound.Play();
     }
 
-    private void OnMouseExit()
+    void OnMouseExit()
     {
-        if (!ownRenderer)
-            return;
-        ownRenderer.material = originalMaterial;        
+        if (ownRenderer)
+            ownRenderer.material = originalMaterial;        
     }
 }
