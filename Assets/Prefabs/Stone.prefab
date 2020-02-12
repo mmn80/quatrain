@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 2027650200065697869}
   - component: {fileID: 2027650200065697870}
   - component: {fileID: 2027650200065697871}
-  - component: {fileID: 4433125640041360460}
   - component: {fileID: 6842333099656336473}
+  - component: {fileID: 4433125640041360460}
   m_Layer: 0
   m_Name: Capsule
   m_TagString: Untagged
@@ -96,6 +96,21 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6842333099656336473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2027650200065697865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 429bad86ebf9ecf46a7f30f0bcbc5ec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RotationSpeed: 360
+  StoneType: 0
+  RemoveSound: {fileID: 8300000, guid: fbf7045f3dfe42b4191ed1fd2a5b3e2c, type: 3}
 --- !u!82 &4433125640041360460
 AudioSource:
   m_ObjectHideFlags: 0
@@ -192,20 +207,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &6842333099656336473
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2027650200065697865}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 429bad86ebf9ecf46a7f30f0bcbc5ec4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  RotationSpeed: 360
-  StoneType: 0
 --- !u!1 &2027650200095077389
 GameObject:
   m_ObjectHideFlags: 0

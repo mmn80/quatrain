@@ -42,8 +42,7 @@ public class MainControl : MonoBehaviour
         var prefab = stone == StoneType.White ? Instance.WhiteStonePrefab : Instance.BlackStonePrefab;
         var pos = new Vector3(-1.5f + x, stoneHeight / 2 + l.Count * stoneHeight, -1.5f + y);
         var go = GameObject.Instantiate(prefab, pos, Quaternion.identity, Instance.transform);
-        go.GetComponentInChildren<AudioSource>()?.Play();
-        go.GetComponentInChildren<Stone>().InitPosition(x, y, l.Count);
+        go.GetComponentInChildren<Stone>().Init(x, y, l.Count);
 
         l.Add(new StoneRef() { Stone = stone, Obj = go });
 
@@ -58,6 +57,11 @@ public class MainControl : MonoBehaviour
         if (l == null || l.Count <= h)
         {
             Debug.Log($"There is no stone at [{x},{y},{h}].");
+            return false;
+        }
+        if (l == null || l.Count - 1 != h)
+        {
+            Debug.Log($"[{x},{y},{h}] is invalid. Can only remove last stone.");
             return false;
         }
         var s = l[h];
