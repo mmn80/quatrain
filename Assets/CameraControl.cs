@@ -2,7 +2,7 @@
 
 public class CameraControl : MonoBehaviour
 {
-    public float AngularSpeed, ZoomSpeed, AngularAcceleration, ZoomAcceleration;
+    public float AngularSpeed, AngularAcceleration, ZoomSpeed, ZoomAcceleration;
 
     float aSpeed, zSpeed;
     Camera cam;

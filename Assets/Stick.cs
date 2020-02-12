@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Highlightable : MonoBehaviour
+public class Stick : MonoBehaviour
 {
     public Material highlightMaterial;
     Material originalMaterial;

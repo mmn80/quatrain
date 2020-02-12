@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Control : MonoBehaviour
+public class MainControl : MonoBehaviour
 {
     void Update()
     {
