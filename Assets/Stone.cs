@@ -4,6 +4,8 @@ public class Stone : MonoBehaviour
 {
     public float RotationSpeed;
 
+    public StoneType StoneType;
+
     AudioSource ownSound;
     bool highlighted;
 

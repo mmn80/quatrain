@@ -2,11 +2,14 @@
 
 public class Stick : MonoBehaviour
 {
+    public int PosX, PosY;
+
     public Material highlightMaterial;
     Material originalMaterial;
 
     Renderer ownRenderer;
     AudioSource ownSound;
+    bool selected;
 
     void Start()
     {
@@ -17,6 +20,7 @@ public class Stick : MonoBehaviour
 
     void OnMouseEnter()
     {
+        selected = true;
         if (ownRenderer)
             ownRenderer.material = highlightMaterial;
         if (ownSound)
@@ -25,7 +29,16 @@ public class Stick : MonoBehaviour
 
     void OnMouseExit()
     {
+        selected = false;
         if (ownRenderer)
             ownRenderer.material = originalMaterial;        
+    }
+
+    void Update()
+    {
+        if (selected && Input.GetMouseButtonDown(0))
+        {
+            MainControl.AddStone(PosX, PosY, MainControl.CurrentPlayer);
+        }
     }
 }

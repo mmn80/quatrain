@@ -72,5 +72,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BlackStone
       objectReference: {fileID: 0}
+    - target: {fileID: 6842333099656336473, guid: f32ddb8c295821a428d5d6d70b9f71c3,
+        type: 3}
+      propertyPath: StoneType
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f32ddb8c295821a428d5d6d70b9f71c3, type: 3}
