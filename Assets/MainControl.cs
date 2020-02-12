@@ -43,10 +43,26 @@ public class MainControl : MonoBehaviour
         var pos = new Vector3(-1.5f + x, stoneHeight / 2 + l.Count * stoneHeight, -1.5f + y);
         var go = GameObject.Instantiate(prefab, pos, Quaternion.identity, Instance.transform);
         go.GetComponentInChildren<AudioSource>()?.Play();
+        go.GetComponentInChildren<Stone>().InitPosition(x, y, l.Count);
 
         l.Add(new StoneRef() { Stone = stone, Obj = go });
 
         CurrentPlayer = CurrentPlayer == StoneType.White ? StoneType.Black : StoneType.White;
+
+        return true;
+    }
+
+    public static bool RemoveStone(int x, int y, int h)
+    {
+        var l = state[x, y];
+        if (l == null || l.Count <= h)
+        {
+            Debug.Log($"There is no stone at [{x},{y},{h}].");
+            return false;
+        }
+        var s = l[h];
+        GameObject.Destroy(s.Obj);
+        l.RemoveAt(h);
 
         return true;
     }
