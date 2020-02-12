@@ -42,6 +42,7 @@ public class MainControl : MonoBehaviour
         var prefab = stone == StoneType.White ? Instance.WhiteStonePrefab : Instance.BlackStonePrefab;
         var pos = new Vector3(-1.5f + x, stoneHeight / 2 + l.Count * stoneHeight, -1.5f + y);
         var go = GameObject.Instantiate(prefab, pos, Quaternion.identity, Instance.transform);
+        go.GetComponentInChildren<AudioSource>()?.Play();
 
         l.Add(new StoneRef() { Stone = stone, Obj = go });
 

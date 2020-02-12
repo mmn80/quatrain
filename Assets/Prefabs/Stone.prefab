@@ -106,7 +106,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 6d67f481b2b63b245bea6fe998ca63c6, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 5c8bfe3a45694924688838e1bc568521, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -205,6 +205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RotationSpeed: 360
+  StoneType: 0
 --- !u!1 &2027650200095077389
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,13 +6,7 @@ public class Stone : MonoBehaviour
 
     public StoneType StoneType;
 
-    AudioSource ownSound;
     bool highlighted;
-
-    void Start()
-    {
-        ownSound = GetComponent<AudioSource>();
-    }
 
     void Update()
     {
@@ -23,9 +17,6 @@ public class Stone : MonoBehaviour
     void OnMouseEnter()
     {
         highlighted = true;
-        if (ownSound)
-            ownSound.Play();
-        
     }
 
     void OnMouseExit()
