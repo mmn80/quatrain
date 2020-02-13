@@ -2,7 +2,7 @@
 
 public class Stone : MonoBehaviour
 {
-    public static bool RotateRandomly = false;
+    public static bool RotateRandomly = true;
 
     public float RotationSpeed;
 
