@@ -104,5 +104,7 @@ public class MainControl : MonoBehaviour
             Application.Quit();
         else if (Input.GetKeyDown(KeyCode.F6))
             PlaceRandomStones(16);
+        else if (Input.GetKeyUp(KeyCode.Alpha2))
+            Stone.RotateRandomly = !Stone.RotateRandomly;
     }
 }

@@ -39,5 +39,10 @@ public class CameraControl : MonoBehaviour
                 cam.transform.position = p;
             }
         }
+
+        if (Input.GetKeyUp(KeyCode.Alpha1))
+        {
+            cam.orthographic = !cam.orthographic;
+        }
     }
 }
