@@ -10,7 +10,7 @@ public class MainControl : MonoBehaviour
     struct StoneRef
     {
         public StoneType Stone;
-        public GameObject Obj;
+        public Stone Obj;
     }
 
     static List<StoneRef>[,] state = new List<StoneRef>[4,4];
@@ -44,9 +44,10 @@ public class MainControl : MonoBehaviour
 
         var prefab = stone == StoneType.White ? Instance.WhiteStonePrefab : Instance.BlackStonePrefab;
         var go = GameObject.Instantiate(prefab, GetStonePos(x, y, l.Count), Quaternion.identity, Instance.transform);
-        go.GetComponentInChildren<Stone>().Init(x, y, l.Count);
+        var sc = go.GetComponentInChildren<Stone>();
+        sc.Init(x, y, l.Count);
 
-        l.Add(new StoneRef() { Stone = stone, Obj = go });
+        l.Add(new StoneRef() { Stone = stone, Obj = sc });
 
         CurrentPlayer = CurrentPlayer == StoneType.White ? StoneType.Black : StoneType.White;
 
@@ -63,12 +64,12 @@ public class MainControl : MonoBehaviour
         }
 
         var s = l[h];
-        GameObject.Destroy(s.Obj);
+        GameObject.Destroy(s.Obj.transform.parent.gameObject);
         l.RemoveAt(h);
 
         for (int i = 0; i < l.Count; i++)
         {
-            var stone = l[i].Obj.GetComponentInChildren<Stone>();
+            var stone = l[i].Obj;
             if (stone.Height > i)
                 stone.FallOneSlot();
         }

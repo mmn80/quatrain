@@ -2,6 +2,8 @@
 
 public class Stone : MonoBehaviour
 {
+    public static bool RotateRandomly = true;
+
     public float RotationSpeed;
 
     public StoneType StoneType;
@@ -14,11 +16,17 @@ public class Stone : MonoBehaviour
     public int PosY { get; private set; }
     public int Height { get; private set; }
 
+    float normalRotationSpeed;
+    bool normalRotationDir;
+
     public void Init(int posX, int posY, int height)
     {
         this.PosX = posX;
         this.PosY = posY;
         this.Height = height;
+
+        normalRotationSpeed = Random.Range(0, RotationSpeed / 10);
+        normalRotationDir = Random.Range(0, 2) == 0;
 
         GetComponent<AudioSource>().Play();
     }
@@ -49,12 +57,15 @@ public class Stone : MonoBehaviour
                 falling = false;
             transform.parent.position = pos;
         }
-        if (highlighted)
+        if (RotateRandomly || highlighted)
         {
-            transform.parent.Rotate(Vector3.up, RotationSpeed * Time.deltaTime);
-            if (Input.GetMouseButtonDown(0))
+            var speed = RotationSpeed;
+            if (!highlighted)
+                speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
+            transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
+            if (highlighted && Input.GetMouseButtonDown(0))
             {
-                AudioSource.PlayClipAtPoint(RemoveSound, gameObject.transform.position);
+                AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
                 MainControl.RemoveStone(PosX, PosY, Height);
             }
         }
