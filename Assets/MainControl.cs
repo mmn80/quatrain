@@ -23,7 +23,10 @@ public class MainControl : MonoBehaviour
         return l.Count;
     }
 
-    const float stoneHeight = 0.5f;
+    const float StoneHeight = 0.5f;
+
+    public static Vector3 GetStonePos(int x, int y, int h) =>
+        new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
     public static bool AddStone(int x, int y, StoneType stone)
     {
@@ -40,8 +43,7 @@ public class MainControl : MonoBehaviour
         }
 
         var prefab = stone == StoneType.White ? Instance.WhiteStonePrefab : Instance.BlackStonePrefab;
-        var pos = new Vector3(-1.5f + x, stoneHeight / 2 + l.Count * stoneHeight, -1.5f + y);
-        var go = GameObject.Instantiate(prefab, pos, Quaternion.identity, Instance.transform);
+        var go = GameObject.Instantiate(prefab, GetStonePos(x, y, l.Count), Quaternion.identity, Instance.transform);
         go.GetComponentInChildren<Stone>().Init(x, y, l.Count);
 
         l.Add(new StoneRef() { Stone = stone, Obj = go });
@@ -59,14 +61,17 @@ public class MainControl : MonoBehaviour
             Debug.Log($"There is no stone at [{x},{y},{h}].");
             return false;
         }
-        if (l == null || l.Count - 1 != h)
-        {
-            Debug.Log($"[{x},{y},{h}] is invalid. Can only remove last stone.");
-            return false;
-        }
+
         var s = l[h];
         GameObject.Destroy(s.Obj);
         l.RemoveAt(h);
+
+        for (int i = 0; i < l.Count; i++)
+        {
+            var stone = l[i].Obj.GetComponentInChildren<Stone>();
+            if (stone.Height > i)
+                stone.FallOneSlot();
+        }
 
         return true;
     }
