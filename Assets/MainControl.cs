@@ -71,6 +71,17 @@ public class MainControl : MonoBehaviour
         return true;
     }
 
+    public static void PlaceRandomStones(int stones)
+    {
+        for (int i = 0; i < stones; i++)
+        {
+            var x = Random.Range(0, 4);
+            var y = Random.Range(0, 4);
+            var s = (StoneType)Random.Range(0, 2);
+            AddStone(x, y, s);
+        }
+    }
+
     public static MainControl Instance { get; private set;}
 
     public GameObject WhiteStonePrefab;
@@ -85,5 +96,7 @@ public class MainControl : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
             Application.Quit();
+        else if (Input.GetKeyDown(KeyCode.F6))
+            PlaceRandomStones(16);
     }
 }
