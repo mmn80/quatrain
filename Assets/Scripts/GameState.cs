@@ -16,6 +16,45 @@ struct StoneRef
     public Stone Obj;
 }
 
+
+struct Place
+{
+    private readonly byte x, y, z;
+    private readonly byte stone;
+
+    public Place(byte _x, byte _y, byte _z, byte _stone)
+    {
+        x = _x; y = _y; z = _z; stone = _stone;
+    }
+
+    public byte X { get => x; }
+    public byte Y { get => y; }
+    public byte Z { get => Z; }
+    public byte Stone { get => stone; }
+}
+
+struct Quatrene
+{
+    private readonly Place p0, p1, p2, p3;
+
+    public Quatrene(Place _p0, Place _p1, Place _p2, Place _p3)
+    {
+        p0 = _p0; p1 = _p1; p2 = _p2; p3 = _p3;
+    }
+
+    public Place P0 { get => p0; }
+    public Place P1 { get => p1; }
+    public Place P2 { get => p2; }
+    public Place P3 { get => p3; }
+
+    public bool IsFull(out StoneType stoneType)
+    {
+        byte stone = p0.Stone;
+        stoneType = stone == 1 ? StoneType.White : StoneType.Black;
+        return stone != 0 && p1.Stone == stone && p2.Stone == stone && p3.Stone == stone;
+    }
+}
+
 public static class Game
 {
     public static Player Player1 = new Player() { StoneType = StoneType.White, Stones = 32 };
@@ -41,6 +80,38 @@ public static class Game
     }
 
     static List<StoneRef>[,] state = new List<StoneRef>[4, 4];
+    static Quatrene[] quatrenes;
+
+    static void RegenerateQuatrenes()
+    {
+        byte q_no = 0;
+        quatrenes = new Quatrene[228];
+        var flatDirs = new Vector3Int[]
+        {
+            new Vector3Int(1, 0, 0), new Vector3Int(0, 1, 0), new Vector3Int(0, 0, 1)
+        };
+        foreach (var flatDir in flatDirs)
+        {
+            for (byte p0 = 0; p0 < 4; p0++)
+                for (byte p1 = 0; p1 < 4; p1++)
+                {
+                    var qarr = new Place[4];
+                    for (byte i = 0; i < 4; i++)
+                    {
+                        var x = flatDir.x == 1 ? i : p0;
+                        var y = flatDir.y == 1 ? i : (flatDir.x == 1 ? p0 : p1);
+                        var z = flatDir.z == 1 ? i : p1;
+                        var stack = state[x, y];
+                        byte stone = 0;
+                        if (stack.Count > z)
+                            stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
+                        qarr[i] = new Place(x, y, z, stone);
+                    }
+                    quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+                    q_no++;
+                }
+        }
+    }
 
     public static int GetHeight(int x, int y)
     {
@@ -122,4 +193,6 @@ public static class Game
             AddStone(x, y);
         }
     }
+
+
 }
