@@ -36,6 +36,7 @@ public static class Game
     public static Player ChangePlayer()
     {
         CurrentPlayer = CurrentPlayer == Player1 ? Player2 : Player1;
+        MainControl.HideMessage();
         return CurrentPlayer;
     }
 
@@ -64,12 +65,12 @@ public static class Game
         }
         if (l.Count >= 4)
         {
-            Debug.Log($"Stack [{x},{y}] is full.");
+            MainControl.ShowError($"Stack [{x},{y}] is full.");
             return false;
         }
         if (CurrentPlayer.Stones <= 0)
         {
-            Debug.Log($"No more stone for you!");
+            MainControl.ShowError($"No more stone for you!");
             return false;
         }
 
@@ -94,7 +95,7 @@ public static class Game
         var l = state[x, y];
         if (l == null || l.Count <= h)
         {
-            Debug.Log($"There is no stone at [{x},{y},{h}].");
+            MainControl.ShowError($"There is no stone at [{x},{y},{h}].");
             return false;
         }
 

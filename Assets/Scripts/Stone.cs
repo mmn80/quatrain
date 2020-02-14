@@ -39,7 +39,7 @@ public class Stone : MonoBehaviour
     {
         if (Height == 0)
         {
-            Debug.LogError("Cannot fall any more.");
+            MainControl.ShowError("Cannot fall any more.");
             return;
         }
         Height -= 1;
