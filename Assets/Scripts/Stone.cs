@@ -43,7 +43,7 @@ public class Stone : MonoBehaviour
             return;
         }
         Height -= 1;
-        fallToY = MainControl.GetStonePos(PosX, PosY, Height).y;
+        fallToY = Game.GetStonePos(PosX, PosY, Height).y;
         falling = true;
     }
 
@@ -66,7 +66,7 @@ public class Stone : MonoBehaviour
             if (highlighted && Input.GetMouseButtonDown(0))
             {
                 AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
-                MainControl.RemoveStone(PosX, PosY, Height);
+                Game.RemoveStone(PosX, PosY, Height);
             }
         }
     }

@@ -38,7 +38,7 @@ public class Stick : MonoBehaviour
     {
         if (selected && Input.GetMouseButtonDown(0))
         {
-            MainControl.AddStone(PosX, PosY, MainControl.CurrentPlayer);
+            Game.AddStone(PosX, PosY);
         }
     }
 }
