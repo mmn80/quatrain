@@ -1,11 +1,25 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum StoneType { White = 0, Black = 1 }
 
 public class MainControl : MonoBehaviour
 {
-    public static StoneType CurrentPlayer;
+    static StoneType _CurrentPlayer;
+    static Color selectedPlayer = Color.green;
+    static Color origPlayer = new Color(0.2f, 0.2f, 0.2f);
+
+    public static StoneType CurrentPlayer
+    {
+        get => _CurrentPlayer;
+        set
+        {
+            _CurrentPlayer = value;
+            MainControl.Instance.Player1.color = _CurrentPlayer == StoneType.White ? selectedPlayer : origPlayer;
+            MainControl.Instance.Player2.color = _CurrentPlayer == StoneType.Black ? selectedPlayer : origPlayer;
+        }
+    }
 
     struct StoneRef
     {
@@ -93,9 +107,16 @@ public class MainControl : MonoBehaviour
     public GameObject WhiteStonePrefab;
     public GameObject BlackStonePrefab;
 
+    public Text Player1, Player2;
+
     void Awake()
     {
         Instance = this;
+    }
+
+    void Start()
+    {
+        CurrentPlayer = StoneType.White;
     }
 
     void Update()
