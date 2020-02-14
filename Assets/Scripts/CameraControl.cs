@@ -2,9 +2,10 @@
 
 public class CameraControl : MonoBehaviour
 {
-    public float AngularSpeed, AngularAcceleration, ZoomSpeed, ZoomAcceleration;
+    public float AngularSpeed, AngularAcceleration;
+    public float ZoomSpeed, ZoomAcceleration;
 
-    float aSpeed, zSpeed;
+    float aSpeed, hSpeed, zSpeed;
     Camera cam;
 
     public static bool Orthographic = false;
@@ -24,9 +25,21 @@ public class CameraControl : MonoBehaviour
         if (aSpeed != 0 && cam)
             cam.transform.RotateAround(Vector3.zero, Vector3.up, aSpeed * Time.deltaTime);
 
+        var hMaxSpeed = AngularSpeed / 2;
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            zSpeed = ZoomSpeed;
+            hSpeed = -hMaxSpeed;
         else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+            hSpeed = hMaxSpeed;
+        else if (hSpeed < 0)
+            hSpeed = Mathf.Min(hSpeed + AngularAcceleration * Time.deltaTime, 0);
+        else if (hSpeed > 0)
+            hSpeed = Mathf.Max(hSpeed - AngularAcceleration * Time.deltaTime, 0);
+        if (hSpeed != 0 && cam)
+            cam.transform.RotateAround(Vector3.zero, cam.transform.right, hSpeed * Time.deltaTime);
+
+        if (Input.GetKey(KeyCode.Equals))
+            zSpeed = ZoomSpeed;
+        else if (Input.GetKey(KeyCode.Minus))
             zSpeed = -ZoomSpeed;
         else if (zSpeed < 0)
             zSpeed = Mathf.Min(zSpeed + ZoomAcceleration * Time.deltaTime, 0);
