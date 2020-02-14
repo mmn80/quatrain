@@ -85,22 +85,21 @@ public static class Game
     static void RegenerateQuatrenes()
     {
         byte q_no = 0;
-        quatrenes = new Quatrene[228];
-        var flatDirs = new Vector3Int[]
+        quatrenes = new Quatrene[76];
+        var orthoDirs = new Vector3Int[]
         {
             new Vector3Int(1, 0, 0), new Vector3Int(0, 1, 0), new Vector3Int(0, 0, 1)
         };
-        foreach (var flatDir in flatDirs)
-        {
+        foreach (var dir in orthoDirs)
             for (byte p0 = 0; p0 < 4; p0++)
                 for (byte p1 = 0; p1 < 4; p1++)
                 {
                     var qarr = new Place[4];
                     for (byte i = 0; i < 4; i++)
                     {
-                        var x = flatDir.x == 1 ? i : p0;
-                        var y = flatDir.y == 1 ? i : (flatDir.x == 1 ? p0 : p1);
-                        var z = flatDir.z == 1 ? i : p1;
+                        var x = dir.x == 1 ? i : p0;
+                        var y = dir.y == 1 ? i : (dir.x == 1 ? p0 : p1);
+                        var z = dir.z == 1 ? i : p1;
                         var stack = state[x, y];
                         byte stone = 0;
                         if (stack.Count > z)
@@ -110,6 +109,64 @@ public static class Game
                     quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
                     q_no++;
                 }
+        var diagDirs = new Vector3Int[]
+        {
+            new Vector3Int(1, 0, 1), new Vector3Int(1, 0, -1),
+            new Vector3Int(0, 1, 1), new Vector3Int(0, 1, -1),
+            new Vector3Int(1, 1, 0), new Vector3Int(-1, 1, 0),
+        };
+        foreach (var dir in diagDirs)
+            for (byte p0 = 0; p0 < 4; p0++)
+            {
+                var qarr = new Place[4];
+                byte d_x = (byte)dir.x, d_y = (byte)dir.y, d_z = (byte)dir.x;
+                byte curr_x = 0, curr_y = 0, curr_z = 0;
+                if (dir.x == -1) curr_x = 3;
+                if (dir.y == -1) curr_y = 3;
+                if (dir.z == -1) curr_z = 3;
+                for (byte i = 0; i < 4; i++)
+                {
+                    var x = p0;
+                    if (dir.x != 0) { x = curr_x; curr_x += d_x; }
+                    var y = p0;
+                    if (dir.y != 0) { y = curr_y; curr_y += d_y; }
+                    var z = p0;
+                    if (dir.z != 0) { z = curr_z; curr_z += d_z; }
+                    var stack = state[x, y];
+                    byte stone = 0;
+                    if (stack.Count > z)
+                        stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
+                    qarr[i] = new Place(x, y, z, stone);
+                }
+                quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+                q_no++;
+            }
+        var diag2Dirs = new Vector3Int[]
+        {
+            new Vector3Int(1, 1, 1), new Vector3Int(1, 1, -1),
+            new Vector3Int(-1, 1, 1), new Vector3Int(-1, 1, -1)
+        };
+        foreach (var dir in diag2Dirs)
+        {
+            var qarr = new Place[4];
+            byte d_x = (byte)dir.x, d_y = (byte)dir.y, d_z = (byte)dir.x;
+            byte curr_x = 0, curr_y = 0, curr_z = 0;
+            if (dir.x == -1) curr_x = 3;
+            if (dir.y == -1) curr_y = 3;
+            if (dir.z == -1) curr_z = 3;
+            for (byte i = 0; i < 4; i++)
+            {
+                var x = curr_x; curr_x += d_x;
+                var y =  curr_y; curr_y += d_y;
+                var z = curr_z; curr_z += d_z;
+                var stack = state[x, y];
+                byte stone = 0;
+                if (stack.Count > z)
+                    stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
+                qarr[i] = new Place(x, y, z, stone);
+            }
+            quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+            q_no++;
         }
     }
 
