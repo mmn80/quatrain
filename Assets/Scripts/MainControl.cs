@@ -23,7 +23,7 @@ public class MainControl : MonoBehaviour
         return l.Count;
     }
 
-    const float StoneHeight = 0.5f;
+    const float StoneHeight = 0.3f;
 
     public static Vector3 GetStonePos(int x, int y, int h) =>
         new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
