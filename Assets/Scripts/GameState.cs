@@ -107,7 +107,7 @@ public static class Game
                 winner = "Player 1";
             else if (Player2.StonesWon > Player1.StonesWon)
                 winner = "Player 2";
-            MainControl.ShowMessage($"game over\nwinner is " + winner);
+            MainControl.ShowMessage($"game over\nwinner is {winner}\nalt + q for new game");
         }
         return CurrentPlayer;
     }
@@ -242,6 +242,41 @@ public static class Game
 
     const float StoneHeight = 0.3f;
 
+    static bool GetMadeQuatreneThisTurn(int x, int y, int z, bool z_greater = false)
+    {
+        MadeQuatreneThisTurn = false;
+        foreach (var q in quatrenes)
+        {
+            StoneType stoneTy;
+            if (q.IsFull(out stoneTy))
+            {
+                if ((q.P0.X == x && q.P0.Y == y && (q.P0.Z == z || (z_greater && q.P0.Z > z))) ||
+                    (q.P1.X == x && q.P1.Y == y && (q.P1.Z == z || (z_greater && q.P1.Z > z))) ||
+                    (q.P2.X == x && q.P2.Y == y && (q.P2.Z == z || (z_greater && q.P2.Z > z))) ||
+                    (q.P3.X == x && q.P3.Y == y && (q.P3.Z == z || (z_greater && q.P3.Z > z))))
+                {
+                    MadeQuatreneThisTurn = true;
+                    break;
+                }
+            }
+        }
+        bool foundRemovableStone = false;
+        foreach (var s in AllStones())
+            if (s.Stone != CurrentPlayer.StoneType && !s.Obj.Highlighted)
+            {
+                foundRemovableStone = true;
+                break;
+            }
+        if (!foundRemovableStone)
+        {
+            MadeQuatreneThisTurn = false;
+            MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
+        }
+        if (MadeQuatreneThisTurn)
+            MainControl.ShowMessage("....QUATRENE....\ntake something");
+        return MadeQuatreneThisTurn;
+    }
+
     public static Vector3 GetStonePos(int x, int y, int h) =>
         new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
@@ -279,42 +314,8 @@ public static class Game
         CurrentPlayer.Stones--;
         MainControl.Instance.UpdateScore();
 
-        MadeQuatreneThisTurn = false;
-        foreach (var q in quatrenes)
-        {
-            StoneType stoneTy;
-            if (q.IsFull(out stoneTy))
-            {
-                if ((q.P0.X == x && q.P0.Y == y && q.P0.Z == l.Count - 1) ||
-                    (q.P1.X == x && q.P1.Y == y && q.P1.Z == l.Count - 1) ||
-                    (q.P2.X == x && q.P2.Y == y && q.P2.Z == l.Count - 1) ||
-                    (q.P3.X == x && q.P3.Y == y && q.P3.Z == l.Count - 1))
-                {
-                    MadeQuatreneThisTurn = true;
-                    break;
-                }
-            }
-        }
-
-        if (MadeQuatreneThisTurn)
-        {
-            bool foundRemovableStone = false;
-            foreach (var s in AllStones())
-                if (s.Stone != CurrentPlayer.StoneType && !s.Obj.Highlighted)
-                {
-                    foundRemovableStone = true;
-                    break;
-                }
-            if (!foundRemovableStone)
-            {
-                MadeQuatreneThisTurn = false;
-                MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
-            }
-        }
-        if (!MadeQuatreneThisTurn)
+        if (!GetMadeQuatreneThisTurn(x, y, l.Count - 1))
             ChangePlayer();
-        else
-            MainControl.ShowMessage("....QUATRENE....\ntake something");
 
         return true;
     }
@@ -350,7 +351,8 @@ public static class Game
         CurrentPlayer.StonesWon += 1;
         MainControl.Instance.UpdateScore();
 
-        ChangePlayer();
+        if (!GetMadeQuatreneThisTurn(x, y, h, true))
+            ChangePlayer();
 
         return true;
     }

@@ -73,6 +73,8 @@ public class CameraControl : MonoBehaviour
             if (Orthographic)
                 cam.orthographicSize = 4;
             cam.orthographic = Orthographic;
+
+            MainControl.ShowMessage(Orthographic ? "orthgraphic" : "perspective");
         }
     }
 }
