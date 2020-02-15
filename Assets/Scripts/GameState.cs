@@ -29,7 +29,7 @@ struct Place
 
     public byte X { get => x; }
     public byte Y { get => y; }
-    public byte Z { get => Z; }
+    public byte Z { get => z; }
     public byte Stone { get => stone; }
 
     public override string ToString() => $"({x} {y} {z})";
@@ -178,10 +178,25 @@ public static class Game
         {
             StoneType stone;
             if (q.IsFull(out stone))
+            {
                 msg += $"Quatrene: {q}\n";
+                HighlightStone(q.P0);
+                HighlightStone(q.P1);
+                HighlightStone(q.P2);
+                HighlightStone(q.P3);
+            }
         }
         if (!string.IsNullOrEmpty(msg))
             MainControl.ShowMessage(msg, false, false);
+    }
+
+    static void HighlightStone(Place p)
+    {
+        var stack = state[p.X, p.Y];
+        if (stack == null || stack.Count <= p.Z)
+            MainControl.ShowError($"Bad stack at {p}");
+        var s = stack[p.Z].Obj;
+        s.Highlighted = true;
     }
 
     public static int GetHeight(int x, int y)

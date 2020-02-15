@@ -10,7 +10,7 @@ public class Stone : MonoBehaviour
 
     public AudioClip RemoveSound;
 
-    bool highlighted;
+    public bool Highlighted { get; set; }
 
     public int PosX { get; private set; }
     public int PosY { get; private set; }
@@ -57,13 +57,13 @@ public class Stone : MonoBehaviour
                 falling = false;
             transform.parent.position = pos;
         }
-        if (RotateRandomly || highlighted)
+        if (RotateRandomly || Highlighted)
         {
             var speed = RotationSpeed;
-            if (!highlighted)
+            if (!Highlighted)
                 speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
             transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
-            if (highlighted && Input.GetMouseButtonDown(0))
+            if (mouseIsOver && Input.GetMouseButtonDown(0))
             {
                 AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
                 Game.RemoveStone(PosX, PosY, Height);
@@ -71,13 +71,17 @@ public class Stone : MonoBehaviour
         }
     }
 
+    bool mouseIsOver;
+
     void OnMouseEnter()
     {
-        highlighted = true;
+        Highlighted = true;
+        mouseIsOver = true;
     }
 
     void OnMouseExit()
     {
-        highlighted = false;
+        Highlighted = false;
+        mouseIsOver = true;
     }
 }
