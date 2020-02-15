@@ -87,25 +87,27 @@ public class Stone : MonoBehaviour
                 falling = false;
             transform.parent.position = pos;
         }
+
         if (RotateRandomly || Highlighted || mouseIsOver)
         {
             var speed = RotationSpeed;
             if (!Highlighted && !mouseIsOver)
                 speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
             transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
-            if (mouseIsOver && Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
+        }
+
+        if (mouseIsOver && Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
+        {
+            if (Game.LastQuatreneType == StoneType)
+                ShowError("can't take your own stone");
+            else if (Highlighted)
+                ShowError("can't take from quatrenes");
+            else if (Game.TakeTopStonesOnly && !Game.IsTopStone(PosX, PosY, PosZ))
+                ShowError("only top stones can be taken in classic mode");
+            else
             {
-                if (Highlighted)
-                    ShowError("can't take from quatrenes");
-                else if (Game.LastQuatreneType == StoneType)
-                    ShowError("can't take your own stone");
-                else if (Game.TakeTopStonesOnly && !Game.IsTopStone(PosX, PosY, PosZ))
-                    ShowError("only top stones can be taken in classic mode");
-                else
-                {
-                    AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
-                    Game.RemoveStone(PosX, PosY, PosZ);
-                }
+                AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
+                Game.RemoveStone(PosX, PosY, PosZ);
             }
         }
     }
