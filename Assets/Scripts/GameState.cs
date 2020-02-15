@@ -31,6 +31,8 @@ struct Place
     public byte Y { get => y; }
     public byte Z { get => Z; }
     public byte Stone { get => stone; }
+
+    public override string ToString() => $"({x} {y} {z})";
 }
 
 struct Quatrene
@@ -53,6 +55,9 @@ struct Quatrene
         stoneType = stone == 1 ? StoneType.White : StoneType.Black;
         return stone != 0 && p1.Stone == stone && p2.Stone == stone && p3.Stone == stone;
     }
+
+    public override string ToString() =>
+        (p0.Stone == 1 ? "White" : "Black") + $" ({p0} {p1} {p2} {p3})";
 }
 
 public static class Game
@@ -75,7 +80,6 @@ public static class Game
     public static Player ChangePlayer()
     {
         CurrentPlayer = CurrentPlayer == Player1 ? Player2 : Player1;
-        MainControl.HideMessage();
         return CurrentPlayer;
     }
 
@@ -102,7 +106,7 @@ public static class Game
                         var z = dir.z == 1 ? i : p1;
                         var stack = state[x, y];
                         byte stone = 0;
-                        if (stack.Count > z)
+                        if (stack?.Count > z)
                             stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
                         qarr[i] = new Place(x, y, z, stone);
                     }
@@ -134,7 +138,7 @@ public static class Game
                     if (dir.z != 0) { z = curr_z; curr_z += d_z; }
                     var stack = state[x, y];
                     byte stone = 0;
-                    if (stack.Count > z)
+                    if (stack?.Count > z)
                         stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
                     qarr[i] = new Place(x, y, z, stone);
                 }
@@ -161,13 +165,23 @@ public static class Game
                 var z = curr_z; curr_z += d_z;
                 var stack = state[x, y];
                 byte stone = 0;
-                if (stack.Count > z)
+                if (stack?.Count > z)
                     stone = (byte)(stack[z].Stone == StoneType.White ? 1 : 2);
                 qarr[i] = new Place(x, y, z, stone);
             }
             quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
             q_no++;
         }
+
+        var msg = "";
+        foreach (var q in quatrenes)
+        {
+            StoneType stone;
+            if (q.IsFull(out stone))
+                msg += $"Quatrene: {q}\n";
+        }
+        if (!string.IsNullOrEmpty(msg))
+            MainControl.ShowMessage(msg, false, false);
     }
 
     public static int GetHeight(int x, int y)
@@ -185,6 +199,8 @@ public static class Game
 
     public static bool AddStone(int x, int y)
     {
+        MainControl.HideMessage();
+
         var l = state[x, y];
         if (l == null)
         {
@@ -210,6 +226,8 @@ public static class Game
 
         l.Add(new StoneRef() { Stone = CurrentPlayer.StoneType, Obj = sc });
 
+        RegenerateQuatrenes();
+
         CurrentPlayer.Stones--;
         MainControl.Instance.UpdateScore();
 
@@ -220,6 +238,8 @@ public static class Game
 
     public static bool RemoveStone(int x, int y, int h)
     {
+        MainControl.HideMessage();
+
         var l = state[x, y];
         if (l == null || l.Count <= h)
         {
@@ -238,6 +258,8 @@ public static class Game
                 stone.FallOneSlot();
         }
 
+        RegenerateQuatrenes();
+
         return true;
     }
 
@@ -250,6 +272,4 @@ public static class Game
             AddStone(x, y);
         }
     }
-
-
 }

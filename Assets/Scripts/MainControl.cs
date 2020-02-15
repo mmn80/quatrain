@@ -5,11 +5,17 @@ public class MainControl : MonoBehaviour
 {
     public static MainControl Instance { get; private set; }
 
-    public static void ShowMessage(string message, bool error = false)
+    public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
     {
         var txt = Instance.Messages;
         txt.color = error ? Color.red : new Color(0.4f, 0.4f, 0.4f);
         txt.text = message;
+        if (string.IsNullOrEmpty(message) || !reflectInUnity)
+            return;
+        if (!error)
+            Debug.Log(message);
+        else
+            Debug.LogError(message);
     }
 
     public static void ShowError(string message) => ShowMessage(message, true);
