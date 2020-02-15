@@ -4,6 +4,27 @@ public class Stone : MonoBehaviour
 {
     public static bool RotateRandomly = true;
 
+    const float StoneHeight = 0.3f;
+
+    public static Vector3 GetStonePos(int x, int y, int h) =>
+        new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
+    
+    public static Stone MakeStone(int x, int y, int z)
+    {
+        var prefab = Game.CurrentPlayer.StoneType == StoneType.White ?
+            MainControl.Instance.WhiteStonePrefab : MainControl.Instance.BlackStonePrefab;
+        var go = GameObject.Instantiate(prefab, Stone.GetStonePos(x, y, z),
+            Quaternion.identity, MainControl.Instance.transform);
+        var sc = go.GetComponentInChildren<Stone>();
+        sc.Init(x, y, z);
+        return sc;
+    }
+
+    public static void DestroyStone(Stone s)
+    {
+        GameObject.Destroy(s.transform.parent.gameObject);
+    }
+
     public float RotationSpeed;
 
     public StoneType StoneType;
@@ -43,7 +64,7 @@ public class Stone : MonoBehaviour
             return;
         }
         Height -= 1;
-        fallToY = Game.GetStonePos(PosX, PosY, Height).y;
+        fallToY = GetStonePos(PosX, PosY, Height).y;
         falling = true;
     }
 
@@ -67,7 +88,7 @@ public class Stone : MonoBehaviour
             {
                 if (Highlighted)
                     MainControl.ShowError("can't take from quatrenes");
-                else if (Game.CurrentQuatrenePlayer == StoneType)
+                else if (Game.LastQuatreneType == StoneType)
                     MainControl.ShowError("can't take your own stone");
                 else
                 {
