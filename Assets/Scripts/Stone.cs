@@ -57,10 +57,10 @@ public class Stone : MonoBehaviour
                 falling = false;
             transform.parent.position = pos;
         }
-        if (RotateRandomly || Highlighted)
+        if (RotateRandomly || Highlighted || mouseIsOver)
         {
             var speed = RotationSpeed;
-            if (!Highlighted)
+            if (!Highlighted && !mouseIsOver)
                 speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
             transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             if (mouseIsOver && Input.GetMouseButtonDown(0))
@@ -75,13 +75,11 @@ public class Stone : MonoBehaviour
 
     void OnMouseEnter()
     {
-        Highlighted = true;
         mouseIsOver = true;
     }
 
     void OnMouseExit()
     {
-        Highlighted = false;
-        mouseIsOver = true;
+        mouseIsOver = false;
     }
 }

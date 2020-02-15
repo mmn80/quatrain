@@ -273,9 +273,19 @@ public static class Game
                 stone.FallOneSlot();
         }
 
+        HighlightAllStones(false);
+
         RegenerateQuatrenes();
 
         return true;
+    }
+
+    public static void HighlightAllStones(bool highlight)
+    {
+        for (int x = 0; x < 4; x++)
+            for (int y = 0; y < 4; y++)
+                foreach (var s in state[x, y])
+                    s.Obj.Highlighted = highlight;
     }
 
     public static void PlaceRandomStones(int stones)
