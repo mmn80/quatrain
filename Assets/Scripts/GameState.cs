@@ -156,7 +156,7 @@ public static class Game
             for (byte p0 = 0; p0 < 4; p0++)
             {
                 var qarr = new Place[4];
-                byte d_x = (byte)dir.x, d_y = (byte)dir.y, d_z = (byte)dir.x;
+                byte d_x = (byte)dir.x, d_y = (byte)dir.y, d_z = (byte)dir.z;
                 byte curr_x = 0, curr_y = 0, curr_z = 0;
                 if (dir.x == -1) curr_x = 3;
                 if (dir.y == -1) curr_y = 3;
