@@ -1,85 +1,87 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class MainControl : MonoBehaviour
+namespace Quatrene
 {
-    public static MainControl Instance { get; private set; }
-
-    public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
+    public class MainControl : MonoBehaviour
     {
-        var txt = Instance.Messages;
-        txt.color = error ? Color.red : new Color(0.4f, 0.4f, 0.4f);
-        txt.text = message;
-        if (string.IsNullOrEmpty(message) || !reflectInUnity)
-            return;
-        if (!error)
-            Debug.Log(message);
-        else
-            Debug.LogError(message);
-    }
+        public static MainControl Instance { get; private set; }
 
-    public static void ShowError(string message) => ShowMessage(message, true);
-
-    public static void HideMessage() => ShowMessage("");
-
-    public static void ShowInfo(string message)
-    {
-        var txt = Instance.Info;
-        txt.text = message.Replace("\\t", "\t");
-    }
-
-    public static void HideInfo() => ShowInfo("");
-
-    public GameObject WhiteStonePrefab;
-    public GameObject BlackStonePrefab;
-
-    public Text Player1, Player2;
-    public Text Player1Stones, Player2Stones;
-    public Text Player1Score, Player2Score;
-    public Text Messages, Info;
-
-    Color selectedPlayer = Color.green;
-    Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
-
-    public void CurrentPlayerChanged()
-    {
-        Player1.color = Game.CurrentPlayer == Game.Player1 ? selectedPlayer : origPlayer;
-        Player2.color = Game.CurrentPlayer == Game.Player2 ? selectedPlayer : origPlayer;
-    }
-
-    public void UpdateScore(bool highlight = false)
-    {
-        Player1Stones.text = MakeRows('○', Game.Player1.Stones);
-        Player2Stones.text = MakeRows('●', Game.Player2.Stones);
-        Player1Score.text = new System.String('●', Game.Player1.StonesWon);
-        Player2Score.text = new System.String('○', Game.Player2.StonesWon);
-
-        if (highlight && highlightScore <= 0)
+        public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
         {
-            highlightScore = 1;
-            highlightPlayer = Game.CurrentPlayer;
+            var txt = Instance.Messages;
+            txt.color = error ? Color.red : new Color(0.4f, 0.4f, 0.4f);
+            txt.text = message;
+            if (string.IsNullOrEmpty(message) || !reflectInUnity)
+                return;
+            if (!error)
+                Debug.Log(message);
+            else
+                Debug.LogError(message);
         }
-    }
 
-    string MakeRows(char c, int no)
-    {
-        var sb = new System.Text.StringBuilder();
-        for (int i = 1; i <= no; i++)
+        public static void ShowError(string message) => ShowMessage(message, true);
+
+        public static void HideMessage() => ShowMessage("");
+
+        public static void ShowInfo(string message)
         {
-            sb.Append(c);
-            if (i % 4 == 0)
-                sb.Append('\n');
-            if (i % 16 == 0)
-                sb.Append('\n');
+            var txt = Instance.Info;
+            txt.text = message.Replace("\\t", "\t");
         }
-        return sb.ToString();
-    }
 
-    void Awake() => Instance = this;
+        public static void HideInfo() => ShowInfo("");
 
-    void Start() => Game.NewGame();
+        public GameObject WhiteStonePrefab;
+        public GameObject BlackStonePrefab;
 
-    const string helpInfo = @"<color=#158>CONTROLS</color>
+        public Text Player1, Player2;
+        public Text Player1Stones, Player2Stones;
+        public Text Player1Score, Player2Score;
+        public Text Messages, Info;
+
+        Color selectedPlayer = Color.green;
+        Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
+
+        public void CurrentPlayerChanged()
+        {
+            Player1.color = Game.CurrentPlayer == Game.Player1 ? selectedPlayer : origPlayer;
+            Player2.color = Game.CurrentPlayer == Game.Player2 ? selectedPlayer : origPlayer;
+        }
+
+        public void UpdateScore(bool highlight = false)
+        {
+            Player1Stones.text = MakeRows('○', Game.Player1.Stones);
+            Player2Stones.text = MakeRows('●', Game.Player2.Stones);
+            Player1Score.text = new System.String('●', Game.Player1.StonesWon);
+            Player2Score.text = new System.String('○', Game.Player2.StonesWon);
+
+            if (highlight && highlightScore <= 0)
+            {
+                highlightScore = 1;
+                highlightPlayer = Game.CurrentPlayer;
+            }
+        }
+
+        string MakeRows(char c, int no)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 1; i <= no; i++)
+            {
+                sb.Append(c);
+                if (i % 4 == 0)
+                    sb.Append('\n');
+                if (i % 16 == 0)
+                    sb.Append('\n');
+            }
+            return sb.ToString();
+        }
+
+        void Awake() => Instance = this;
+
+        void Start() => Game.NewGame();
+
+        const string helpInfo = @"<color=#158>CONTROLS</color>
 
 - <color=#158>A</color> or <color=#158>←</color>\t: rotate camera left
 - <color=#158>D</color> or <color=#158>→</color>\t: rotate camera right
@@ -98,7 +100,7 @@ public class MainControl : MonoBehaviour
 - <color=#158>Ctrl + Q</color>\t: quit game
 ";
 
-    const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
+        const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
 
 <color=#158>Textures</color>
 
@@ -119,44 +121,47 @@ public class MainControl : MonoBehaviour
     <size=14>https://freesound.org/people/Autistic%20Lucario/sounds/142608/</size>
 ";
 
-    const float scoreSpeed = 1;
+        const float scoreSpeed = 1;
 
-    float highlightScore = 0;
-    Player highlightPlayer;
+        float highlightScore = 0;
+        Player highlightPlayer;
 
-    static Color highlightColor = Color.green;
-    static Color origColor = new Color(0.4f, 0.4f, 0.4f);
+        static Color highlightColor = Color.green;
+        static Color origColor = new Color(0.4f, 0.4f, 0.4f);
 
-    void Update()
-    {
-        if (highlightScore > 0)
+        void Update()
         {
-            highlightScore = Mathf.Max(0, highlightScore - Time.deltaTime);
-            var txt = highlightPlayer == Game.Player1 ?
-                Player1Score : Player2Score;
-            txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
-        }
+            if (highlightScore > 0)
+            {
+                highlightScore = Mathf.Max(0, highlightScore - Time.deltaTime);
+                var txt = highlightPlayer == Game.Player1 ?
+                    Player1Score : Player2Score;
+                txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
+            }
 
-        if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
-            Application.Quit();
-        else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
-            Game.NewGame();
-        else if (Input.GetKeyUp(KeyCode.Alpha2))
-            Stone.RotateRandomly = !Stone.RotateRandomly;
-        else if (Input.GetKeyUp(KeyCode.Alpha3))
-        {
-            Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
-            ShowMessage(Game.TakeTopStonesOnly ?
-                "classic mode activated\ncan only take top stones" :
-                "neo mode activated\ncan take stones from bellow");
+            if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
+                Application.Quit();
+            else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
+                Game.NewGame();
+            else if (Input.GetKeyUp(KeyCode.Alpha2))
+                Stone.RotateRandomly = !Stone.RotateRandomly;
+            else if (Input.GetKeyUp(KeyCode.Alpha3))
+            {
+                Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
+                ShowMessage(Game.TakeTopStonesOnly ?
+                    "classic mode activated\ncan only take top stones" :
+                    "neo mode activated\ncan take stones from bellow");
+            }
+            else if (Input.GetKeyUp(KeyCode.Alpha8))
+                Game.state.Dump();
+            else if (Input.GetKeyUp(KeyCode.Alpha9))
+                Game.ShowQuatrenesDebugInfo = !Game.ShowQuatrenesDebugInfo;
+            else if (Input.GetKeyUp(KeyCode.F1))
+                ShowInfo(helpInfo);
+            else if (Input.GetKeyUp(KeyCode.F2))
+                ShowInfo(creditsInfo);
+            else if (Input.GetMouseButtonUp(0))
+                HideInfo();
         }
-        else if (Input.GetKeyUp(KeyCode.Alpha9))
-            Game.ShowQuatrenesDebugInfo = !Game.ShowQuatrenesDebugInfo;
-        else if (Input.GetKeyUp(KeyCode.F1))
-            ShowInfo(helpInfo);
-        else if (Input.GetKeyUp(KeyCode.F2))
-            ShowInfo(creditsInfo);
-        else if (Input.GetMouseButtonUp(0))
-            HideInfo();
     }
 }
