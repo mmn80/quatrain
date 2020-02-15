@@ -65,8 +65,13 @@ public class Stone : MonoBehaviour
             transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             if (mouseIsOver && Input.GetMouseButtonDown(0))
             {
-                AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
-                Game.RemoveStone(PosX, PosY, Height);
+                if (Highlighted)
+                    MainControl.ShowError("hands off quatrenes");
+                else
+                {
+                    AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
+                    Game.RemoveStone(PosX, PosY, Height);
+                }
             }
         }
     }
