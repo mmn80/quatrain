@@ -106,8 +106,10 @@ public static class Game
     public static bool GameOver = true;
     public static bool MadeQuatreneThisTurn = false;
 
-    public static Player Player1 = new Player() { StoneType = StoneType.White, Stones = 32 };
-    public static Player Player2 = new Player() { StoneType = StoneType.Black, Stones = 32 };
+    public static Player Player1 = new Player() {
+        StoneType = StoneType.White, Stones = 32 };
+    public static Player Player2 = new Player() {
+        StoneType = StoneType.Black, Stones = 32 };
 
     static Player _CurrentPlayer;
     public static Player CurrentPlayer
@@ -219,7 +221,7 @@ public static class Game
 
         HighlightAllStones(false);
         CurrentPlayer.StonesWon += 1;
-        MainControl.Instance.UpdateScore();
+        MainControl.Instance.UpdateScore(true);
 
         RegenerateQuatrenes();
         if (!AnyQuatrenesMadeThisTurn(x, y, h, true))
