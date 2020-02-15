@@ -80,11 +80,25 @@ public static class Game
     public static Player ChangePlayer()
     {
         CurrentPlayer = CurrentPlayer == Player1 ? Player2 : Player1;
+        if (Player1.Stones == 0 && Player2.Stones == 0)
+        {
+            GameOver = true;
+            var winner = "nobody";
+            if (Player1.StonesWon > Player2.StonesWon)
+                winner = "Player 1";
+            else if (Player2.StonesWon > Player1.StonesWon)
+                winner = "Player 2";
+            MainControl.ShowMessage($"game over\nwinner is " + winner);
+        }
         return CurrentPlayer;
     }
 
     static List<StoneRef>[,] state = new List<StoneRef>[4, 4];
     static Quatrene[] quatrenes;
+
+    public static bool MadeQuatreneThisTurn = false;
+
+    public static bool GameOver = true;
 
     static void RegenerateQuatrenes()
     {
@@ -173,21 +187,21 @@ public static class Game
             q_no++;
         }
 
-        var msg = "";
+        // var msg = "";
         foreach (var q in quatrenes)
         {
             StoneType stone;
             if (q.IsFull(out stone))
             {
-                msg += $"Quatrene: {q}\n";
+                // msg += $"Quatrene: {q}\n";
                 HighlightStone(q.P0);
                 HighlightStone(q.P1);
                 HighlightStone(q.P2);
                 HighlightStone(q.P3);
             }
         }
-        if (!string.IsNullOrEmpty(msg))
-            MainControl.ShowMessage(msg, false, false);
+        // if (!string.IsNullOrEmpty(msg))
+        //     MainControl.ShowMessage(msg, false, false);
     }
 
     static void HighlightStone(Place p)
@@ -246,9 +260,50 @@ public static class Game
         CurrentPlayer.Stones--;
         MainControl.Instance.UpdateScore();
 
-        ChangePlayer();
+        MadeQuatreneThisTurn = false;
+        foreach (var q in quatrenes)
+        {
+            StoneType stoneTy;
+            if (q.IsFull(out stoneTy))
+            {
+                if ((q.P0.X == x && q.P0.Y == y && q.P0.Z == l.Count - 1) ||
+                    (q.P1.X == x && q.P1.Y == y && q.P1.Z == l.Count - 1) ||
+                    (q.P2.X == x && q.P2.Y == y && q.P2.Z == l.Count - 1) ||
+                    (q.P3.X == x && q.P3.Y == y && q.P3.Z == l.Count - 1))
+                {
+                    MadeQuatreneThisTurn = true;
+                    break;
+                }
+            }
+        }
+
+        if (MadeQuatreneThisTurn)
+        {
+            bool foundRemovableStone = false;
+            foreach (var s in AllStones())
+                if (s.Stone != CurrentPlayer.StoneType && !s.Obj.Highlighted)
+                {
+                    foundRemovableStone = true;
+                    break;
+                }
+            if (!foundRemovableStone)
+            {
+                MadeQuatreneThisTurn = false;
+                MainControl.ShowError("nothing to take, next");
+            }
+        }
+        if (!MadeQuatreneThisTurn)
+            ChangePlayer();
 
         return true;
+    }
+
+    static IEnumerable<StoneRef> AllStones()
+    {
+        for (int x = 0; x < 4; x++)
+            for (int y = 0; y < 4; y++)
+                foreach (var s in state[x, y] ?? new List<StoneRef>())
+                    yield return s;
     }
 
     public static bool RemoveStone(int x, int y, int h)
@@ -277,15 +332,20 @@ public static class Game
 
         RegenerateQuatrenes();
 
+        MadeQuatreneThisTurn = false;
+
+        CurrentPlayer.StonesWon += 1;
+        MainControl.Instance.UpdateScore();
+
+        ChangePlayer();
+
         return true;
     }
 
     public static void HighlightAllStones(bool highlight)
     {
-        for (int x = 0; x < 4; x++)
-            for (int y = 0; y < 4; y++)
-                foreach (var s in state[x, y])
-                    s.Obj.Highlighted = highlight;
+        foreach (var s in AllStones())
+            s.Obj.Highlighted = highlight;
     }
 
     public static void PlaceRandomStones(int stones)

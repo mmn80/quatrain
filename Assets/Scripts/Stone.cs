@@ -63,10 +63,12 @@ public class Stone : MonoBehaviour
             if (!Highlighted && !mouseIsOver)
                 speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
             transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
-            if (mouseIsOver && Input.GetMouseButtonDown(0))
+            if (mouseIsOver && Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
             {
                 if (Highlighted)
-                    MainControl.ShowError("hands off quatrenes");
+                    MainControl.ShowError("can't take from quatrenes");
+                else if (Game.CurrentPlayer.StoneType == StoneType)
+                    MainControl.ShowError("can't take your own stone");
                 else
                 {
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);

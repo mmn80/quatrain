@@ -36,9 +36,7 @@ public class Stick : MonoBehaviour
 
     void Update()
     {
-        if (selected && Input.GetMouseButtonDown(0))
-        {
+        if (selected && !Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
             Game.AddStone(PosX, PosY);
-        }
     }
 }
