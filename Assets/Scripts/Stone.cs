@@ -49,7 +49,16 @@ public class Stone : MonoBehaviour
         normalRotationSpeed = Random.Range(0, RotationSpeed / 10);
         normalRotationDir = Random.Range(0, 2) == 0;
 
-        GetComponent<AudioSource>().Play();
+        PlayPlaceSound();
+    }
+
+    public void PlayPlaceSound() => GetComponents<AudioSource>()[0].Play();
+    public void PlayErrorSound() => GetComponents<AudioSource>()[1].Play();
+
+    void ShowError(string message)
+    {
+        MainControl.ShowError(message);
+        PlayErrorSound();
     }
 
     bool falling;
@@ -60,7 +69,7 @@ public class Stone : MonoBehaviour
     {
         if (PosZ == 0)
         {
-            MainControl.ShowError("Cannot fall any more.");
+            ShowError("Cannot fall any more.");
             return;
         }
         PosZ -= 1;
@@ -87,11 +96,11 @@ public class Stone : MonoBehaviour
             if (mouseIsOver && Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
             {
                 if (Highlighted)
-                    MainControl.ShowError("can't take from quatrenes");
+                    ShowError("can't take from quatrenes");
                 else if (Game.LastQuatreneType == StoneType)
-                    MainControl.ShowError("can't take your own stone");
+                    ShowError("can't take your own stone");
                 else if (Game.TakeTopStonesOnly && !Game.IsTopStone(PosX, PosY, PosZ))
-                    MainControl.ShowError("only top stones can be taken in classic mode");
+                    ShowError("only top stones can be taken in classic mode");
                 else
                 {
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
