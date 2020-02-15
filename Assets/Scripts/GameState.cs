@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -30,6 +31,12 @@ public static class Game
             x = _x; y = _y; z = _z; stone = _stone;
         }
 
+        public Place(Place src, byte _stone)
+        {
+            x = src.x; y = src.y; z = src.z;
+            stone = _stone;
+        }
+
         public byte X { get => x; }
         public byte Y { get => y; }
         public byte Z { get => z; }
@@ -54,6 +61,14 @@ public static class Game
         public Quatrene(Place _p0, Place _p1, Place _p2, Place _p3)
         {
             p0 = _p0; p1 = _p1; p2 = _p2; p3 = _p3;
+        }
+
+        public Quatrene(Quatrene src, byte s0, byte s1, byte s2, byte s3)
+        {
+            p0 = new Place(src.p0, s0);
+            p1 = new Place(src.p1, s1);
+            p2 = new Place(src.p2, s2);
+            p3 = new Place(src.p3, s3);
         }
 
         public Place P0 { get => p0; }
@@ -144,7 +159,7 @@ public static class Game
     }
 
     static List<StoneRef>[,] state = new List<StoneRef>[4, 4];
-    static Quatrene[] quatrenes;
+    static Quatrene[] quatrenesSrc, quatrenes;
 
     public static bool AddStone(int x, int y)
     {
@@ -213,6 +228,14 @@ public static class Game
         return true;
     }
 
+    static byte GetStoneAt(byte x, byte y, byte z)
+    {
+        var stack = state[x, y];
+        if (stack?.Count > z)
+            return (byte)(stack[z].StoneTy == StoneType.White ? 1 : 2);
+        return 0;
+    }
+
     static IEnumerable<StoneRef> AllStones()
     {
         for (int x = 0; x < 4; x++)
@@ -257,10 +280,48 @@ public static class Game
 
     #endregion
 
+    public static bool ShowQuatrenesDebugInfo = false;
+
     static void RegenerateQuatrenes(bool highlightStones = true)
     {
-        byte q_no = 0;
+        if (quatrenesSrc == null)
+            InitQuatrenesSrc();
+
+        Stopwatch watch = null;
+        if (ShowQuatrenesDebugInfo)
+        {
+            watch = new Stopwatch();
+            watch.Start();
+        }
+
         quatrenes = new Quatrene[76];
+        for (byte i = 0; i < 76; i++)
+        {
+            var src = quatrenesSrc[i];
+            quatrenes[i] = new Quatrene(src,
+                GetStoneAt(src.P0.X, src.P0.Y, src.P0.Z),
+                GetStoneAt(src.P1.X, src.P1.Y, src.P1.Z),
+                GetStoneAt(src.P2.X, src.P2.Y, src.P2.Z),
+                GetStoneAt(src.P3.X, src.P3.Y, src.P3.Z));
+        }
+
+        if (ShowQuatrenesDebugInfo)
+        {
+            watch.Stop();
+            var ms = watch.ElapsedMilliseconds;
+            var ts = watch.ElapsedTicks;
+            MainControl.ShowMessage($"quatrenes evaluated in {ms} ms ({ts} ticks)");
+        }
+
+        if (highlightStones)
+            foreach (var q in quatrenes.Where(q => q.IsFull()))
+                q.HighlightStones();
+    }
+
+    static void InitQuatrenesSrc()
+    {
+        byte q_no = 0;
+        quatrenesSrc = new Quatrene[76];
 
         foreach (var dir in orthoDirs)
             for (byte p0 = 0; p0 < 4; p0++)
@@ -272,13 +333,9 @@ public static class Game
                         var x = dir.x == 1 ? i : p0;
                         var y = dir.y == 1 ? i : (dir.x == 1 ? p0 : p1);
                         var z = dir.z == 1 ? i : p1;
-                        var stack = state[x, y];
-                        byte stone = 0;
-                        if (stack?.Count > z)
-                            stone = (byte)(stack[z].StoneTy == StoneType.White ? 1 : 2);
-                        qarr[i] = new Place(x, y, z, stone);
+                        qarr[i] = new Place(x, y, z, 0);
                     }
-                    quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+                    quatrenesSrc[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
                     q_no++;
                 }
 
@@ -299,13 +356,9 @@ public static class Game
                     if (dir.y != 0) { y = curr_y; curr_y += d_y; }
                     var z = p0;
                     if (dir.z != 0) { z = curr_z; curr_z += d_z; }
-                    var stack = state[x, y];
-                    byte stone = 0;
-                    if (stack?.Count > z)
-                        stone = (byte)(stack[z].StoneTy == StoneType.White ? 1 : 2);
-                    qarr[i] = new Place(x, y, z, stone);
+                    qarr[i] = new Place(x, y, z, 0);
                 }
-                quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+                quatrenesSrc[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
                 q_no++;
             }
 
@@ -320,21 +373,13 @@ public static class Game
             for (byte i = 0; i < 4; i++)
             {
                 var x = curr_x; curr_x += d_x;
-                var y =  curr_y; curr_y += d_y;
+                var y = curr_y; curr_y += d_y;
                 var z = curr_z; curr_z += d_z;
-                var stack = state[x, y];
-                byte stone = 0;
-                if (stack?.Count > z)
-                    stone = (byte)(stack[z].StoneTy == StoneType.White ? 1 : 2);
-                qarr[i] = new Place(x, y, z, stone);
+                qarr[i] = new Place(x, y, z, 0);
             }
-            quatrenes[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
+            quatrenesSrc[q_no] = new Quatrene(qarr[0], qarr[1], qarr[2], qarr[3]);
             q_no++;
         }
-
-        if (highlightStones)
-            foreach (var q in quatrenes.Where(q => q.IsFull()))
-                q.HighlightStones();
     }
 
     static bool AnyQuatrenesMadeThisTurn(int x, int y, int z, bool z_greater = false)

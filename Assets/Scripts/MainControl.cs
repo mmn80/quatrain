@@ -95,6 +95,7 @@ public class MainControl : MonoBehaviour
 - Autistic Lucario - Error.wav
     <size=14>https://freesound.org/people/Autistic%20Lucario/sounds/142608/</size>
 ";
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
@@ -110,6 +111,8 @@ public class MainControl : MonoBehaviour
                 "classic mode activated\ncan only take top stones" :
                 "neo mode activated\ncan take stones from bellow");
         }
+        else if (Input.GetKeyUp(KeyCode.Alpha9))
+            Game.ShowQuatrenesDebugInfo = !Game.ShowQuatrenesDebugInfo;
         else if (Input.GetKeyUp(KeyCode.F1))
             ShowInfo(helpInfo);
         else if (Input.GetKeyUp(KeyCode.F2))
