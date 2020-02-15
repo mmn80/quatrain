@@ -264,6 +264,7 @@ public static class Game
                 }
             }
         }
+        var toTake = CurrentQuatrenePlayer == StoneType.White ? "black" : "white";
         if (MadeQuatreneThisTurn)
         {
             bool foundRemovableStone = false;
@@ -276,11 +277,11 @@ public static class Game
             if (!foundRemovableStone)
             {
                 MadeQuatreneThisTurn = false;
-                MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
+                MainControl.ShowMessage($"....QUATRENE....\nbut no free {toTake} stone to take, next");
             }
         }
         if (MadeQuatreneThisTurn)
-            MainControl.ShowMessage("....QUATRENE....\ntake something");
+            MainControl.ShowMessage($"....QUATRENE....\ntake a {toTake} stone");
         return MadeQuatreneThisTurn;
     }
 
