@@ -52,11 +52,9 @@ public class MainControl : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
             Application.Quit();
-        else if (Input.GetKeyDown(KeyCode.F6))
-            Game.PlaceRandomStones(16);
+        else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
+            Game.NewGame();
         else if (Input.GetKeyUp(KeyCode.Alpha2))
             Stone.RotateRandomly = !Stone.RotateRandomly;
-        else if (Input.GetKeyUp(KeyCode.Q) && Game.GameOver)
-            Game.NewGame();
     }
 }

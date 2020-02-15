@@ -65,6 +65,7 @@ public static class Game
     public static void NewGame()
     {
         GameOver = false;
+
         Player1.Stones = 32;
         Player1.StonesWon = 0;
         Player2.Stones = 32;
@@ -73,6 +74,11 @@ public static class Game
 
         MainControl.Instance.UpdateScore();
         MainControl.HideMessage();
+
+        foreach (var s in AllStones())
+            GameObject.Destroy(s.Obj.transform.parent.gameObject);
+        state = new List<StoneRef>[4, 4];
+        RegenerateQuatrenes();
     }
 
     public static Player Player1 = new Player() { StoneType = StoneType.White, Stones = 32 };
@@ -361,15 +367,5 @@ public static class Game
     {
         foreach (var s in AllStones())
             s.Obj.Highlighted = highlight;
-    }
-
-    public static void PlaceRandomStones(int stones)
-    {
-        for (int i = 0; i < stones; i++)
-        {
-            var x = Random.Range(0, 4);
-            var y = Random.Range(0, 4);
-            AddStone(x, y);
-        }
     }
 }
