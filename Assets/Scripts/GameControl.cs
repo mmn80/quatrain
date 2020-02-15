@@ -8,9 +8,12 @@ namespace Quatrene
 {
     public class Player
     {
+        public string Name;
         public StoneType StoneType;
         public int Stones;
         public int StonesWon;
+
+        public override string ToString() => Name;
     }
 
     public enum StoneType { White = 0, Black = 1 }
@@ -106,11 +109,13 @@ namespace Quatrene
 
         public static Player Player1 = new Player()
         {
+            Name = "Player 1",
             StoneType = StoneType.White,
             Stones = 32
         };
         public static Player Player2 = new Player()
         {
+            Name = "Player 2",
             StoneType = StoneType.Black,
             Stones = 32
         };
@@ -164,9 +169,9 @@ namespace Quatrene
                 GameOver = true;
                 var winner = "nobody";
                 if (Player1.StonesWon > Player2.StonesWon)
-                    winner = "Player 1";
+                    winner = Player1.Name;
                 else if (Player2.StonesWon > Player1.StonesWon)
-                    winner = "Player 2";
+                    winner = Player2.Name;
                 MainControl.ShowMessage($"game over\nwinner is {winner}\nalt + q for new game");
             }
             return CurrentPlayer;

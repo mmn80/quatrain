@@ -16,6 +16,9 @@ namespace Quatrene
 
         void Update()
         {
+            if (MainControl.IsInputOn())
+                return;
+
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
                 aSpeed = -AngularSpeed;
             else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))

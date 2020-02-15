@@ -32,6 +32,8 @@ namespace Quatrene
 
         public static void HideInfo() => ShowInfo("");
 
+        public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
+
         public GameObject WhiteStonePrefab;
         public GameObject BlackStonePrefab;
 
@@ -39,6 +41,8 @@ namespace Quatrene
         public Text Player1Stones, Player2Stones;
         public Text Player1Score, Player2Score;
         public Text Messages, Info;
+
+        public InputField UserInput;
 
         Color selectedPlayer = Color.green;
         Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
@@ -92,6 +96,7 @@ namespace Quatrene
 - <color=#158>1</color>\t\t: switch camera between orthographic & perspective
 - <color=#158>2</color>\t: switch slow rotation of stones
 - <color=#158>3</color>\t: switch between classic & neo game rules
+- <color=#158>4</color> and <color=#158>5</color>\t: rename player 1 & 2
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
@@ -129,6 +134,8 @@ namespace Quatrene
         static Color highlightColor = Color.green;
         static Color origColor = new Color(0.4f, 0.4f, 0.4f);
 
+        Player renamingPlayer;
+
         void Update()
         {
             if (highlightScore > 0)
@@ -143,18 +150,36 @@ namespace Quatrene
                 Application.Quit();
             else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
                 Game.NewGame();
-            else if (Input.GetKeyUp(KeyCode.Alpha2))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha2))
                 Stone.RotateRandomly = !Stone.RotateRandomly;
-            else if (Input.GetKeyUp(KeyCode.Alpha3))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha3))
             {
                 Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
                 ShowMessage(Game.TakeTopStonesOnly ?
                     "classic mode activated\ncan only take top stones" :
                     "neo mode activated\ncan take stones from bellow");
             }
-            else if (Input.GetKeyUp(KeyCode.Alpha8))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha4))
+            {
+                renamingPlayer = Game.Player1;
+                StartRename();
+            }
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha5))
+            {
+                renamingPlayer = Game.Player2;
+                StartRename();
+            }
+            else if (IsInputOn() && Input.GetKeyUp(KeyCode.Return))
+            {
+                renamingPlayer.Name = UserInput.text;
+                (renamingPlayer == Game.Player1 ? Player1 : Player2).text = 
+                    renamingPlayer.Name;
+                UserInput.gameObject.SetActive(false);
+                HideMessage();
+            }
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
                 Game.state.Dump();
-            else if (Input.GetKeyUp(KeyCode.Alpha9))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))
                 Game.ShowQuatrenesDebugInfo = !Game.ShowQuatrenesDebugInfo;
             else if (Input.GetKeyUp(KeyCode.F1))
                 ShowInfo(helpInfo);
@@ -162,6 +187,14 @@ namespace Quatrene
                 ShowInfo(creditsInfo);
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
+        }
+
+        void StartRename()
+        {
+            ShowMessage($"new name for: {renamingPlayer}\npress ENTER when ready");
+            UserInput.text = "";
+            UserInput.gameObject.SetActive(true);
+            UserInput.Select();
         }
     }
 }
