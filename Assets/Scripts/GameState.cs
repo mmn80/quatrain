@@ -242,9 +242,12 @@ public static class Game
 
     const float StoneHeight = 0.3f;
 
+    public static StoneType CurrentQuatrenePlayer { get; private set; }
+
     static bool GetMadeQuatreneThisTurn(int x, int y, int z, bool z_greater = false)
     {
         MadeQuatreneThisTurn = false;
+        CurrentQuatrenePlayer = CurrentPlayer.StoneType;
         foreach (var q in quatrenes)
         {
             StoneType stoneTy;
@@ -256,21 +259,25 @@ public static class Game
                     (q.P3.X == x && q.P3.Y == y && (q.P3.Z == z || (z_greater && q.P3.Z > z))))
                 {
                     MadeQuatreneThisTurn = true;
+                    CurrentQuatrenePlayer = stoneTy;
                     break;
                 }
             }
         }
-        bool foundRemovableStone = false;
-        foreach (var s in AllStones())
-            if (s.Stone != CurrentPlayer.StoneType && !s.Obj.Highlighted)
-            {
-                foundRemovableStone = true;
-                break;
-            }
-        if (!foundRemovableStone)
+        if (MadeQuatreneThisTurn)
         {
-            MadeQuatreneThisTurn = false;
-            MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
+            bool foundRemovableStone = false;
+            foreach (var s in AllStones())
+                if (s.Stone != CurrentQuatrenePlayer && !s.Obj.Highlighted)
+                {
+                    foundRemovableStone = true;
+                    break;
+                }
+            if (!foundRemovableStone)
+            {
+                MadeQuatreneThisTurn = false;
+                MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
+            }
         }
         if (MadeQuatreneThisTurn)
             MainControl.ShowMessage("....QUATRENE....\ntake something");

@@ -67,7 +67,7 @@ public class Stone : MonoBehaviour
             {
                 if (Highlighted)
                     MainControl.ShowError("can't take from quatrenes");
-                else if (Game.CurrentPlayer.StoneType == StoneType)
+                else if (Game.CurrentQuatrenePlayer == StoneType)
                     MainControl.ShowError("can't take your own stone");
                 else
                 {
