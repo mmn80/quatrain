@@ -44,15 +44,9 @@ public class MainControl : MonoBehaviour
         Player2Score.text = $"s:{Game.Player2.Stones} w:{Game.Player2.StonesWon}";
     }
 
-    void Awake()
-    {
-        Instance = this;
-    }
+    void Awake() => Instance = this;
 
-    void Start()
-    {
-        Game.ChangePlayer();
-    }
+    void Start() => Game.NewGame();
 
     void Update()
     {
@@ -62,5 +56,7 @@ public class MainControl : MonoBehaviour
             Game.PlaceRandomStones(16);
         else if (Input.GetKeyUp(KeyCode.Alpha2))
             Stone.RotateRandomly = !Stone.RotateRandomly;
+        else if (Input.GetKeyUp(KeyCode.Q) && Game.GameOver)
+            Game.NewGame();
     }
 }

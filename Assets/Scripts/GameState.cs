@@ -62,6 +62,19 @@ struct Quatrene
 
 public static class Game
 {
+    public static void NewGame()
+    {
+        GameOver = false;
+        Player1.Stones = 32;
+        Player1.StonesWon = 0;
+        Player2.Stones = 32;
+        Player2.StonesWon = 0;
+        CurrentPlayer = Player1;
+
+        MainControl.Instance.UpdateScore();
+        MainControl.HideMessage();
+    }
+
     public static Player Player1 = new Player() { StoneType = StoneType.White, Stones = 32 };
     public static Player Player2 = new Player() { StoneType = StoneType.Black, Stones = 32 };
 
@@ -289,21 +302,15 @@ public static class Game
             if (!foundRemovableStone)
             {
                 MadeQuatreneThisTurn = false;
-                MainControl.ShowError("nothing to take, next");
+                MainControl.ShowMessage("....QUATRENE....\nbut nothing to take, next");
             }
         }
         if (!MadeQuatreneThisTurn)
             ChangePlayer();
+        else
+            MainControl.ShowMessage("....QUATRENE....\ntake something");
 
         return true;
-    }
-
-    static IEnumerable<StoneRef> AllStones()
-    {
-        for (int x = 0; x < 4; x++)
-            for (int y = 0; y < 4; y++)
-                foreach (var s in state[x, y] ?? new List<StoneRef>())
-                    yield return s;
     }
 
     public static bool RemoveStone(int x, int y, int h)
@@ -340,6 +347,14 @@ public static class Game
         ChangePlayer();
 
         return true;
+    }
+
+    static IEnumerable<StoneRef> AllStones()
+    {
+        for (int x = 0; x < 4; x++)
+            for (int y = 0; y < 4; y++)
+                foreach (var s in state[x, y] ?? new List<StoneRef>())
+                    yield return s;
     }
 
     public static void HighlightAllStones(bool highlight)
