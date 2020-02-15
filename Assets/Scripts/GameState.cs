@@ -86,6 +86,8 @@ public static class Game
             (p0.Stone == 1 ? "White" : "Black") + $" ({p0} {p1} {p2} {p3})";
     }
 
+    public static bool TakeTopStonesOnly = false;
+
     public static bool GameOver = true;
     public static bool MadeQuatreneThisTurn = false;
 
@@ -196,7 +198,7 @@ public static class Game
         for (int i = 0; i < l.Count; i++)
         {
             var stone = l[i].Stone;
-            if (stone.Height > i)
+            if (stone.PosZ > i)
                 stone.FallOneSlot();
         }
 
@@ -223,6 +225,14 @@ public static class Game
     {
         foreach (var s in AllStones())
             s.Stone.Highlighted = highlight;
+    }
+
+    public static bool IsTopStone(int x, int y, int z)
+    {
+        var stack = state[x, y];
+        if (stack == null || stack.Count != z + 1)
+            return false;
+        return true;
     }
 
     #region Quatrene generators

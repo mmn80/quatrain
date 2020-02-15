@@ -56,5 +56,12 @@ public class MainControl : MonoBehaviour
             Game.NewGame();
         else if (Input.GetKeyUp(KeyCode.Alpha2))
             Stone.RotateRandomly = !Stone.RotateRandomly;
+        else if (Input.GetKeyUp(KeyCode.Alpha3))
+        {
+            Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
+            ShowMessage(Game.TakeTopStonesOnly ?
+                "classic mode activated\ncan only take top stones" :
+                "nu mode activated\ncan take stones from bellow");
+        }
     }
 }

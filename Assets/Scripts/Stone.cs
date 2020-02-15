@@ -35,16 +35,16 @@ public class Stone : MonoBehaviour
 
     public int PosX { get; private set; }
     public int PosY { get; private set; }
-    public int Height { get; private set; }
+    public int PosZ { get; private set; }
 
     float normalRotationSpeed;
     bool normalRotationDir;
 
-    public void Init(int posX, int posY, int height)
+    public void Init(int x, int y, int z)
     {
-        this.PosX = posX;
-        this.PosY = posY;
-        this.Height = height;
+        this.PosX = x;
+        this.PosY = y;
+        this.PosZ = z;
 
         normalRotationSpeed = Random.Range(0, RotationSpeed / 10);
         normalRotationDir = Random.Range(0, 2) == 0;
@@ -58,13 +58,13 @@ public class Stone : MonoBehaviour
 
     public void FallOneSlot()
     {
-        if (Height == 0)
+        if (PosZ == 0)
         {
             MainControl.ShowError("Cannot fall any more.");
             return;
         }
-        Height -= 1;
-        fallToY = GetStonePos(PosX, PosY, Height).y;
+        PosZ -= 1;
+        fallToY = GetStonePos(PosX, PosY, PosZ).y;
         falling = true;
     }
 
@@ -90,24 +90,18 @@ public class Stone : MonoBehaviour
                     MainControl.ShowError("can't take from quatrenes");
                 else if (Game.LastQuatreneType == StoneType)
                     MainControl.ShowError("can't take your own stone");
+                else if (Game.TakeTopStonesOnly && !Game.IsTopStone(PosX, PosY, PosZ))
+                    MainControl.ShowError("only top stones can be taken in classic mode");
                 else
                 {
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
-                    Game.RemoveStone(PosX, PosY, Height);
+                    Game.RemoveStone(PosX, PosY, PosZ);
                 }
             }
         }
     }
 
     bool mouseIsOver;
-
-    void OnMouseEnter()
-    {
-        mouseIsOver = true;
-    }
-
-    void OnMouseExit()
-    {
-        mouseIsOver = false;
-    }
+    void OnMouseEnter() => mouseIsOver = true;
+    void OnMouseExit() => mouseIsOver = false;
 }
