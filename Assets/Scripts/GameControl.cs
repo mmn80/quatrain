@@ -156,6 +156,8 @@ namespace Quatrene
                                 true, false);
                 MainControl.ShowMessage("press <color=#158>N</color> to start new game");
             }
+            else
+                MainControl.Instance.PlayFinishSound();
         }
 
         public static void NewGame()
@@ -299,6 +301,22 @@ namespace Quatrene
                 return true;
             v = state.GetStoneAt((byte)x, (byte)y, (byte)(z + 1));
             return v == AI.Value.None;
+        }
+
+        public static bool IsTableAllLoaded()
+        {
+            if (stones == null)
+                return false;
+            for (int x = 0; x < 4; x++)
+                for (int y = 0; y < 4; y++)
+                    for (int z = 0; z < 4; z++)
+                    {
+                        var s = stones[x, y, z];
+                        if (s == null || s.StoneType !=
+                                (x < 2 ? StoneType.White : StoneType.Black))
+                            return false;
+                    }
+            return true;
         }
 
         #region Quatrene generators

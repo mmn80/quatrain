@@ -123,9 +123,8 @@ namespace Quatrene
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 
-- <color=#158>Alt + Q</color>\t: quit current game
-- <color=#158>N</color>\t\t\t: start new game
-- <color=#158>Ctrl + Q</color> or <color=#158>Esc</color>\t: quit game
+- <color=#158>N</color>\t: start new game
+- <color=#158>Esc</color>\t: quit (current) game
 ";
 
         const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
@@ -149,6 +148,8 @@ namespace Quatrene
     <size=14>https://freesound.org/people/Electroviolence/sounds/234553/</size>
 - Autistic Lucario - Error.wav
     <size=14>https://freesound.org/people/Autistic%20Lucario/sounds/142608/</size>
+- Walter_Odington -  Synth Bass » Baz Bass III Short (Nova).aif
+    <size=14>https://freesound.org/people/Walter_Odington/sounds/25955/</size>
 ";
 
         float highlightSpeed = 1;
@@ -177,17 +178,15 @@ namespace Quatrene
                     UserInput.gameObject.SetActive(false);
                     HideMessage();
                 }
+                else if (Game.Playing)
+                {
+                    Game.StopPlaying(false);
+                    ShowMessage("game over");
+                }
+                else if (!Game.IsTableAllLoaded())
+                    Game.StopPlaying(true);
                 else
                     Application.Quit();
-            }
-            else if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
-                Application.Quit();
-            else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
-            {
-                var wasPlaying = Game.Playing;
-                Game.StopPlaying(!Game.Playing);
-                if (wasPlaying)
-                    ShowMessage("game over");
             }
             else if (!Game.Playing && Input.GetKeyUp(KeyCode.N))
                 Game.NewGame();
@@ -220,8 +219,8 @@ namespace Quatrene
                 Stone.RotateRandomly = !Stone.RotateRandomly;
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha6))
             {
-                var m = GetComponent<AudioSource>();
-                m.volume = m.volume > 0.5f ? 0 : 1;
+                var m = GetComponents<AudioSource>()[0];
+                m.mute = !m.mute;
             }
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha7))
                 EffectsMuted = !EffectsMuted;
@@ -235,6 +234,14 @@ namespace Quatrene
                 ShowInfo(creditsInfo);
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
+        }
+
+        public void PlayFinishSound()
+        {
+            if (EffectsMuted)
+                return;
+            var s = GetComponents<AudioSource>()[1];
+            s.Play();
         }
 
         public static bool EffectsMuted = false;
