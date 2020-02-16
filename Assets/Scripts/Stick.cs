@@ -38,7 +38,7 @@ namespace Quatrene
 
         void Update()
         {
-            if (selected && !Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
+            if (selected && Game.Playing && !Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
                 Game.AddStone(PosX, PosY);
         }
     }

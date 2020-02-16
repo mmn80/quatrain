@@ -47,18 +47,34 @@ namespace Quatrene
         Color selectedPlayer = Color.green;
         Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
 
-        public void CurrentPlayerChanged()
+        public void UpdatePlayers(bool gameEnd = false)
         {
-            Player1.color = Game.CurrentPlayer == Game.Player1 ? selectedPlayer : origPlayer;
-            Player2.color = Game.CurrentPlayer == Game.Player2 ? selectedPlayer : origPlayer;
+            if (Game.Playing || gameEnd)
+            {
+                Player1.color = !gameEnd && Game.CurrentPlayer == Game.Player1 ?
+                    selectedPlayer : origPlayer;
+                Player2.color = !gameEnd && Game.CurrentPlayer == Game.Player2 ?
+                    selectedPlayer : origPlayer;
+                if (!Player1.gameObject.activeSelf)
+                {
+                    Player1.gameObject.SetActive(true);
+                    Player2.gameObject.SetActive(true);
+                }
+            }
+            else if (Player1.gameObject.activeSelf)
+            {
+                Player1.gameObject.SetActive(false);
+                Player2.gameObject.SetActive(false);
+            }
         }
 
         public void UpdateScore(bool highlight = false)
         {
-            Player1Stones.text = MakeRows('○', Game.Player1.Stones);
-            Player2Stones.text = MakeRows('●', Game.Player2.Stones);
-            Player1Score.text = new System.String('●', Game.Player1.StonesWon);
-            Player2Score.text = new System.String('○', Game.Player2.StonesWon);
+            var g = Game.Playing || highlight;
+            Player1Stones.text = MakeRows('○', g ? Game.Player1.Stones : 0);
+            Player2Stones.text = MakeRows('●', g ? Game.Player2.Stones : 0);
+            Player1Score.text = new System.String('●', g ? Game.Player1.StonesWon : 0);
+            Player2Score.text = new System.String('○', g ? Game.Player2.StonesWon : 0);
 
             if (highlight && highlightScore <= 0)
                 HighlightScore();
@@ -87,7 +103,7 @@ namespace Quatrene
 
         void Awake() => Instance = this;
 
-        void Start() => Game.NewGame();
+        void Start() => Game.StopPlaying(true);
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
@@ -107,7 +123,8 @@ namespace Quatrene
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 
-- <color=#158>Alt + Q</color>\t: start new game
+- <color=#158>Alt + Q</color>\t: quit current game
+- <color=#158>N</color>\t\t\t: start new game
 - <color=#158>Ctrl + Q</color> or <color=#158>Esc</color>\t: quit game
 ";
 
@@ -166,6 +183,13 @@ namespace Quatrene
             else if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
                 Application.Quit();
             else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
+            {
+                var wasPlaying = Game.Playing;
+                Game.StopPlaying(!Game.Playing);
+                if (wasPlaying)
+                    ShowMessage("game over");
+            }
+            else if (!Game.Playing && Input.GetKeyUp(KeyCode.N))
                 Game.NewGame();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {

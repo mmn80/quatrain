@@ -104,7 +104,8 @@ namespace Quatrene
 
         public static bool TakeTopStonesOnly = false;
 
-        public static bool GameOver = true;
+        public static bool Playing { get; private set; }
+
         public static bool MadeQuatreneThisTurn = false;
 
         public static Player Player1 = new Player()
@@ -127,15 +128,39 @@ namespace Quatrene
             private set
             {
                 _CurrentPlayer = value;
-                MainControl.Instance.CurrentPlayerChanged();
+                MainControl.Instance.UpdatePlayers();
             }
         }
 
         public static StoneType LastQuatreneType { get; private set; }
 
+        public static void StopPlaying(bool loadAllStones = false)
+        {
+            Playing = false;
+
+            MainControl.Instance.UpdatePlayers(!loadAllStones);
+            MainControl.Instance.UpdateScore(!loadAllStones);
+            MainControl.HideMessage();
+
+            if (stones == null)
+                stones = new Stone[4, 4, 4];
+            if (loadAllStones)
+            {
+                foreach (var s in AllStones().ToArray())
+                    Stone.DestroyStone(s);
+                for (int x = 0; x < 4; x++)
+                    for (int y = 0; y < 4; y++)
+                        for (int z = 0; z < 4; z++)
+                            stones[x, y, z] = Stone.MakeStone(x, y, z,
+                                x < 2 ? StoneType.White : StoneType.Black,
+                                true, false);
+                MainControl.ShowMessage("press <color=#158>N</color> to start new game");
+            }
+        }
+
         public static void NewGame()
         {
-            GameOver = false;
+            Playing = true;
 
             Player1.Stones = 32;
             Player1.StonesWon = 0;
@@ -166,15 +191,15 @@ namespace Quatrene
             CurrentPlayer = CurrentPlayer == Player1 ? Player2 : Player1;
             if (Player1.Stones == 0 && Player2.Stones == 0)
             {
-                GameOver = true;
+                StopPlaying();
+
                 Player winner = null;
                 if (Player1.StonesWon > Player2.StonesWon)
                     winner = Player1;
                 else if (Player2.StonesWon > Player1.StonesWon)
                     winner = Player2;
-                MainControl.ShowMessage(
-                    $"game over\nwinner is {winner?.Name ?? "nobody"}\n" +
-                    "alt + q for new game");
+                MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
+                    (winner?.Name ?? "nobody") +"</color>\n");
                 MainControl.Instance.HighlightScore(5, winner);
             }
             return CurrentPlayer;
@@ -188,7 +213,7 @@ namespace Quatrene
 
             if (CurrentPlayer.Stones <= 0)
             {
-                MainControl.ShowError($"No more stone for you!");
+                MainControl.ShowError($"no more stone for you");
                 return false;
             }
 
@@ -198,7 +223,7 @@ namespace Quatrene
                 MainControl.ShowError($"Stack [{x},{y}] is full.");
                 return false;
             }
-            stones[x, y, z] = Stone.MakeStone(x, y, z);
+            stones[x, y, z] = Stone.MakeStone(x, y, z, CurrentPlayer.StoneType);
 
             CurrentPlayer.Stones--;
             MainControl.Instance.UpdateScore();

@@ -11,14 +11,19 @@ namespace Quatrene
         public static Vector3 GetStonePos(int x, int y, int h) =>
             new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
-        public static Stone MakeStone(int x, int y, int z)
+        public static Stone MakeStone(int x, int y, int z, StoneType type,
+            bool animation = false, bool sound = true)
         {
-            var prefab = Game.CurrentPlayer.StoneType == StoneType.White ?
-                MainControl.Instance.WhiteStonePrefab : MainControl.Instance.BlackStonePrefab;
-            var go = GameObject.Instantiate(prefab, Stone.GetStonePos(x, y, z),
-                Quaternion.identity, MainControl.Instance.transform);
+            var prefab = type == StoneType.White ?
+                MainControl.Instance.WhiteStonePrefab :
+                MainControl.Instance.BlackStonePrefab;
+            var pos = Stone.GetStonePos(x, y, z);
+            if (animation)
+                pos.y += Stone.StoneHeight * 40  + pos.y * Random.Range(0f, 1f);
+            var go = GameObject.Instantiate(prefab,
+                pos, Quaternion.identity, MainControl.Instance.transform);
             var sc = go.GetComponentInChildren<Stone>();
-            sc.Init(x, y, z);
+            sc.Init(x, y, z, animation, sound);
             return sc;
         }
 
@@ -42,7 +47,7 @@ namespace Quatrene
         float normalRotationSpeed;
         bool normalRotationDir;
 
-        public void Init(int x, int y, int z)
+        public void Init(int x, int y, int z, bool animation, bool sound)
         {
             this.PosX = x;
             this.PosY = y;
@@ -51,7 +56,14 @@ namespace Quatrene
             normalRotationSpeed = Random.Range(0, RotationSpeed / 10);
             normalRotationDir = Random.Range(0, 2) == 0;
 
-            PlayPlaceSound();
+            if (sound)
+                PlayPlaceSound();
+            if (animation)
+            {
+                fallToY = GetStonePos(PosX, PosY, PosZ).y;
+                falling = true;
+                fallSpeed = 10;
+            }
         }
 
         public void PlayPlaceSound()
@@ -74,7 +86,7 @@ namespace Quatrene
 
         bool falling;
         float fallToY;
-        const float fallSpeed = 2;
+        float fallSpeed = 2;
 
         public void FallOneSlot()
         {
@@ -107,7 +119,8 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (mouseIsOver && Game.MadeQuatreneThisTurn && Input.GetMouseButtonDown(0))
+            if (mouseIsOver && Game.Playing && Game.MadeQuatreneThisTurn &&
+                Input.GetMouseButtonDown(0))
             {
                 if (Game.LastQuatreneType == StoneType)
                     ShowError("can't take your own stone");
