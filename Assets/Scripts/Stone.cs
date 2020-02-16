@@ -54,8 +54,17 @@ namespace Quatrene
             PlayPlaceSound();
         }
 
-        public void PlayPlaceSound() => GetComponents<AudioSource>()[0].Play();
-        public void PlayErrorSound() => GetComponents<AudioSource>()[1].Play();
+        public void PlayPlaceSound()
+        {
+            if (!MainControl.EffectsMuted)
+                GetComponents<AudioSource>()[0].Play();
+        }
+
+        public void PlayErrorSound()
+        {
+            if (!MainControl.EffectsMuted)
+                GetComponents<AudioSource>()[1].Play();
+        }
 
         void ShowError(string message)
         {
@@ -108,7 +117,8 @@ namespace Quatrene
                     ShowError("only top stones can be taken in classic mode");
                 else
                 {
-                    AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
+                    if (!MainControl.EffectsMuted)
+                        AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
                     Game.RemoveStone(PosX, PosY, PosZ);
                 }
             }

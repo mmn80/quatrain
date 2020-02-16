@@ -25,7 +25,7 @@ namespace Quatrene
             selected = true;
             if (ownRenderer)
                 ownRenderer.material = highlightMaterial;
-            if (ownSound)
+            if (ownSound && !MainControl.EffectsMuted)
                 ownSound.Play();
         }
 

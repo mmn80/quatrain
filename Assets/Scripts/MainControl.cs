@@ -98,15 +98,17 @@ namespace Quatrene
 - <color=#158>=</color> and <color=#158>-</color>\t: zoom camera
 
 - <color=#158>1</color> and <color=#158>2</color>\t: rename player 1 & 2
-- <color=#158>3</color>\t: switch between classic & neo game rules
-- <color=#158>4</color>\t: switch camera between orthographic & perspective
-- <color=#158>5</color>\t: switch slow rotation of stones
+- <color=#158>3</color>\t: classic game rules
+- <color=#158>4</color>\t: orthographic camera mode
+- <color=#158>5</color>\t: stop slow rotation of stones
+- <color=#158>6</color>\t: mute music
+- <color=#158>7</color>\t: mute effects
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 
 - <color=#158>Alt + Q</color>\t: start new game
-- <color=#158>Ctrl + Q</color>\t: quit game
+- <color=#158>Ctrl + Q</color> or <color=#158>Esc</color>\t: quit game
 ";
 
         const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
@@ -149,7 +151,17 @@ namespace Quatrene
                 txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
             }
 
-            if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (IsInputOn())
+                {
+                    UserInput.gameObject.SetActive(false);
+                    HideMessage();
+                }
+                else
+                    Application.Quit();
+            }
+            else if (Input.GetKeyDown(KeyCode.Q) && Input.GetKey(KeyCode.LeftControl))
                 Application.Quit();
             else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
                 Game.NewGame();
@@ -180,6 +192,13 @@ namespace Quatrene
             }
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha5))
                 Stone.RotateRandomly = !Stone.RotateRandomly;
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha6))
+            {
+                var m = GetComponent<AudioSource>();
+                m.volume = m.volume > 0.5f ? 0 : 1;
+            }
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha7))
+                EffectsMuted = !EffectsMuted;
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
                 Game.state.Dump();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))
@@ -191,6 +210,8 @@ namespace Quatrene
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }
+
+        public static bool EffectsMuted = false;
 
         void StartRename()
         {
