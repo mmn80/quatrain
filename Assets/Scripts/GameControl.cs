@@ -173,6 +173,7 @@ namespace Quatrene
                 else if (Player2.StonesWon > Player1.StonesWon)
                     winner = Player2.Name;
                 MainControl.ShowMessage($"game over\nwinner is {winner}\nalt + q for new game");
+                MainControl.Instance.HighlightScore(5);
             }
             return CurrentPlayer;
         }

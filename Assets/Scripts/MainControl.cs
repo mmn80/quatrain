@@ -61,10 +61,14 @@ namespace Quatrene
             Player2Score.text = new System.String('○', Game.Player2.StonesWon);
 
             if (highlight && highlightScore <= 0)
-            {
-                highlightScore = 1;
-                highlightPlayer = Game.CurrentPlayer;
-            }
+                HighlightScore();
+        }
+
+        public void HighlightScore(float time = 1)
+        {
+            highlightSpeed = 1 / time;
+            highlightScore = 1;
+            highlightPlayer = Game.CurrentPlayer;
         }
 
         string MakeRows(char c, int no)
@@ -126,8 +130,7 @@ namespace Quatrene
     <size=14>https://freesound.org/people/Autistic%20Lucario/sounds/142608/</size>
 ";
 
-        const float scoreSpeed = 1;
-
+        float highlightSpeed = 1;
         float highlightScore = 0;
         Player highlightPlayer;
 
@@ -140,7 +143,7 @@ namespace Quatrene
         {
             if (highlightScore > 0)
             {
-                highlightScore = Mathf.Max(0, highlightScore - Time.deltaTime);
+                highlightScore = Mathf.Max(0, highlightScore - highlightSpeed * Time.deltaTime);
                 var txt = highlightPlayer == Game.Player1 ?
                     Player1Score : Player2Score;
                 txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
