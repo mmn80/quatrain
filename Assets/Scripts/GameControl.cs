@@ -202,7 +202,7 @@ namespace Quatrene
                 else if (Player2.StonesWon > Player1.StonesWon)
                     winner = Player2;
 
-                StopPlaying(winner != null);
+                StopPlaying(false, winner != null);
 
                 MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
                     (winner?.Name ?? "nobody") +"</color>\n");
@@ -219,7 +219,8 @@ namespace Quatrene
 
             if (CurrentPlayer.Stones <= 0)
             {
-                MainControl.ShowError($"no more stone for you");
+                MainControl.ShowError("no more free stones, next");
+                FinishTurn();
                 return false;
             }
 
@@ -492,7 +493,8 @@ namespace Quatrene
                     {
                         MainControl.ShowMessage($"....QUATRENE....\nno {toTake} stone on board, taking a free one");
                         other.Stones--;
-                        MainControl.Instance.UpdateScore();
+                        CurrentPlayer.StonesWon++;
+                        MainControl.Instance.UpdateScore(true);
                     }
                     else
                         MainControl.ShowMessage($"....QUATRENE....\nno {toTake} stone to take, next");
