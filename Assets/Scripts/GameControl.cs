@@ -438,7 +438,15 @@ namespace Quatrene
                 if (!foundRemovableStone)
                 {
                     MadeQuatreneThisTurn = false;
-                    MainControl.ShowMessage($"....QUATRENE....\nbut no free {toTake} stone to take, next");
+                    var other = CurrentPlayer == Player1 ? Player2 : Player1;
+                    if (other.Stones > 0)
+                    {
+                        MainControl.ShowMessage($"....QUATRENE....\nno {toTake} stone on board, taking a free one");
+                        other.Stones--;
+                        MainControl.Instance.UpdateScore();
+                    }
+                    else
+                        MainControl.ShowMessage($"....QUATRENE....\nno {toTake} stone to take, next");
                 }
             }
             if (MadeQuatreneThisTurn)
