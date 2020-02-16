@@ -148,8 +148,10 @@ namespace Quatrene
     <size=14>https://freesound.org/people/Electroviolence/sounds/234553/</size>
 - Autistic Lucario - Error.wav
     <size=14>https://freesound.org/people/Autistic%20Lucario/sounds/142608/</size>
-- Walter_Odington -  Synth Bass » Baz Bass III Short (Nova).aif
+- Walter_Odington - Synth Bass » Baz Bass III Short (Nova).aif
     <size=14>https://freesound.org/people/Walter_Odington/sounds/25955/</size>
+- Kevcio - Amen Break D (200 BPM)
+    <size=14>https://freesound.org/people/Kevcio/sounds/263871/</size>
 ";
 
         float highlightSpeed = 1;
@@ -236,11 +238,19 @@ namespace Quatrene
                 HideInfo();
         }
 
-        public void PlayFinishSound()
+        public void PlayGameOverSound()
         {
             if (EffectsMuted)
                 return;
             var s = GetComponents<AudioSource>()[1];
+            s.Play();
+        }
+
+        public void PlayAmenSound()
+        {
+            if (EffectsMuted)
+                return;
+            var s = GetComponents<AudioSource>()[2];
             s.Play();
         }
 

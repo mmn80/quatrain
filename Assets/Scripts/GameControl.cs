@@ -134,7 +134,8 @@ namespace Quatrene
 
         public static StoneType LastQuatreneType { get; private set; }
 
-        public static void StopPlaying(bool loadAllStones = false)
+        public static void StopPlaying(bool loadAllStones = false,
+            bool won = false)
         {
             Playing = false;
 
@@ -156,8 +157,10 @@ namespace Quatrene
                                 true, false);
                 MainControl.ShowMessage("press <color=#158>N</color> to start new game");
             }
+            else if (won)
+                MainControl.Instance.PlayAmenSound();
             else
-                MainControl.Instance.PlayFinishSound();
+                MainControl.Instance.PlayGameOverSound();
         }
 
         public static void NewGame()
@@ -193,13 +196,14 @@ namespace Quatrene
             CurrentPlayer = CurrentPlayer == Player1 ? Player2 : Player1;
             if (Player1.Stones == 0 && Player2.Stones == 0)
             {
-                StopPlaying();
-
                 Player winner = null;
                 if (Player1.StonesWon > Player2.StonesWon)
                     winner = Player1;
                 else if (Player2.StonesWon > Player1.StonesWon)
                     winner = Player2;
+
+                StopPlaying(winner != null);
+
                 MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
                     (winner?.Name ?? "nobody") +"</color>\n");
                 MainControl.Instance.HighlightScore(5, winner);
