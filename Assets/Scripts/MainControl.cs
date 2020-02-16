@@ -64,11 +64,11 @@ namespace Quatrene
                 HighlightScore();
         }
 
-        public void HighlightScore(float time = 1)
+        public void HighlightScore(float time = 1, Player player = null)
         {
             highlightSpeed = 1 / time;
             highlightScore = 1;
-            highlightPlayer = Game.CurrentPlayer;
+            highlightPlayer = player ?? Game.CurrentPlayer;
         }
 
         string MakeRows(char c, int no)

@@ -167,13 +167,15 @@ namespace Quatrene
             if (Player1.Stones == 0 && Player2.Stones == 0)
             {
                 GameOver = true;
-                var winner = "nobody";
+                Player winner = null;
                 if (Player1.StonesWon > Player2.StonesWon)
-                    winner = Player1.Name;
+                    winner = Player1;
                 else if (Player2.StonesWon > Player1.StonesWon)
-                    winner = Player2.Name;
-                MainControl.ShowMessage($"game over\nwinner is {winner}\nalt + q for new game");
-                MainControl.Instance.HighlightScore(5);
+                    winner = Player2;
+                MainControl.ShowMessage(
+                    $"game over\nwinner is {winner?.Name ?? "nobody"}\n" +
+                    "alt + q for new game");
+                MainControl.Instance.HighlightScore(5, winner);
             }
             return CurrentPlayer;
         }
