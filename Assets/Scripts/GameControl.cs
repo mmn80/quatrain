@@ -430,7 +430,9 @@ namespace Quatrene
             {
                 bool foundRemovableStone = false;
                 foreach (var s in AllStones())
-                    if (s.StoneType != LastQuatreneType && !s.Highlighted)
+                    if (s.StoneType != LastQuatreneType && !s.Highlighted &&
+                        (!Game.TakeTopStonesOnly ||
+                            Game.IsTopStone(s.PosX, s.PosY, s.PosZ)))
                     {
                         foundRemovableStone = true;
                         break;
