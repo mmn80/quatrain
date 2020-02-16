@@ -194,7 +194,9 @@ namespace Quatrene
             ShowMessage($"new name for: {renamingPlayer}\npress ENTER when ready");
             UserInput.text = "";
             UserInput.gameObject.SetActive(true);
-            UserInput.Select();
+            var evs = UnityEngine.EventSystems.EventSystem.current;
+            evs.SetSelectedGameObject(UserInput.gameObject, null);
+            UserInput.OnPointerClick(new UnityEngine.EventSystems.PointerEventData(evs));
         }
     }
 }
