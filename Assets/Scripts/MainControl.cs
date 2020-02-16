@@ -113,10 +113,12 @@ namespace Quatrene
 
         const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
 
-<color=#158>Textures</color>
+<color=#158>Visuals</color>
 
 - FireBolt Studios - Sci-Fi Texture Pack 1
     <size=14>https://assetstore.unity.com/packages/2d/textures-materials/sci-fi-texture-pack-1-23301</size>
+- NimaVisual - Autobus Bold Font
+    <size=14>https://www.fontspace.com/nimavisual/autobus-bold</size>
 
 <color=#158>Sounds</color>
 
