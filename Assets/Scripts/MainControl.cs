@@ -97,10 +97,10 @@ namespace Quatrene
 - <color=#158>S</color> or <color=#158>↓</color>\t: rotate camera down
 - <color=#158>=</color> and <color=#158>-</color>\t: zoom camera
 
-- <color=#158>1</color>\t\t: switch camera between orthographic & perspective
-- <color=#158>2</color>\t: switch slow rotation of stones
+- <color=#158>1</color> and <color=#158>2</color>\t: rename player 1 & 2
 - <color=#158>3</color>\t: switch between classic & neo game rules
-- <color=#158>4</color> and <color=#158>5</color>\t: rename player 1 & 2
+- <color=#158>4</color>\t: switch camera between orthographic & perspective
+- <color=#158>5</color>\t: switch slow rotation of stones
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
@@ -153,21 +153,12 @@ namespace Quatrene
                 Application.Quit();
             else if (Input.GetKeyUp(KeyCode.Q) && Input.GetKey(KeyCode.LeftAlt))
                 Game.NewGame();
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha2))
-                Stone.RotateRandomly = !Stone.RotateRandomly;
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha3))
-            {
-                Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
-                ShowMessage(Game.TakeTopStonesOnly ?
-                    "classic mode activated\ncan only take top stones" :
-                    "neo mode activated\ncan take stones from bellow");
-            }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha4))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = Game.Player1;
                 StartRename();
             }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha5))
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha2))
             {
                 renamingPlayer = Game.Player2;
                 StartRename();
@@ -175,11 +166,20 @@ namespace Quatrene
             else if (IsInputOn() && Input.GetKeyUp(KeyCode.Return))
             {
                 renamingPlayer.Name = UserInput.text;
-                (renamingPlayer == Game.Player1 ? Player1 : Player2).text = 
+                (renamingPlayer == Game.Player1 ? Player1 : Player2).text =
                     renamingPlayer.Name;
                 UserInput.gameObject.SetActive(false);
                 HideMessage();
             }
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha3))
+            {
+                Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
+                ShowMessage(Game.TakeTopStonesOnly ?
+                    "classic mode activated\ncan only take top stones" :
+                    "neo mode activated\ncan take stones from bellow");
+            }
+            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha5))
+                Stone.RotateRandomly = !Stone.RotateRandomly;
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
                 Game.state.Dump();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))

@@ -72,7 +72,7 @@ namespace Quatrene
                 }
             }
 
-            if (Input.GetKeyUp(KeyCode.Alpha1))
+            if (Input.GetKeyUp(KeyCode.Alpha4))
             {
                 Orthographic = !Orthographic;
                 if (Orthographic)
