@@ -119,14 +119,14 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (mouseIsOver && Game.Playing && Game.MadeQuatreneThisTurn &&
+            if (mouseIsOver && Game.Playing && Game.MadeQuatrainThisTurn &&
                 Input.GetMouseButtonDown(0))
             {
-                if (Game.LastQuatreneType == StoneType)
+                if (Game.LastQuatrainType == StoneType)
                     ShowError("can't take your own stone");
                 else if (Highlighted)
-                    ShowError("can't take from quatrenes");
-                else if (Game.TakeTopStonesOnly && !Game.IsTopStone(PosX, PosY, PosZ))
+                    ShowError("can't take from quatrains");
+                else if (Game.TakeTopStonesOnly && !Game.state.IsTopStone(PosX, PosY, PosZ))
                     ShowError("only top stones can be taken in classic mode");
                 else
                 {

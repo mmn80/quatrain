@@ -178,7 +178,7 @@ namespace Quatrene
                     Game.StopPlaying(false);
                     ShowMessage("game over");
                 }
-                else if (!Game.IsTableAllLoaded())
+                else if (!Game.StonesPacked)
                     Game.StopPlaying(true);
                 else
                     Application.Quit();
@@ -222,7 +222,8 @@ namespace Quatrene
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
                 Game.state.Dump();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))
-                Game.ShowQuatrenesDebugInfo = !Game.ShowQuatrenesDebugInfo;
+                AI.GameState.ShowQuatrainsDebugInfo =
+                    !AI.GameState.ShowQuatrainsDebugInfo;
             else if (Input.GetKeyUp(KeyCode.F1))
                 ShowInfo(helpInfo);
             else if (Input.GetKeyUp(KeyCode.F2))
