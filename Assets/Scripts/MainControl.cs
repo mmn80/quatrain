@@ -103,7 +103,7 @@ namespace Quatrene
 
         void Awake() => Instance = this;
 
-        void Start() => Game.StopPlaying(true);
+        void Start() => Game.GameOver(true);
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
@@ -175,11 +175,11 @@ namespace Quatrene
                 }
                 else if (Game.Playing)
                 {
-                    Game.StopPlaying(false);
+                    Game.GameOver(false);
                     ShowMessage("game over");
                 }
                 else if (!Game.StonesPacked)
-                    Game.StopPlaying(true);
+                    Game.GameOver(true);
                 else
                     Application.Quit();
             }

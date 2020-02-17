@@ -62,23 +62,20 @@ namespace Quatrene
             s.Highlighted = true;
         }
 
-        static void HighlightStones(Quatrain q)
-        {
-            HighlightStone(q.P0);
-            HighlightStone(q.P1);
-            HighlightStone(q.P2);
-            HighlightStone(q.P3);
-        }
-
         static void HighlightStones()
         {
             foreach (var q in state.quatrains.Where(q => q.IsFull()))
-                HighlightStones(q);
+            {
+                HighlightStone(q.P0);
+                HighlightStone(q.P1);
+                HighlightStone(q.P2);
+                HighlightStone(q.P3);
+            }
         }
 
         public static bool StonesPacked = false;
 
-        public static void StopPlaying(bool packStones = false,
+        public static void GameOver(bool packStones = false,
             bool won = false)
         {
             Playing = false;
@@ -149,7 +146,7 @@ namespace Quatrene
                 else if (Player2.StonesWon > Player1.StonesWon)
                     winner = Player2;
 
-                StopPlaying(false, winner != null);
+                GameOver(false, winner != null);
 
                 MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
                     (winner?.Name ?? "nobody") +"</color>\n");
@@ -182,6 +179,7 @@ namespace Quatrene
 
             state.RegenerateQuatrains();
             HighlightStones();
+
             if (!AnyQuatrainsMadeThisTurn(x, y, z))
                 FinishTurn();
 
@@ -212,12 +210,15 @@ namespace Quatrene
                 stone.FallOneSlot();
             }
 
-            HighlightAllStones(false);
+            foreach (var s in AllStones())
+                s.Highlighted = false;
+
             CurrentPlayer.StonesWon += 1;
             MainControl.Instance.UpdateScore(true);
 
             state.RegenerateQuatrains();
             HighlightStones();
+
             if (!AnyQuatrainsMadeThisTurn(x, y, z, true))
                 FinishTurn();
 
@@ -238,31 +239,16 @@ namespace Quatrene
                     }
         }
 
-        public static void HighlightAllStones(bool highlight)
-        {
-            foreach (var s in AllStones())
-                s.Highlighted = highlight;
-        }
-
-        static bool AnyQuatrainsMadeThisTurn(int x, int y, int z, bool z_greater = false)
+        static bool AnyQuatrainsMadeThisTurn(int x, int y, int z,
+            bool allowAbove = false)
         {
             MadeQuatrainThisTurn = false;
             LastQuatrainType = CurrentPlayer.StoneType;
-            foreach (var q in state.quatrains)
+            StoneType stoneTy;
+            if (state.AnyQuatrainAt(x, y, z, allowAbove, out stoneTy))
             {
-                StoneType stoneTy;
-                if (q.IsFull(out stoneTy))
-                {
-                    if ((q.P0.X == x && q.P0.Y == y && (q.P0.Z == z || (z_greater && q.P0.Z > z))) ||
-                        (q.P1.X == x && q.P1.Y == y && (q.P1.Z == z || (z_greater && q.P1.Z > z))) ||
-                        (q.P2.X == x && q.P2.Y == y && (q.P2.Z == z || (z_greater && q.P2.Z > z))) ||
-                        (q.P3.X == x && q.P3.Y == y && (q.P3.Z == z || (z_greater && q.P3.Z > z))))
-                    {
-                        MadeQuatrainThisTurn = true;
-                        LastQuatrainType = stoneTy;
-                        break;
-                    }
-                }
+                MadeQuatrainThisTurn = true;
+                LastQuatrainType = stoneTy;
             }
             var toTake = LastQuatrainType == StoneType.White ? "black" : "white";
             if (MadeQuatrainThisTurn)

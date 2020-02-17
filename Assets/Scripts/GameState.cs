@@ -199,6 +199,28 @@ namespace Quatrene.AI
                 MainControl.ShowMessage($"quatrains evaluated in {ms} ms ({ts} ticks)");
             }
         }
+
+        public bool AnyQuatrainAt(int x, int y, int z, bool allowAbove,
+            out StoneType quatrainType)
+        {
+            quatrainType = StoneType.White;
+            foreach (var q in quatrains)
+            {
+                StoneType stoneTy;
+                if (q.IsFull(out stoneTy))
+                {
+                    if ((q.P0.X == x && q.P0.Y == y && (q.P0.Z == z || (allowAbove && q.P0.Z > z))) ||
+                        (q.P1.X == x && q.P1.Y == y && (q.P1.Z == z || (allowAbove && q.P1.Z > z))) ||
+                        (q.P2.X == x && q.P2.Y == y && (q.P2.Z == z || (allowAbove && q.P2.Z > z))) ||
+                        (q.P3.X == x && q.P3.Y == y && (q.P3.Z == z || (allowAbove && q.P3.Z > z))))
+                    {
+                        quatrainType = stoneTy;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     public struct Place
