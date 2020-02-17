@@ -107,18 +107,16 @@ namespace Quatrene
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
-- <color=#158>A</color> or <color=#158>←</color>\t: rotate camera left
-- <color=#158>D</color> or <color=#158>→</color>\t: rotate camera right
-- <color=#158>W</color> or <color=#158>↑</color>\t: rotate camera up
-- <color=#158>S</color> or <color=#158>↓</color>\t: rotate camera down
-- <color=#158>=</color> and <color=#158>-</color>\t: zoom camera
+- <color=#158>WSAD</color> or <color=#158>↑↓←→</color>: rotate camera
+- <color=#158>=-</color>\t: zoom camera
+- <color=#158>Alt+Enter</color>: toggle full screen
 
-- <color=#158>1</color> and <color=#158>2</color>\t: rename player 1 & 2
-- <color=#158>3</color>\t: classic game rules
-- <color=#158>4</color>\t: orthographic camera mode
-- <color=#158>5</color>\t: stop slow rotation of stones
-- <color=#158>6</color>\t: mute music
-- <color=#158>7</color>\t: mute effects
+- <color=#158>12</color>\t: rename player 1 & 2
+- <color=#158>3</color>\t: toggle classic game rules
+- <color=#158>4</color>\t: toggle orthographic camera mode
+- <color=#158>5</color>\t: toggle slow rotation of stones
+- <color=#158>6</color>\t: (un)mute music
+- <color=#158>7</color>\t: (un)mute effects
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
@@ -129,15 +127,10 @@ namespace Quatrene
 
         const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
 
-<color=#158>Visuals</color>
-
 - FireBolt Studios - Sci-Fi Texture Pack 1
     <size=14>https://assetstore.unity.com/packages/2d/textures-materials/sci-fi-texture-pack-1-23301</size>
 - NimaVisual - Autobus Bold Font
     <size=14>https://www.fontspace.com/nimavisual/autobus-bold</size>
-
-<color=#158>Sounds</color>
-
 - Erokia - Amberque
     <size=14>https://freesound.org/people/Erokia/sounds/460578/</size>
 - NenadSimic - Mixed Samples » Menu Selection Click
