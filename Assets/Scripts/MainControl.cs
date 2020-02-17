@@ -47,10 +47,11 @@ namespace Quatrene
         Color selectedPlayer = Color.green;
         Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
 
-        public void UpdatePlayers(bool gameEnd = false)
+        public void UpdateUI(bool highlight = false)
         {
-            if (Game.Playing || gameEnd)
+            if (Game.Mode != GameMode.Lobby)
             {
+                var gameEnd = Game.Mode == GameMode.GameOver;
                 Player1.color = !gameEnd && Game.CurrentPlayer == Game.Player1 ?
                     selectedPlayer : origPlayer;
                 Player2.color = !gameEnd && Game.CurrentPlayer == Game.Player2 ?
@@ -66,17 +67,14 @@ namespace Quatrene
                 Player1.gameObject.SetActive(false);
                 Player2.gameObject.SetActive(false);
             }
-        }
 
-        public void UpdateScore(bool highlight = false)
-        {
-            var g = Game.Playing || highlight;
+            var g = Game.IsPlaying() || highlight;
             Player1Stones.text = MakeRows('○', g ? Game.Player1.Stones : 0);
             Player2Stones.text = MakeRows('●', g ? Game.Player2.Stones : 0);
             Player1Score.text = new System.String('●', g ? Game.Player1.StonesWon : 0);
             Player2Score.text = new System.String('○', g ? Game.Player2.StonesWon : 0);
 
-            if (highlight && highlightScore <= 0)
+            if (highlight && this.highlightScore <= 0)
                 HighlightScore();
         }
 
@@ -103,7 +101,7 @@ namespace Quatrene
 
         void Awake() => Instance = this;
 
-        void Start() => Game.GameOver(true);
+        void Start() => Game.GoToLobby();
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
@@ -173,17 +171,18 @@ namespace Quatrene
                     UserInput.gameObject.SetActive(false);
                     HideMessage();
                 }
-                else if (Game.Playing)
-                {
-                    Game.GameOver(false);
-                    ShowMessage("game over");
-                }
-                else if (!Game.StonesPacked)
-                    Game.GameOver(true);
-                else
+                else if (Game.Mode == GameMode.Lobby)
                     Application.Quit();
+                else if (Game.Mode == GameMode.GameOver)
+                    Game.GoToLobby();
+                else
+                {
+                    Game.GameOver();
+                    ShowMessage("game over");
+                    PlayGameOverSound();
+                }
             }
-            else if (!Game.Playing && Input.GetKeyUp(KeyCode.N))
+            else if (!Game.IsPlaying() && Input.GetKeyUp(KeyCode.N))
                 Game.NewGame();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {

@@ -119,10 +119,10 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (mouseIsOver && Game.Playing && Game.MadeQuatrainThisTurn &&
+            if (mouseIsOver && Game.Mode == GameMode.Remove &&
                 Input.GetMouseButtonDown(0))
             {
-                if (Game.LastQuatrainType == StoneType)
+                if (Game.RemovalType == StoneType)
                     ShowError("can't take your own stone");
                 else if (Highlighted)
                     ShowError("can't take from quatrains");
