@@ -71,6 +71,7 @@ namespace Quatrene
         {
             state.GameMode = GameMode.Add;
             var p = state.SwitchPlayer();
+            MainControl.Instance.UpdateUI();
 
             if (state.GetStones(0) == 0 && state.GetStones(1) == 0)
             {
