@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Quatrene.AI;
 
 namespace Quatrene
 {
@@ -119,10 +120,10 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (mouseIsOver && Game.Mode == GameMode.Remove &&
+            if (mouseIsOver && Game.state.GameMode == GameMode.Remove &&
                 Input.GetMouseButtonDown(0))
             {
-                if (Game.RemovalType == StoneType)
+                if (Game.state.RemovalType == StoneType)
                     ShowError("can't take your own stone");
                 else if (Highlighted)
                     ShowError("can't take from quatrains");

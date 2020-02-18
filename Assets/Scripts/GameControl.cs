@@ -4,58 +4,26 @@ using Quatrene.AI;
 
 namespace Quatrene
 {
-    public class Player
-    {
-        public string Name;
-        public StoneType StoneType;
-        public int Stones;
-        public int StonesWon;
-
-        public override string ToString() => Name;
-    }
-
-    public enum StoneType { White = 0, Black = 1 }
-
-    public enum GameMode { Lobby, Add, Remove, GameOver }
-
     public static class Game
     {
         public static GameState state = new GameState();
 
         static Stone[,,] stones = new Stone[4, 4, 4];
 
+        public static string[] PlayerNames = new string[]
+        {
+            "Player 1", "Player 2"
+        };
+
         public static bool TakeTopStonesOnly = false;
 
-        public static GameMode Mode { get; private set; }
-
         public static bool IsPlaying() =>
-            Mode != GameMode.Lobby && Mode != GameMode.GameOver;
-
-        public static StoneType RemovalType { get; private set; }
-        public static Player CurrentPlayer { get; private set; }
-
-        public static Player Player1 = new Player()
-        {
-            Name = "Player 1",
-            StoneType = StoneType.White,
-            Stones = 32
-        };
-        public static Player Player2 = new Player()
-        {
-            Name = "Player 2",
-            StoneType = StoneType.Black,
-            Stones = 32
-        };
-
-        public static void SetCurrentPlayer(Player player)
-        {
-            CurrentPlayer = player;
-            MainControl.Instance.UpdateUI();
-        }
+            state.GameMode != GameMode.Lobby &&
+            state.GameMode != GameMode.GameOver;
 
         public static void GameOver()
         {
-            Mode = GameMode.GameOver;
+            state.GameMode = GameMode.GameOver;
 
             MainControl.Instance.UpdateUI(true);
             MainControl.HideMessage();
@@ -63,7 +31,7 @@ namespace Quatrene
 
         public static void GoToLobby()
         {
-            Mode = GameMode.Lobby;
+            state.GameMode = GameMode.Lobby;
 
             foreach (var s in AllStones().ToArray())
                 Stone.DestroyStone(s);
@@ -80,21 +48,14 @@ namespace Quatrene
 
         public static void NewGame()
         {
-            Mode = GameMode.Add;
-
-            Player1.Stones = 32;
-            Player1.StonesWon = 0;
-            Player2.Stones = 32;
-            Player2.StonesWon = 0;
-            CurrentPlayer = Player1;
+            state = new GameState();
+            state.GameMode = GameMode.Add;
 
             MainControl.Instance.UpdateUI();
             MainControl.HideMessage();
 
             foreach (var s in AllStones().ToArray())
                 Stone.DestroyStone(s);
-
-            state = new GameState();
 
             if (stones == null)
                 stones = new Stone[4, 4, 4];
@@ -106,34 +67,35 @@ namespace Quatrene
             state.RegenerateQuatrains();
         }
 
-        public static Player NextTurn()
+        public static byte NextTurn()
         {
-            Mode = GameMode.Add;
-            SetCurrentPlayer(CurrentPlayer == Player1 ? Player2 : Player1);
+            state.GameMode = GameMode.Add;
+            var p = state.SwitchPlayer();
 
-            if (Player1.Stones == 0 && Player2.Stones == 0)
+            if (state.GetStones(0) == 0 && state.GetStones(1) == 0)
             {
-                Player winner = null;
-                if (Player1.StonesWon > Player2.StonesWon)
-                    winner = Player1;
-                else if (Player2.StonesWon > Player1.StonesWon)
-                    winner = Player2;
+                byte winner = 2;
+                if (state.GetScore(0) > state.GetScore(1))
+                    winner = 0;
+                else if (state.GetScore(1) > state.GetScore(0))
+                    winner = 1;
 
                 GameOver();
 
                 MainControl.Instance.PlayAmenSound();
                 MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
-                    (winner?.Name ?? "nobody") +"</color>\n");
+                    (winner == 2 ? "nobody" : PlayerNames[winner]) +"</color>\n");
                 MainControl.Instance.HighlightScore(5, winner);
             }
-            return CurrentPlayer;
+            return p;
         }
 
         public static bool AddStone(int x, int y)
         {
             MainControl.HideMessage();
 
-            if (CurrentPlayer.Stones <= 0)
+            var p = state.GetPlayer();
+            if (state.GetStones(p) <= 0)
             {
                 MainControl.ShowError("no more free stones, next");
                 NextTurn();
@@ -141,14 +103,13 @@ namespace Quatrene
             }
 
             byte z;
-            if (!state.AddStone((byte)x, (byte)y, CurrentPlayer.StoneType, out z))
+            if (!state.AddStone((byte)x, (byte)y, out z))
             {
                 MainControl.ShowError($"Stack [{x},{y}] is full.");
                 return false;
             }
-            stones[x, y, z] = Stone.MakeStone(x, y, z, CurrentPlayer.StoneType);
+            stones[x, y, z] = Stone.MakeStone(x, y, z, (StoneType)p);
 
-            CurrentPlayer.Stones--;
             MainControl.Instance.UpdateUI();
 
             state.RegenerateQuatrains();
@@ -186,7 +147,7 @@ namespace Quatrene
             foreach (var s in AllStones())
                 s.Highlighted = false;
 
-            CurrentPlayer.StonesWon += 1;
+            state.Scoreed();
             MainControl.Instance.UpdateUI(true);
 
             state.RegenerateQuatrains();
@@ -206,13 +167,13 @@ namespace Quatrene
                 NextTurn();
                 return;
             }
-            RemovalType = ty;
-            var toTake = RemovalType == StoneType.White ? "black" : "white";
+            state.RemovalType = ty;
+            var toTake = state.RemovalType == StoneType.White ? "black" : "white";
 
-            Mode = GameMode.Remove;
+            state.GameMode = GameMode.Remove;
 
             foreach (var s in AllStones())
-                if (s.StoneType != RemovalType && !s.Highlighted &&
+                if (s.StoneType != state.RemovalType && !s.Highlighted &&
                     (!Game.TakeTopStonesOnly ||
                         Game.state.IsTopStone(s.PosX, s.PosY, s.PosZ)))
                 {
@@ -220,12 +181,12 @@ namespace Quatrene
                     return;
                 }
 
-            var other = CurrentPlayer == Player1 ? Player2 : Player1;
-            if (other.Stones > 0)
+            var other = (byte)(state.GetPlayer() == 0 ? 1 : 0);
+            if (state.GetStones(other) > 0)
             {
                 MainControl.ShowMessage($"....QUATRAIN....\nno {toTake} stone on board, taking a free one");
-                other.Stones--;
-                CurrentPlayer.StonesWon++;
+                state.TookStone(other);
+                state.Scoreed();
                 MainControl.Instance.UpdateUI(true);
             }
             else

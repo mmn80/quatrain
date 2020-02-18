@@ -5,23 +5,51 @@ using UnityEngine;
 
 namespace Quatrene.AI
 {
+    public enum GameMode { Lobby = 0, Add = 1, Remove = 2, GameOver = 3 }
     public enum Value { None = 0, White = 1, Black = 2 }
+    public enum StoneType { White = 0, Black = 1 }
 
     public sealed class GameState
     {
+        byte game = 0;
+        byte[] stones = new byte[2] { 32, 32 };
+        byte[] score = new byte[2] { 0, 0 };
         UInt64[] board = new UInt64[] { 0, 0, 0, 0 };
 
-        public void Dump()
+        public byte GetStones(byte player) => stones[player];
+        public void TookStone(byte player) => stones[player]--;
+        public byte GetScore(byte player) => score[player];
+        public byte Scoreed() => score[GetPlayer()]++;
+        byte GetMode() => (byte)(game & 0x0F);
+        void SetMode(byte m) => game = (byte)(game & 0xF0 | m);
+        public byte GetPlayer() => (byte)(game >> 6);
+        void SetPlayer(byte p) => game = (byte)(game & 0x3F | (p << 6));
+        byte GetToRemove() => (byte)((game >> 4) & 0x3);
+        void SetToRemove(byte p) => game = (byte)(game & 0xCF | (p << 4));
+
+        public GameMode GameMode
         {
-            MainControl.ShowMessage(String.Format(
-                "#{0:X16}\n#{1:X16}\n#{2:X16}\n#{3:X16}",
-                board[0], board[1], board[2], board[3]));
+            get => (GameMode)GetMode();
+            set => SetMode((byte)value);
+        }
+
+        public StoneType RemovalType
+        {
+            get => (StoneType)GetToRemove();
+            set => SetToRemove((byte)value);
+        }
+
+        public byte SwitchPlayer()
+        {
+            var p = (byte)(GetPlayer() == 0 ? 1 : 0);
+            SetPlayer(p);
+            return p;
         }
 
         public Value GetStoneAt(byte x, byte y, byte z) =>
             (Value)(byte)(((board[z] << (60 - y * 16 - x * 4)) >> 60));
 
-        public void SetStoneAt(byte x, byte y, byte z, Value v)
+        void SetStoneAt(byte x, byte y, byte z, Value v)
         {
             var shift = y * 16 + x * 4;
             var mask = (UInt64)0xF << shift;
@@ -29,17 +57,16 @@ namespace Quatrene.AI
             board[z] = (board[z] & ~mask) | val;
         }
 
-        public void SetStoneAt(byte x, byte y, byte z, StoneType s) =>
-            SetStoneAt(x, y, z, s == StoneType.Black ? Value.Black : Value.White);
-
-        public bool AddStone(byte x, byte y, StoneType s, out byte z)
+        public bool AddStone(byte x, byte y, out byte z)
         {
+            var p = GetPlayer();
             z = 0;
             while (z < 4)
             {
                 if (GetStoneAt(x, y, z) == Value.None)
                 {
-                    SetStoneAt(x, y, z, s);
+                    SetStoneAt(x, y, z, (Value)(p + 1));
+                    stones[p]--;
                     return true;
                 }
                 z++;
@@ -69,6 +96,13 @@ namespace Quatrene.AI
                 return true;
             v = GetStoneAt(x, y, (byte)(z + 1));
             return v == Value.None;
+        }
+
+        public void Dump()
+        {
+            MainControl.ShowMessage(String.Format(
+                "#{0:X16}\n#{1:X16}\n#{2:X16}\n#{3:X16}",
+                board[0], board[1], board[2], board[3]));
         }
 
         public static bool ShowQuatrainsDebugInfo = false;
@@ -244,7 +278,8 @@ namespace Quatrene.AI
         public byte Z { get => z; }
         public byte Stone { get => stone; }
 
-        public override string ToString() => $"({x} {y} {z})";
+        public override string ToString() =>
+            $"({(stone == 0 ? "-" : (stone == 1 ? "w" : "b"))} {x} {y} {z})";
     }
 
     public struct Quatrain
@@ -277,13 +312,9 @@ namespace Quatrene.AI
                 p2.Stone == stone && p3.Stone == stone;
         }
 
-        public bool IsFull()
-        {
-            StoneType stoneType;
-            return IsFull(out stoneType);
-        }
+        public bool IsFull() => p0.Stone != 0 &&
+            p1.Stone == p0.Stone && p2.Stone == p0.Stone && p3.Stone == p0.Stone;
 
-        public override string ToString() =>
-            (p0.Stone == 1 ? "White" : "Black") + $" ({p0} {p1} {p2} {p3})";
+        public override string ToString() => $"({p0} {p1} {p2} {p3})";
     }
 }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Quatrene.AI;
 
 namespace Quatrene
 {
@@ -49,12 +50,12 @@ namespace Quatrene
 
         public void UpdateUI(bool highlight = false)
         {
-            if (Game.Mode != GameMode.Lobby)
+            if (Game.state.GameMode != GameMode.Lobby)
             {
-                var gameEnd = Game.Mode == GameMode.GameOver;
-                Player1.color = !gameEnd && Game.CurrentPlayer == Game.Player1 ?
+                var gameEnd = Game.state.GameMode == GameMode.GameOver;
+                Player1.color = !gameEnd && Game.state.GetPlayer() == 0 ?
                     selectedPlayer : origPlayer;
-                Player2.color = !gameEnd && Game.CurrentPlayer == Game.Player2 ?
+                Player2.color = !gameEnd && Game.state.GetPlayer() == 1 ?
                     selectedPlayer : origPlayer;
                 if (!Player1.gameObject.activeSelf)
                 {
@@ -69,20 +70,20 @@ namespace Quatrene
             }
 
             var g = Game.IsPlaying() || highlight;
-            Player1Stones.text = MakeRows('○', g ? Game.Player1.Stones : 0);
-            Player2Stones.text = MakeRows('●', g ? Game.Player2.Stones : 0);
-            Player1Score.text = new System.String('●', g ? Game.Player1.StonesWon : 0);
-            Player2Score.text = new System.String('○', g ? Game.Player2.StonesWon : 0);
+            Player1Stones.text = MakeRows('○', g ? Game.state.GetStones(0) : 0);
+            Player2Stones.text = MakeRows('●', g ? Game.state.GetStones(1) : 0);
+            Player1Score.text = new System.String('●', g ? Game.state.GetScore(0) : 0);
+            Player2Score.text = new System.String('○', g ? Game.state.GetScore(1) : 0);
 
             if (highlight && this.highlightScore <= 0)
                 HighlightScore();
         }
 
-        public void HighlightScore(float time = 1, Player player = null)
+        public void HighlightScore(float time = 1, byte player = 2)
         {
             highlightSpeed = 1 / time;
             highlightScore = 1;
-            highlightPlayer = player ?? Game.CurrentPlayer;
+            highlightPlayer = player < 2 ? player : Game.state.GetPlayer();
         }
 
         string MakeRows(char c, int no)
@@ -147,20 +148,19 @@ namespace Quatrene
 
         float highlightSpeed = 1;
         float highlightScore = 0;
-        Player highlightPlayer;
+        byte highlightPlayer;
 
         static Color highlightColor = Color.green;
         static Color origColor = new Color(0.4f, 0.4f, 0.4f);
 
-        Player renamingPlayer;
+        byte renamingPlayer;
 
         void Update()
         {
             if (highlightScore > 0)
             {
                 highlightScore = Mathf.Max(0, highlightScore - highlightSpeed * Time.deltaTime);
-                var txt = highlightPlayer == Game.Player1 ?
-                    Player1Score : Player2Score;
+                var txt = highlightPlayer == 0 ? Player1Score : Player2Score;
                 txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
             }
 
@@ -171,9 +171,9 @@ namespace Quatrene
                     UserInput.gameObject.SetActive(false);
                     HideMessage();
                 }
-                else if (Game.Mode == GameMode.Lobby)
+                else if (Game.state.GameMode == GameMode.Lobby)
                     Application.Quit();
-                else if (Game.Mode == GameMode.GameOver)
+                else if (Game.state.GameMode == GameMode.GameOver)
                     Game.GoToLobby();
                 else
                 {
@@ -186,19 +186,19 @@ namespace Quatrene
                 Game.NewGame();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {
-                renamingPlayer = Game.Player1;
+                renamingPlayer = 0;
                 StartRename();
             }
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha2))
             {
-                renamingPlayer = Game.Player2;
+                renamingPlayer = 1;
                 StartRename();
             }
             else if (IsInputOn() && Input.GetKeyUp(KeyCode.Return))
             {
-                renamingPlayer.Name = UserInput.text;
-                (renamingPlayer == Game.Player1 ? Player1 : Player2).text =
-                    renamingPlayer.Name;
+                Game.PlayerNames[renamingPlayer] = UserInput.text;
+                (renamingPlayer == 0 ? Player1 : Player2).text =
+                    UserInput.text;
                 UserInput.gameObject.SetActive(false);
                 HideMessage();
             }
