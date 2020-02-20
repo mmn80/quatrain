@@ -56,8 +56,8 @@ namespace Quatrene
                             x < 2 ? StoneType.White : StoneType.Black,
                             true, false);
 
-            MainControl.ShowMessage("press <color=#158>N</color> to start new game");
-            MainControl.Instance.UpdateUI();
+            ShowMessage("press <color=#158>N</color> to start new game");
+            Instance.UpdateUI();
 
             return true;
         }
@@ -66,8 +66,8 @@ namespace Quatrene
         {
             game.GameMode = GameMode.Add;
 
-            MainControl.Instance.UpdateUI();
-            MainControl.HideMessage();
+            Instance.UpdateUI();
+            HideMessage();
 
             DestroyAllStones();
 
@@ -83,30 +83,30 @@ namespace Quatrene
 
         public static void OnGameOver(bool quit, byte winner)
         {
-            MainControl.Instance.UpdateUI(true);
-            MainControl.HideMessage();
+            Instance.UpdateUI(true);
+            HideMessage();
             if (quit)
             {
-                MainControl.Instance.PlayGameOverSound();
-                MainControl.ShowMessage("game over");
+                Instance.PlayGameOverSound();
+                ShowMessage("game over");
             }
             else
             {
-                MainControl.Instance.PlayAmenSound();
-                MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
+                Instance.PlayAmenSound();
+                ShowMessage("game over\nwinner is <color=#D9471A>" +
                     (winner == 2 ? "nobody" : PlayerNames[winner]) + "</color>\n");
-                MainControl.Instance.HighlightScore(5, winner);
+                Instance.HighlightScore(5, winner);
             }
         }
 
-        public static void OnPlayerSwitch() => MainControl.Instance.UpdateUI();
+        public static void OnPlayerSwitch() => Instance.UpdateUI();
 
         public static void OnAfterAdd(int x, int y, int z)
         {
             stones[x, y, z] = Stone.MakeStone(x, y, z,
                 (StoneType)game.GetPlayer());
 
-            MainControl.Instance.UpdateUI();
+            Instance.UpdateUI();
 
             HighlightStones();
         }
@@ -127,20 +127,20 @@ namespace Quatrene
             }
 
             HighlightStones(true);
-            MainControl.Instance.UpdateUI(true);
+            Instance.UpdateUI(true);
             HighlightStones();
         }
 
         static string ToRemove() => game.ToRemove.ToString().ToLower();
 
         public static void OnTakeAStone() =>
-            MainControl.ShowMessage($"....QUATRAIN....\ntake a {ToRemove()} stone");
+            ShowMessage($"....QUATRAIN....\ntake a {ToRemove()} stone");
 
         public static void OnTakingFreeStone() =>
-            MainControl.ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone on board, taking a free one");
+            ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone on board, taking a free one");
 
         public static void OnNoStoneToTake() =>
-            MainControl.ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone to take, next");
+            ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone to take, next");
 
         static void DestroyAllStones()
         {
@@ -363,6 +363,8 @@ namespace Quatrene
                 ShowInfo(helpInfo);
             else if (Input.GetKeyUp(KeyCode.F2))
                 ShowInfo(creditsInfo);
+            else if (Input.GetKeyUp(KeyCode.F5))
+                game.RandomMove();
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }

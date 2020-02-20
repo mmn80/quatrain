@@ -209,6 +209,20 @@ namespace Quatrene
             return true;
         }
 
+        public bool RandomMove()
+        {
+            if (GameMode == GameMode.Add)
+                return DoAddStone(
+                    UnityEngine.Random.Range(0, 4),
+                    UnityEngine.Random.Range(0, 4));
+            if (GameMode == GameMode.Remove)
+                return DoRemoveStone(
+                    UnityEngine.Random.Range(0, 4),
+                    UnityEngine.Random.Range(0, 4),
+                    UnityEngine.Random.Range(0, 4));
+            return false;
+        }
+
         bool IsTopStone(int x, int y, int z) =>
             IsTopStone((byte)x, (byte)y, (byte)z);
 
