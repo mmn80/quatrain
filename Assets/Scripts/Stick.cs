@@ -39,7 +39,7 @@ namespace Quatrene
         void Update()
         {
             if (selected && Input.GetMouseButtonDown(0))
-                Game.state.DoAddStone(PosX, PosY);
+                MainControl.game.DoAddStone(PosX, PosY);
         }
     }
 }

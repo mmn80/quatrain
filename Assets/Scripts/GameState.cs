@@ -3,13 +3,13 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using UnityEngine;
 
-namespace Quatrene.AI
+namespace Quatrene
 {
     public enum GameMode { Lobby = 0, Add = 1, Remove = 2, GameOver = 3 }
     public enum Value { None = 0, White = 1, Black = 2 }
     public enum StoneType { White = 0, Black = 1 }
 
-    public sealed class GameState
+    public sealed class Game
     {
         public static StoneType Value2Stone(Value val) =>
             val == Value.Black ? StoneType.Black : StoneType.White;
@@ -17,9 +17,9 @@ namespace Quatrene.AI
         public static bool TakeTopStonesOnly = false;
         public static bool AiMode = false;
 
-        public GameState() {}
+        public Game() {}
 
-        public GameState(GameState src)
+        public Game(Game src)
         {
             game = src.game;
             src.stones.CopyTo(stones, 0);
@@ -56,7 +56,7 @@ namespace Quatrene.AI
         {
             GameMode = GameMode.GameOver;
             if (!AiMode)
-                Game.OnGameOver(quit, winner);
+                MainControl.OnGameOver(quit, winner);
         }
 
         void NextTurn()
@@ -66,7 +66,7 @@ namespace Quatrene.AI
             SetPlayer(p);
 
             if (!AiMode)
-                Game.OnPlayerSwitch();
+                MainControl.OnPlayerSwitch();
 
             if (GetStones(0) == 0 && GetStones(1) == 0)
             {
@@ -140,7 +140,7 @@ namespace Quatrene.AI
             }
 
             if (!AiMode)
-                Game.OnAfterAdd(x, y, z);
+                MainControl.OnAfterAdd(x, y, z);
 
             ProcessQuatrains(x, y, z);
 
@@ -202,7 +202,7 @@ namespace Quatrene.AI
             }
 
             if (!AiMode)
-                Game.OnAfterRemove(x, y, z);
+                MainControl.OnAfterRemove(x, y, z);
 
             ProcessQuatrains(x, y, z, true);
 
@@ -428,7 +428,7 @@ namespace Quatrene.AI
             if (HasStoneToTake())
             {
                 if (!AiMode)
-                    Game.OnTakeAStone();
+                    MainControl.OnTakeAStone();
                 return;
             }
 
@@ -436,13 +436,13 @@ namespace Quatrene.AI
             if (GetStones(other) > 0)
             {
                 if (!AiMode)
-                    Game.OnTakingFreeStone();
+                    MainControl.OnTakingFreeStone();
                 TookStone(other);
                 if (!AiMode)
                     MainControl.Instance.UpdateUI(true);
             }
             else if(!AiMode)
-                Game.OnNoStoneToTake();
+                MainControl.OnNoStoneToTake();
 
             NextTurn();
         }

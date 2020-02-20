@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Quatrene.AI;
 
 namespace Quatrene
 {
@@ -121,7 +120,7 @@ namespace Quatrene
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
-                Game.state.DoRemoveStone(PosX, PosY, PosZ) &&
+                MainControl.game.DoRemoveStone(PosX, PosY, PosZ) &&
                 !MainControl.EffectsMuted)
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
         }
