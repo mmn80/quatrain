@@ -30,9 +30,12 @@ namespace Quatrene.AI
         UInt64[] board = new UInt64[] { 0, 0, 0, 0 };
 
         public byte GetStones(byte player) => stones[player];
-        public void TookStone(byte player) => stones[player]--;
+        public void TookStone(byte player)
+        {
+            stones[player]--;
+            score[player == 0 ? (byte)1 : (byte)0]++;
+        }
         public byte GetScore(byte player) => score[player];
-        public byte Scoreed() => score[GetPlayer()]++;
         byte GetMode() => (byte)(game & 0x0F);
         void SetMode(byte m) => game = (byte)(game & 0xF0 | m);
         public byte GetPlayer() => (byte)(game >> 6);
@@ -46,9 +49,9 @@ namespace Quatrene.AI
             set => SetMode((byte)value);
         }
 
-        public StoneType RemovalType
+        public Value ToRemove
         {
-            get => (StoneType)GetToRemove();
+            get => (Value)GetToRemove();
             set => SetToRemove((byte)value);
         }
 
@@ -80,6 +83,7 @@ namespace Quatrene.AI
                 {
                     SetStoneAt(x, y, z, (Value)(p + 1));
                     stones[p]--;
+                    RegenerateQuatrains();
                     return true;
                 }
                 z++;
@@ -89,11 +93,14 @@ namespace Quatrene.AI
 
         public bool RemoveStone(byte x, byte y, byte z)
         {
-            if (GetStoneAt(x, y, z) == Value.None)
+            var s = GetStoneAt(x, y, z);
+            if (s == Value.None)
                 return false;
+            score[s == Value.Black ? (byte)0 : (byte)1]++;
             for (byte i = z; i < 4; i++)
                 SetStoneAt(x, y, i, i >= 3 ? Value.None :
                     GetStoneAt(x, y, (byte)(i + 1)));
+            RegenerateQuatrains();
             return true;
         }
 
@@ -109,6 +116,23 @@ namespace Quatrene.AI
                 return true;
             v = GetStoneAt(x, y, (byte)(z + 1));
             return v == Value.None;
+        }
+
+        public bool HasStoneToTake()
+        {
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = GetStoneAt(x, y, z);
+                        if (s == Value.None)
+                            break;
+                        if (s == ToRemove &&
+                            !IsQuatrainStone(x, y, z) &&
+                            (!Game.TakeTopStonesOnly || IsTopStone(x, y, z)))
+                            return true;
+                    }
+            return false;
         }
 
         public void Dump()
@@ -223,7 +247,7 @@ namespace Quatrene.AI
         public bool IsQuatrainStone(byte x, byte y, byte z) =>
             (quatrainStones & ((UInt64)1 << (16 * z + 4 * y + x))) != 0;
 
-        public void RegenerateQuatrains()
+        void RegenerateQuatrains()
         {
             quatrainStones = 0;
 

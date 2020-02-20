@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Quatrene.AI;
+﻿using Quatrene.AI;
 
 namespace Quatrene
 {
@@ -51,8 +49,6 @@ namespace Quatrene
                 for (int y = 0; y < 4; y++)
                     for (int z = 0; z < 4; z++)
                         stones[x, y, z] = null;
-
-            state.RegenerateQuatrains();
 
             return true;
         }
@@ -117,7 +113,6 @@ namespace Quatrene
 
             MainControl.Instance.UpdateUI();
 
-            state.RegenerateQuatrains();
             HighlightStones();
 
             ProcessQuatrains(x, y, z);
@@ -140,7 +135,7 @@ namespace Quatrene
                 MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
                 return false;
             }
-            if (state.RemovalType == GameState.Value2Stone(st))
+            if (state.ToRemove != st)
             {
                 MainControl.ShowError("can't take your own stone");
                 return false;
@@ -167,7 +162,6 @@ namespace Quatrene
             for (int i = z; i < 4; i++)
                 stones[x, y, i] = i >= 3 ? null :
                     stones[x, y, i + 1];
-
             for (int i = z; i < 4; i++)
             {
                 var stone = stones[x, y, i];
@@ -177,33 +171,12 @@ namespace Quatrene
             }
 
             HighlightStones(true);
-
-            state.Scoreed();
             MainControl.Instance.UpdateUI(true);
-
-            state.RegenerateQuatrains();
             HighlightStones();
 
             ProcessQuatrains(x, y, z, true);
 
             return true;
-        }
-
-        static bool HasStoneToTake()
-        {
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                    {
-                        var s = state.GetStoneAt(x, y, z);
-                        if (s == Value.None)
-                            break;
-                        if (GameState.Value2Stone(s) != state.RemovalType &&
-                            !state.IsQuatrainStone(x, y, z) &&
-                            (!TakeTopStonesOnly || state.IsTopStone(x, y, z)))
-                                return true;
-                    }
-            return false;
         }
 
         static void ProcessQuatrains(int x, int y, int z,
@@ -215,23 +188,22 @@ namespace Quatrene
                 NextTurn();
                 return;
             }
-            state.RemovalType = ty;
-            var toTake = state.RemovalType == StoneType.White ? "black" : "white";
+            state.ToRemove = ty == StoneType.White ? Value.Black : Value.White;
+            var toTake = state.ToRemove.ToString().ToLower();
 
             state.GameMode = GameMode.Remove;
 
-            if (HasStoneToTake())
+            if (state.HasStoneToTake())
             {
                 MainControl.ShowMessage($"....QUATRAIN....\ntake a {toTake} stone");
                 return;
             }
 
-            var other = (byte)(state.GetPlayer() == 0 ? 1 : 0);
+            var other = (byte)(state.ToRemove == Value.Black ? 1 : 0);
             if (state.GetStones(other) > 0)
             {
                 MainControl.ShowMessage($"....QUATRAIN....\nno {toTake} stone on board, taking a free one");
                 state.TookStone(other);
-                state.Scoreed();
                 MainControl.Instance.UpdateUI(true);
             }
             else
