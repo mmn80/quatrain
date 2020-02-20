@@ -177,11 +177,7 @@ namespace Quatrene
                 else if (Game.state.GameMode == GameMode.GameOver)
                     Game.NewGame();
                 else
-                {
-                    Game.GameOver();
-                    ShowMessage("game over");
-                    PlayGameOverSound();
-                }
+                    Game.state.GameOver(true, 2);
             }
             else if (Game.state.GameMode == GameMode.Lobby &&
                     Input.GetKeyUp(KeyCode.N))
@@ -206,8 +202,8 @@ namespace Quatrene
             }
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha3))
             {
-                Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
-                ShowMessage(Game.TakeTopStonesOnly ?
+                GameState.TakeTopStonesOnly = !GameState.TakeTopStonesOnly;
+                ShowMessage(GameState.TakeTopStonesOnly ?
                     "classic mode activated\ncan only take top stones" :
                     "neo mode activated\ncan take stones from bellow");
             }

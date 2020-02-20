@@ -13,8 +13,6 @@ namespace Quatrene
             "Player 1", "Player 2"
         };
 
-        public static bool TakeTopStonesOnly = false;
-
         public static bool NewGame()
         {
             state = new GameState();
@@ -53,110 +51,38 @@ namespace Quatrene
             return true;
         }
 
-        static byte NextTurn()
+        public static void OnGameOver(bool quit, byte winner)
         {
-            state.GameMode = GameMode.Add;
-            var p = state.SwitchPlayer();
-            MainControl.Instance.UpdateUI();
-
-            if (state.GetStones(0) == 0 && state.GetStones(1) == 0)
-            {
-                byte winner = 2;
-                if (state.GetScore(0) > state.GetScore(1))
-                    winner = 0;
-                else if (state.GetScore(1) > state.GetScore(0))
-                    winner = 1;
-
-                GameOver();
-
-                MainControl.Instance.PlayAmenSound();
-                MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
-                    (winner == 2 ? "nobody" : PlayerNames[winner]) +"</color>\n");
-                MainControl.Instance.HighlightScore(5, winner);
-            }
-            return p;
-        }
-
-        public static void GameOver()
-        {
-            state.GameMode = GameMode.GameOver;
-
             MainControl.Instance.UpdateUI(true);
             MainControl.HideMessage();
+            if (quit)
+            {
+                MainControl.Instance.PlayGameOverSound();
+                MainControl.ShowMessage("game over");
+            }
+            else
+            {
+                MainControl.Instance.PlayAmenSound();
+                MainControl.ShowMessage("game over\nwinner is <color=#D9471A>" +
+                    (winner == 2 ? "nobody" : PlayerNames[winner]) + "</color>\n");
+                MainControl.Instance.HighlightScore(5, winner);
+            }
         }
 
-        public static bool AddStone(int x, int y)
+        public static void OnPlayerSwitch() => MainControl.Instance.UpdateUI();
+
+        public static void OnAfterAdd(int x, int y, int z)
         {
-            MainControl.HideMessage();
-
-            if (state.GameMode != GameMode.Add)
-            {
-                MainControl.ShowError("invalid move");
-                return false;
-            }
-
-            var p = state.GetPlayer();
-            if (state.GetStones(p) <= 0)
-            {
-                MainControl.ShowError("no more free stones, next");
-                NextTurn();
-                return true;
-            }
-
-            byte z;
-            if (!state.AddStone((byte)x, (byte)y, out z))
-            {
-                MainControl.ShowError($"Stack [{x},{y}] is full.");
-                return false;
-            }
-            stones[x, y, z] = Stone.MakeStone(x, y, z, (StoneType)p);
+            stones[x, y, z] = Stone.MakeStone(x, y, z,
+                (StoneType)state.GetPlayer());
 
             MainControl.Instance.UpdateUI();
 
             HighlightStones();
-
-            ProcessQuatrains(x, y, z);
-
-            return true;
         }
 
-        public static bool RemoveStone(int x, int y, int z)
+        public static void OnAfterRemove(int x, int y, int z)
         {
-            MainControl.HideMessage();
-
-            if (state.GameMode != GameMode.Remove)
-            {
-                MainControl.ShowError($"invalid move");
-                return false;
-            }
-            var st = state.GetStoneAt((byte)x, (byte)y, (byte)z);
-            if (st == Value.None)
-            {
-                MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
-                return false;
-            }
-            if (state.ToRemove != st)
-            {
-                MainControl.ShowError("can't take your own stone");
-                return false;
-            }
-            if (state.IsQuatrainStone((byte)x, (byte)y, (byte)z))
-            {
-                MainControl.ShowError("can't take from quatrains");
-                return false;
-            }
-            if (TakeTopStonesOnly && !state.IsTopStone(x, y, z))
-            {
-                MainControl.ShowError("only top stones can be taken in classic mode");
-                return false;
-            }
-
-            if (!state.RemoveStone((byte)x, (byte)y, (byte)z))
-            {
-                MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
-                return false;
-            }
-
             Stone.DestroyStone(stones[x, y, z]);
             stones[x, y, z] = null;
             for (int i = z; i < 4; i++)
@@ -173,44 +99,18 @@ namespace Quatrene
             HighlightStones(true);
             MainControl.Instance.UpdateUI(true);
             HighlightStones();
-
-            ProcessQuatrains(x, y, z, true);
-
-            return true;
         }
 
-        static void ProcessQuatrains(int x, int y, int z,
-            bool allowAbove = false)
-        {
-            StoneType ty;
-            if (!state.AnyQuatrainAt(x, y, z, allowAbove, out ty))
-            {
-                NextTurn();
-                return;
-            }
-            state.ToRemove = ty == StoneType.White ? Value.Black : Value.White;
-            var toTake = state.ToRemove.ToString().ToLower();
+        static string ToRemove() => state.ToRemove.ToString().ToLower();
 
-            state.GameMode = GameMode.Remove;
+        public static void OnTakeAStone() =>
+            MainControl.ShowMessage($"....QUATRAIN....\ntake a {ToRemove()} stone");
 
-            if (state.HasStoneToTake())
-            {
-                MainControl.ShowMessage($"....QUATRAIN....\ntake a {toTake} stone");
-                return;
-            }
+        public static void OnTakingFreeStone() =>
+            MainControl.ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone on board, taking a free one");
 
-            var other = (byte)(state.ToRemove == Value.Black ? 1 : 0);
-            if (state.GetStones(other) > 0)
-            {
-                MainControl.ShowMessage($"....QUATRAIN....\nno {toTake} stone on board, taking a free one");
-                state.TookStone(other);
-                MainControl.Instance.UpdateUI(true);
-            }
-            else
-                MainControl.ShowMessage($"....QUATRAIN....\nno {toTake} stone to take, next");
-
-            NextTurn();
-        }
+        public static void OnNoStoneToTake() =>
+            MainControl.ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone to take, next");
 
         static void DestroyAllStones()
         {

@@ -121,7 +121,8 @@ namespace Quatrene
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
-                Game.RemoveStone(PosX, PosY, PosZ) && !MainControl.EffectsMuted)
+                Game.state.DoRemoveStone(PosX, PosY, PosZ) &&
+                !MainControl.EffectsMuted)
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
         }
 
