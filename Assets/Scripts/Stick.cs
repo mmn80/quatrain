@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Quatrene.AI;
 
 namespace Quatrene
 {
@@ -39,8 +38,7 @@ namespace Quatrene
 
         void Update()
         {
-            if (selected && Game.state.GameMode == GameMode.Add &&
-                    Input.GetMouseButtonDown(0))
+            if (selected && Input.GetMouseButtonDown(0))
                 Game.AddStone(PosX, PosY);
         }
     }

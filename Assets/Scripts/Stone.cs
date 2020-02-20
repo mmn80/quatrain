@@ -120,22 +120,9 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (mouseIsOver && Game.state.GameMode == GameMode.Remove &&
-                Input.GetMouseButtonDown(0))
-            {
-                if (Game.state.RemovalType == StoneType)
-                    ShowError("can't take your own stone");
-                else if (Highlighted)
-                    ShowError("can't take from quatrains");
-                else if (Game.TakeTopStonesOnly && !Game.state.IsTopStone(PosX, PosY, PosZ))
-                    ShowError("only top stones can be taken in classic mode");
-                else
-                {
-                    if (!MainControl.EffectsMuted)
-                        AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
-                    Game.RemoveStone(PosX, PosY, PosZ);
-                }
-            }
+            if (mouseIsOver && Input.GetMouseButtonDown(0) &&
+                Game.RemoveStone(PosX, PosY, PosZ) && !MainControl.EffectsMuted)
+                    AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
         }
 
         bool mouseIsOver;

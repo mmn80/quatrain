@@ -17,24 +17,12 @@ namespace Quatrene
 
         public static bool TakeTopStonesOnly = false;
 
-        public static bool IsPlaying() =>
-            state.GameMode != GameMode.Lobby &&
-            state.GameMode != GameMode.GameOver;
-
-        public static void GameOver()
+        public static bool NewGame()
         {
-            state.GameMode = GameMode.GameOver;
+            state = new GameState();
 
-            MainControl.Instance.UpdateUI(true);
-            MainControl.HideMessage();
-        }
+            DestroyAllStones();
 
-        public static void GoToLobby()
-        {
-            state.GameMode = GameMode.Lobby;
-
-            foreach (var s in AllStones().ToArray())
-                Stone.DestroyStone(s);
             for (int x = 0; x < 4; x++)
                 for (int y = 0; y < 4; y++)
                     for (int z = 0; z < 4; z++)
@@ -44,18 +32,18 @@ namespace Quatrene
 
             MainControl.ShowMessage("press <color=#158>N</color> to start new game");
             MainControl.Instance.UpdateUI();
+
+            return true;
         }
 
-        public static void NewGame()
+        public static bool StartGame()
         {
-            state = new GameState();
             state.GameMode = GameMode.Add;
 
             MainControl.Instance.UpdateUI();
             MainControl.HideMessage();
 
-            foreach (var s in AllStones().ToArray())
-                Stone.DestroyStone(s);
+            DestroyAllStones();
 
             if (stones == null)
                 stones = new Stone[4, 4, 4];
@@ -65,9 +53,11 @@ namespace Quatrene
                         stones[x, y, z] = null;
 
             state.RegenerateQuatrains();
+
+            return true;
         }
 
-        public static byte NextTurn()
+        static byte NextTurn()
         {
             state.GameMode = GameMode.Add;
             var p = state.SwitchPlayer();
@@ -91,16 +81,30 @@ namespace Quatrene
             return p;
         }
 
+        public static void GameOver()
+        {
+            state.GameMode = GameMode.GameOver;
+
+            MainControl.Instance.UpdateUI(true);
+            MainControl.HideMessage();
+        }
+
         public static bool AddStone(int x, int y)
         {
             MainControl.HideMessage();
+
+            if (state.GameMode != GameMode.Add)
+            {
+                MainControl.ShowError("invalid move");
+                return false;
+            }
 
             var p = state.GetPlayer();
             if (state.GetStones(p) <= 0)
             {
                 MainControl.ShowError("no more free stones, next");
                 NextTurn();
-                return false;
+                return true;
             }
 
             byte z;
@@ -125,6 +129,33 @@ namespace Quatrene
         {
             MainControl.HideMessage();
 
+            if (state.GameMode != GameMode.Remove)
+            {
+                MainControl.ShowError($"invalid move");
+                return false;
+            }
+            var st = state.GetStoneAt((byte)x, (byte)y, (byte)z);
+            if (st == Value.None)
+            {
+                MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
+                return false;
+            }
+            if (state.RemovalType == GameState.Value2Stone(st))
+            {
+                MainControl.ShowError("can't take your own stone");
+                return false;
+            }
+            if (state.IsQuatrainStone((byte)x, (byte)y, (byte)z))
+            {
+                MainControl.ShowError("can't take from quatrains");
+                return false;
+            }
+            if (TakeTopStonesOnly && !state.IsTopStone(x, y, z))
+            {
+                MainControl.ShowError("only top stones can be taken in classic mode");
+                return false;
+            }
+
             if (!state.RemoveStone((byte)x, (byte)y, (byte)z))
             {
                 MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
@@ -145,8 +176,7 @@ namespace Quatrene
                 stone.FallOneSlot();
             }
 
-            foreach (var s in AllStones())
-                s.Highlighted = false;
+            HighlightStones(true);
 
             state.Scoreed();
             MainControl.Instance.UpdateUI(true);
@@ -157,6 +187,23 @@ namespace Quatrene
             ProcessQuatrains(x, y, z, true);
 
             return true;
+        }
+
+        static bool HasStoneToTake()
+        {
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = state.GetStoneAt(x, y, z);
+                        if (s == Value.None)
+                            break;
+                        if (GameState.Value2Stone(s) != state.RemovalType &&
+                            !state.IsQuatrainStone(x, y, z) &&
+                            (!TakeTopStonesOnly || state.IsTopStone(x, y, z)))
+                                return true;
+                    }
+            return false;
         }
 
         static void ProcessQuatrains(int x, int y, int z,
@@ -173,14 +220,11 @@ namespace Quatrene
 
             state.GameMode = GameMode.Remove;
 
-            foreach (var s in AllStones())
-                if (s.StoneType != state.RemovalType && !s.Highlighted &&
-                    (!Game.TakeTopStonesOnly ||
-                        Game.state.IsTopStone(s.PosX, s.PosY, s.PosZ)))
-                {
-                    MainControl.ShowMessage($"....QUATRAIN....\ntake a {toTake} stone");
-                    return;
-                }
+            if (HasStoneToTake())
+            {
+                MainControl.ShowMessage($"....QUATRAIN....\ntake a {toTake} stone");
+                return;
+            }
 
             var other = (byte)(state.GetPlayer() == 0 ? 1 : 0);
             if (state.GetStones(other) > 0)
@@ -196,37 +240,36 @@ namespace Quatrene
             NextTurn();
         }
 
-        static IEnumerable<Stone> AllStones()
+        static void DestroyAllStones()
         {
             if (stones == null)
-                yield break;
+                return;
             for (int x = 0; x < 4; x++)
                 for (int y = 0; y < 4; y++)
                     for (int z = 0; z < 4; z++)
                     {
                         var s = stones[x, y, z];
-                        if (s != null)
-                            yield return s;
+                        if (s)
+                            Stone.DestroyStone(s);
                     }
         }
 
-        static void HighlightStone(Place p)
+        static void HighlightStones(bool reset = false)
         {
-            var s = stones[p.X, p.Y, p.Z];
-            if (s == null)
-                MainControl.ShowError($"No stone at {p}.");
-            s.Highlighted = true;
-        }
-
-        static void HighlightStones()
-        {
-            foreach (var q in state.quatrains.Where(q => q.IsFull()))
-            {
-                HighlightStone(q.P0);
-                HighlightStone(q.P1);
-                HighlightStone(q.P2);
-                HighlightStone(q.P3);
-            }
+            if (stones == null)
+                return;
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = stones[x, y, z];
+                        if (!s)
+                            break;
+                        if (reset)
+                            s.Highlighted = false;
+                        else if (state.IsQuatrainStone(x, y, z))
+                            s.Highlighted = true;
+                    }
         }
     }
 }

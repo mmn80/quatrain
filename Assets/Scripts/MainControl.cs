@@ -69,7 +69,8 @@ namespace Quatrene
                 Player2.gameObject.SetActive(false);
             }
 
-            var g = Game.IsPlaying() || highlight;
+            var g = Game.state.GameMode == GameMode.Add ||
+                Game.state.GameMode == GameMode.Remove || highlight;
             Player1Stones.text = MakeRows('○', g ? Game.state.GetStones(0) : 0);
             Player2Stones.text = MakeRows('●', g ? Game.state.GetStones(1) : 0);
             Player1Score.text = new System.String('●', g ? Game.state.GetScore(0) : 0);
@@ -102,7 +103,7 @@ namespace Quatrene
 
         void Awake() => Instance = this;
 
-        void Start() => Game.GoToLobby();
+        void Start() => Game.NewGame();
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
@@ -174,7 +175,7 @@ namespace Quatrene
                 else if (Game.state.GameMode == GameMode.Lobby)
                     Application.Quit();
                 else if (Game.state.GameMode == GameMode.GameOver)
-                    Game.GoToLobby();
+                    Game.NewGame();
                 else
                 {
                     Game.GameOver();
@@ -182,8 +183,9 @@ namespace Quatrene
                     PlayGameOverSound();
                 }
             }
-            else if (!Game.IsPlaying() && Input.GetKeyUp(KeyCode.N))
-                Game.NewGame();
+            else if (Game.state.GameMode == GameMode.Lobby &&
+                    Input.GetKeyUp(KeyCode.N))
+                Game.StartGame();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;

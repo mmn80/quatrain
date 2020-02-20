@@ -11,6 +11,19 @@ namespace Quatrene.AI
 
     public sealed class GameState
     {
+        public static StoneType Value2Stone(Value val) =>
+            val == Value.Black ? StoneType.Black : StoneType.White;
+
+        public GameState() {}
+
+        public GameState(GameState src)
+        {
+            game = src.game;
+            src.stones.CopyTo(stones, 0);
+            src.score.CopyTo(score, 0);
+            src.board.CopyTo(board, 0);
+        }
+
         byte game = 0;
         byte[] stones = new byte[2] { 32, 32 };
         byte[] score = new byte[2] { 0, 0 };
@@ -202,8 +215,18 @@ namespace Quatrene.AI
 
         public Quatrain[] quatrains;
 
+        UInt64 quatrainStones;
+
+        void SetQuatrainStone(byte x, byte y, byte z) =>
+            quatrainStones |= ((UInt64)1 << (16 * z + 4 * y + x));
+
+        public bool IsQuatrainStone(byte x, byte y, byte z) =>
+            (quatrainStones & ((UInt64)1 << (16 * z + 4 * y + x))) != 0;
+
         public void RegenerateQuatrains()
         {
+            quatrainStones = 0;
+
             if (quatrainsSrc == null)
                 InitQuatrainsSrc();
 
@@ -223,6 +246,13 @@ namespace Quatrene.AI
                     (byte)GetStoneAt(src.P1.X, src.P1.Y, src.P1.Z),
                     (byte)GetStoneAt(src.P2.X, src.P2.Y, src.P2.Z),
                     (byte)GetStoneAt(src.P3.X, src.P3.Y, src.P3.Z));
+                if (quatrains[i].IsFull())
+                {
+                    SetQuatrainStone(src.P0.X, src.P0.Y, src.P0.Z);
+                    SetQuatrainStone(src.P1.X, src.P1.Y, src.P1.Z);
+                    SetQuatrainStone(src.P2.X, src.P2.Y, src.P2.Z);
+                    SetQuatrainStone(src.P3.X, src.P3.Y, src.P3.Z);
+                }
             }
 
             if (ShowQuatrainsDebugInfo)
@@ -238,20 +268,17 @@ namespace Quatrene.AI
             out StoneType quatrainType)
         {
             quatrainType = StoneType.White;
-            foreach (var q in quatrains)
+            while (z < 4)
             {
-                StoneType stoneTy;
-                if (q.IsFull(out stoneTy))
+                if (IsQuatrainStone((byte)x, (byte)y, (byte)z))
                 {
-                    if ((q.P0.X == x && q.P0.Y == y && (q.P0.Z == z || (allowAbove && q.P0.Z > z))) ||
-                        (q.P1.X == x && q.P1.Y == y && (q.P1.Z == z || (allowAbove && q.P1.Z > z))) ||
-                        (q.P2.X == x && q.P2.Y == y && (q.P2.Z == z || (allowAbove && q.P2.Z > z))) ||
-                        (q.P3.X == x && q.P3.Y == y && (q.P3.Z == z || (allowAbove && q.P3.Z > z))))
-                    {
-                        quatrainType = stoneTy;
-                        return true;
-                    }
+                    var s = GetStoneAt((byte)x, (byte)y, (byte)z);
+                    quatrainType = Value2Stone(s);
+                    return true;
                 }
+                if (!allowAbove)
+                    return false;
+                z++;
             }
             return false;
         }
