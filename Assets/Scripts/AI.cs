@@ -17,7 +17,7 @@
         {
             var score = game.GetScore(AI.Player);
             var other = AI.Player == 0 ? 1 : 0;
-            return score - other;
+            return score - game.GetScore((byte)other);
         }
 
         public float Eval()
