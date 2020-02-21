@@ -222,7 +222,7 @@ namespace Quatrene
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var move = AI.Move(this, 4, 4);
+            var move = AI.Move(this, 6, 6);
 
             watch.Stop();
             var ms = watch.ElapsedMilliseconds;
