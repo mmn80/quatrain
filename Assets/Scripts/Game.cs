@@ -25,6 +25,8 @@ namespace Quatrene
             src.stones.CopyTo(stones, 0);
             src.score.CopyTo(score, 0);
             src.board.CopyTo(board, 0);
+            src.quatrains.CopyTo(quatrains, 0);
+            quatrainStones = src.quatrainStones;
         }
 
         byte game = 0;
@@ -209,17 +211,56 @@ namespace Quatrene
             return true;
         }
 
-        public bool RandomMove()
+        public bool RandomMove(bool onlyValidMoves = true)
         {
+            byte m, x, y, z;
+            return RandomMoveExt(onlyValidMoves, out m, out x, out y, out z);
+        }
+
+        public void AIMove()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            var move = AI.Move(this, 4, 4);
+
+            watch.Stop();
+            var ms = watch.ElapsedMilliseconds;
+            var ts = watch.ElapsedTicks;
+            MainControl.ShowMessage($"AI moved ({move}) in {ms} ms ({ts} ticks)");
+        }
+
+        public bool RandomMoveExt(bool onlyValidMoves, out byte moveType,
+            out byte x, out byte y, out byte z)
+        {
+            moveType = x = y = z = 0;
+            var attempts = 0;
             if (GameMode == GameMode.Add)
-                return DoAddStone(
-                    UnityEngine.Random.Range(0, 4),
-                    UnityEngine.Random.Range(0, 4));
+            {
+                do
+                {
+                    x = (byte)UnityEngine.Random.Range(0, 4);
+                    y = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoAddStone(x, y))
+                        return true;
+                }
+                while (!onlyValidMoves || attempts++ < 20);
+                return false;
+            }
             if (GameMode == GameMode.Remove)
-                return DoRemoveStone(
-                    UnityEngine.Random.Range(0, 4),
-                    UnityEngine.Random.Range(0, 4),
-                    UnityEngine.Random.Range(0, 4));
+            {
+                moveType = 1;
+                do
+                {
+                    x = (byte)UnityEngine.Random.Range(0, 4);
+                    y = (byte)UnityEngine.Random.Range(0, 4);
+                    z = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoRemoveStone(x, y, z))
+                        return true;
+                }
+                while (!onlyValidMoves || attempts++ < 20);
+                return false;
+            }
             return false;
         }
 
@@ -356,7 +397,7 @@ namespace Quatrene
 
         #endregion
 
-        public Quatrain[] quatrains;
+        public Quatrain[] quatrains = new Quatrain[76];
 
         UInt64 quatrainStones;
 
@@ -380,7 +421,6 @@ namespace Quatrene
                 watch.Start();
             }
 
-            quatrains = new Quatrain[76];
             for (byte i = 0; i < 76; i++)
             {
                 var src = quatrainsSrc[i];

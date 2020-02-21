@@ -365,6 +365,8 @@ namespace Quatrene
                 ShowInfo(creditsInfo);
             else if (Input.GetKeyUp(KeyCode.F5))
                 game.RandomMove();
+            else if (Input.GetKeyUp(KeyCode.F6))
+                game.AIMove();
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }
