@@ -38,7 +38,8 @@
 
         public delegate bool GenMoveFunction(bool onlyValid, Game next, out Move move);
 
-        void GenNextMove(GenMoveFunction generator, ref float bestNext, ref int tries, ref float total)
+        void GenNextMove(GenMoveFunction generator,
+            ref float bestNext, ref int tries, ref float total)
         {
             var next = new Game(game);
             var nextState = new GameState();
@@ -54,6 +55,7 @@
                 }
                 total += val;
                 tries++;
+                AI.Tries++;
             }
         }
 
@@ -79,7 +81,7 @@
                 score = GetCurrentScore();
             else
             {
-                float total = 0, bestNext = 0;
+                float total = 0, bestNext = -10000;
                 best = null;
                 var tries = 0;
                 if (depth <= 1)
@@ -128,9 +130,11 @@
     {
         public static int Width, Depth;
         public static byte Player;
+        public static int Tries;
 
         public static GameState Move(Game game, int depth, int width)
         {
+            Tries = 0;
             Width = width;
             Depth = depth;
             Player = game.GetPlayer();

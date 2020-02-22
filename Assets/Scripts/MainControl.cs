@@ -127,6 +127,21 @@ namespace Quatrene
                 StartCoroutine(game.AIMove());
         }
 
+        public static void ShowAiDebugInfo()
+        {
+            if (Game.aiMove != null)
+            {
+                var ms = Game.aiTimer.ElapsedMilliseconds;
+                var ts = Game.aiTimer.ElapsedTicks;
+                var stats = "<color=#158>AI stats</color>\n\n";
+                stats += $"<color=#158>Move:</color>\t{Game.aiMove}\n";
+                stats += $"<color=#158>Time:</color>\t\t{ms} ms ({ts} ticks)\n";
+                stats += $"<color=#158>Score:</color>\t{Game.aiMove.score}\n";
+                stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n";
+                ShowInfo(stats);
+            }
+        }
+
         public bool AddStone(int x, int y)
         {
             StartCoroutine(MakeAiMove());
@@ -398,9 +413,13 @@ namespace Quatrene
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha7))
                 EffectsMuted = !EffectsMuted;
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
-                game.Dump();
+                ShowAiDebugInfo();
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))
-                Game.ShowQuatrainsDebugInfo = !Game.ShowQuatrainsDebugInfo;
+            {
+                Game.ShowAiDebugInfo = !Game.ShowAiDebugInfo;
+                ShowMessage((Game.ShowAiDebugInfo ? "showing" : "hiding") +
+                    " AI debug info");
+            }
             else if (Input.GetKeyUp(KeyCode.F1))
                 ShowInfo(helpInfo);
             else if (Input.GetKeyUp(KeyCode.F2))

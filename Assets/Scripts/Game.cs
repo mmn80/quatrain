@@ -240,18 +240,24 @@ namespace Quatrene
 
         public IEnumerator AIMove()
         {
+            if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
+                yield break;
+
             yield return new WaitForSecondsRealtime(0.1f);
 
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
+            aiTimer = new Stopwatch();
+            aiTimer.Start();
 
-            var move = AI.Move(this, 6, 4);
+            aiMove = AI.Move(this, 6, 4);
 
-            watch.Stop();
-            var ms = watch.ElapsedMilliseconds;
-            var ts = watch.ElapsedTicks;
-            UnityEngine.Debug.Log($"AI moved ({move}) in {ms} ms ({ts} ticks)");
+            aiTimer.Stop();
+
+            if (ShowAiDebugInfo)
+                MainControl.ShowAiDebugInfo();
         }
+
+        public static GameState aiMove;
+        public static Stopwatch aiTimer;
 
         public bool RandomMoveExt(bool onlyValidMoves, out Move move)
         {
@@ -325,6 +331,7 @@ namespace Quatrene
         }
 
         public static bool ShowQuatrainsDebugInfo = false;
+        public static bool ShowAiDebugInfo = false;
 
         #region Quatrains generators
 
