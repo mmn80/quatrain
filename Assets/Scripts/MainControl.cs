@@ -62,7 +62,7 @@ namespace Quatrene
                             x < 2 ? StoneType.White : StoneType.Black,
                             true, false);
 
-            ShowMessage("press <color=#158>N</color> to start new game\n" +
+            ShowMessage("press <color=#158>H</color> to play against a human\n" +
                 "press <color=#158>C</color> to play against the computer");
             Instance.UpdateUI();
 
@@ -76,9 +76,9 @@ namespace Quatrene
             if (againstAi)
             {
                 if (PlayerNames[0] == "Player 1")
-                    PlayerNames[0] = "Hombre";
+                    PlayerNames[0] = "hombre";
                 if (PlayerNames[1] == "Player 2")
-                    PlayerNames[1] = "Computador";
+                    PlayerNames[1] = "computador";
                 Instance.Player1.text = PlayerNames[0];
                 Instance.Player2.text = PlayerNames[1];
             }
@@ -298,7 +298,7 @@ namespace Quatrene
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 
-- <color=#158>N</color>\t: start new hot seat game
+- <color=#158>H</color>\t: start new hot seat game
 - <color=#158>C</color>\t: start new game against the computer
 - <color=#158>Esc</color>\t: quit (current) game
 ";
@@ -358,7 +358,7 @@ namespace Quatrene
                     game.GameOver(true, 2);
             }
             else if (game.GameMode == GameMode.Lobby &&
-                    Input.GetKeyUp(KeyCode.N))
+                    Input.GetKeyUp(KeyCode.H))
                 StartGame(false);
             else if (game.GameMode == GameMode.Lobby &&
                     Input.GetKeyUp(KeyCode.C))
