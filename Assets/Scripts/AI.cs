@@ -21,7 +21,7 @@ namespace Quatrene
         public byte moveType;
         public byte x, y, z;
 
-        public bool Apply(Game game, bool forReals = false)
+        public bool Apply(ref Game game, bool forReals = false)
         {
             if (moveType == 0)
                 return forReals ? MainControl.Instance.AddStone(x, y) :
@@ -35,41 +35,31 @@ namespace Quatrene
             (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
 
-    public class GameState
+    public static class AI
     {
-        public Move move;
-        public float score;
-        public byte depth;
-        public Game game;
-        public GameState best;
-
-        public override string ToString() => move.ToString();
-
-        public float GetCurrentScore()
+        public static float GetCurrentScore(Game game)
         {
             var score = game.GetScore(AI.Player);
             var other = AI.Player == 0 ? 1 : 0;
             return score - game.GetScore((byte)other);
         }
 
-        public delegate bool GenMoveFunction(bool onlyValid, Game next, out Move move);
+        public delegate bool GenMoveFunction(bool onlyValid, ref Game next, out Move move);
 
-        void GenNextMove(GenMoveFunction generator,
-            ref float bestNext, ref int tries, ref float total)
+        static void GenNextMove(ref Game game, GenMoveFunction generator,
+            ref float bestNext, ref Game best, ref int tries, ref float total)
         {
-            var next = new Game(game);
-            var nextState = new GameState();
-            nextState.depth = (byte)(depth + 1);
-            nextState.game = next;
-            if (generator(true, next, out nextState.move))
+            var next = new Game(ref game);
+            if (generator(true, ref next, out next.AiMove))
             {
-                var val = nextState.Eval();
-                if (depth == 0)
-                    AI.Moves.Add(nextState);
+                Game nn;
+                var val = Eval(ref next, out nn);
+                if (game.AiDepth == 0)
+                    AI.Moves.Add(next);
                 if (val > bestNext || tries == 0)
                 {
                     bestNext = val;
-                    best = nextState;
+                    best = next;
                 }
                 total += val;
                 tries++;
@@ -77,32 +67,32 @@ namespace Quatrene
             }
         }
 
-        static bool RandomGen(bool onlyValid, Game next, out Move move) =>
+        static bool RandomGen(bool onlyValid, ref Game next, out Move move) =>
             next.RandomMoveExt(onlyValid, out move);
 
-        static bool AllGen(bool onlyValid, Game next, out Move move)
+        static bool AllGen(bool onlyValid, ref Game next, out Move move)
         {
             move.moveType = allMove.moveType;
             move.x = allMove.x;
             move.y = allMove.y;
             move.z = allMove.z;
-            return move.Apply(next);
+            return move.Apply(ref next);
         }
 
         static Move allMove;
 
-        public float Eval()
+        public static float Eval(ref Game game, out Game best)
         {
-            score = 0;
+            game.AiScore = 0;
+            best = new Game();
             
-            if (depth >= AI.Depth || game.GameMode == GameMode.GameOver)
-                score = GetCurrentScore();
+            if (game.AiDepth >= AI.Depth || game.GameMode == GameMode.GameOver)
+                game.AiScore = game.GetAiScore();
             else
             {
                 float total = 0, bestNext = -10000;
-                best = null;
                 var tries = 0;
-                if (depth <= 1)
+                if (game.AiDepth <= 1)
                 {
                     if (game.GameMode == GameMode.Add)
                     {
@@ -114,7 +104,7 @@ namespace Quatrene
                                     allMove.x = x;
                                     allMove.y = y;
                                     allMove.z = 0;
-                                    GenNextMove(AllGen, ref bestNext, ref tries, ref total);
+                                    GenNextMove(ref game, AllGen, ref bestNext, ref best, ref tries, ref total);
                                 }
                     }
                     else if (game.GameMode == GameMode.Remove)
@@ -128,30 +118,27 @@ namespace Quatrene
                                         allMove.x = rx;
                                         allMove.y = ry;
                                         allMove.z = rz;
-                                        GenNextMove(AllGen, ref bestNext, ref tries, ref total);
+                                        GenNextMove(ref game, AllGen, ref bestNext, ref best, ref tries, ref total);
                                     }
                     }
                 }
                 else
                     for (int i = 0; i < AI.Width; i++)
-                        GenNextMove(RandomGen, ref bestNext, ref tries, ref total);
+                        GenNextMove(ref game, RandomGen, ref bestNext, ref best, ref tries, ref total);
                 if (tries == 0)
-                    score = GetCurrentScore();
+                    game.AiScore = game.GetAiScore();
                 else
-                    score = total / AI.Width;
+                    game.AiScore = total / AI.Width;
             }
-            return score;
+            return game.AiScore;
         }
-    }
 
-    public static class AI
-    {
         public static int Width, Depth;
         public static byte Player;
         public static int Tries;
-        public static List<GameState> Moves = new List<GameState>();
+        public static List<Game> Moves = new List<Game>();
 
-        public static GameState Move(Game game, int depth, int width)
+        public static void Move(ref Game game, int depth, int width)
         {
             Tries = 0;
             Moves.Clear();
@@ -159,16 +146,13 @@ namespace Quatrene
             Depth = depth;
             Player = game.GetPlayer();
 
-            var state = new GameState();
-            state.game = game;
-
             Game.AiMode = true;
-            var score = state.Eval();
+            Game best;
+            var score = Eval(ref game, out best);
             Game.AiMode = false;
 
-            if (state.best != null)
-                state.best.move.Apply(game, true);
-            return state.best;
+            if (best.AiDepth > 0)
+                best.AiMove.Apply(ref game, true);
         }
     }
 }

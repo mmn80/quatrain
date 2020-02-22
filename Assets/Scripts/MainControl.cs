@@ -36,7 +36,7 @@ namespace Quatrene
 
         public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
 
-        public static Game game = new Game();
+        public static Game game = new Game(true);
 
         static Stone[,,] stones = new Stone[4, 4, 4];
 
@@ -52,7 +52,7 @@ namespace Quatrene
 
         static bool NewGame()
         {
-            game = new Game();
+            game = new Game(true);
 
             DestroyAllStones();
 
@@ -130,22 +130,20 @@ namespace Quatrene
 
         public static void ShowAiDebugInfo()
         {
-            if (Game.aiMove != null)
-            {
-                var ms = Game.aiTimer.ElapsedMilliseconds;
-                var ts = Game.aiTimer.ElapsedTicks;
-                var stats = $"<color=#158>Move:</color>\t{Game.aiMove}\n";
-                stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
-                stats += $"<color=#158>Score:</color>\t{Game.aiMove.score}\n";
-                stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n\n";
-                stats += $"<color=#158>Next best moves:</color>\n";
-                foreach (var state in AI.Moves.
-                    Where(s => s != Game.aiMove).
-                    OrderByDescending(s => s.score).
-                    Take(5))
-                        stats += $"\t{state}  ({state.score})\n";
-                ShowInfo(stats);
-            }
+            var bests = AI.Moves.
+                OrderByDescending(s => s.AiScore).
+                Take(5).ToArray();
+            var best = bests[0];
+            var ms = Game.aiTimer.ElapsedMilliseconds;
+            var ts = Game.aiTimer.ElapsedTicks;
+            var stats = $"<color=#158>Move:</color>\t{best.AiMove}\n";
+            stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
+            stats += $"<color=#158>Score:</color>\t{best.AiScore}\n";
+            stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n\n";
+            stats += $"<color=#158>Next best moves:</color>\n";
+            foreach (var g in bests.Skip(1))
+                stats += $"\t{g.AiMove}  ({g.AiScore})\n";
+            ShowInfo(stats);
         }
 
         public bool AddStone(int x, int y)

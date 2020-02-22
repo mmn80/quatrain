@@ -10,7 +10,7 @@ namespace Quatrene
     public enum Value { None = 0, White = 1, Black = 2 }
     public enum StoneType { White = 0, Black = 1 }
 
-    public sealed class Game
+    public struct Game
     {
         public static StoneType Value2Stone(Value val) =>
             val == Value.Black ? StoneType.Black : StoneType.White;
@@ -18,22 +18,45 @@ namespace Quatrene
         public static bool TakeTopStonesOnly = false;
         public static bool AiMode = false;
 
-        public Game() {}
-
-        public Game(Game src)
+        public Game(ref Game src)
         {
+            stones = new byte[] { 32, 32 };
+            score = new byte[] { 0, 0 };
+            board = new UInt64[] { 0, 0, 0, 0 };
+
             game = src.game;
             src.stones.CopyTo(stones, 0);
             src.score.CopyTo(score, 0);
             src.board.CopyTo(board, 0);
-            src.quatrains.CopyTo(quatrains, 0);
             quatrainStones = src.quatrainStones;
+
+            AiScore = 0;
+            AiDepth = (byte)(src.AiDepth + 1);
+            AiMove = new Move();
         }
 
-        byte game = 0;
-        byte[] stones = new byte[2] { 32, 32 };
-        byte[] score = new byte[2] { 0, 0 };
-        UInt64[] board = new UInt64[] { 0, 0, 0, 0 };
+        public Game(bool dummy)
+        {
+            game = 0;
+            stones = new byte[] { 32, 32 };
+            score = new byte[] { 0, 0 };
+            board = new UInt64[] { 0, 0, 0, 0 };
+            quatrainStones = 0;
+
+            AiScore = 0;
+            AiDepth = 0;
+            AiMove = new Move();
+        }
+
+        byte game;
+        byte[] stones;
+        byte[] score;
+        UInt64[] board;
+        UInt64 quatrainStones;
+
+        public Move AiMove;
+        public float AiScore;
+        public byte AiDepth;
 
         public byte GetStones(byte player) => stones[player];
         void TookStone(byte player)
@@ -248,7 +271,7 @@ namespace Quatrene
             aiTimer = new Stopwatch();
             aiTimer.Start();
 
-            aiMove = AI.Move(this, 6, 4);
+            AI.Move(ref this, 6, 4);
 
             aiTimer.Stop();
 
@@ -256,8 +279,14 @@ namespace Quatrene
                 MainControl.ShowAiDebugInfo();
         }
 
-        public static GameState aiMove;
         public static Stopwatch aiTimer;
+
+        public float GetAiScore()
+        {
+            var score = GetScore(AI.Player);
+            var other = AI.Player == 0 ? 1 : 0;
+            return score - GetScore((byte)other);
+        }
 
         public bool RandomMoveExt(bool onlyValidMoves, out Move move)
         {
@@ -426,10 +455,6 @@ namespace Quatrene
 
         #endregion
 
-        public Quatrain[] quatrains = new Quatrain[76];
-
-        UInt64 quatrainStones;
-
         void SetQuatrainStone(byte x, byte y, byte z) =>
             quatrainStones |= ((UInt64)1 << (16 * z + 4 * y + x));
 
@@ -439,6 +464,7 @@ namespace Quatrene
         void RegenerateQuatrains()
         {
             quatrainStones = 0;
+            var quatrains = new Quatrain[76];
 
             if (quatrainsSrc == null)
                 InitQuatrainsSrc();
