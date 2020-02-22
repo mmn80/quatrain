@@ -18,7 +18,7 @@ namespace Quatrene
         }
 
         public override string ToString() =>
-            (moveType == 0 ? "add" : "remove") + $" {x} {y} {z}";
+            (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
 
     public class GameState

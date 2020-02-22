@@ -140,7 +140,9 @@ namespace Quatrene
                 stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n\n";
                 stats += $"<color=#158>Next best moves:</color>\n";
                 foreach (var state in AI.Moves.
-                    OrderByDescending(s => s.score).Take(5))
+                    Where(s => s != Game.aiMove).
+                    OrderByDescending(s => s.score).
+                    Take(5))
                         stats += $"\t{state}\t({state.score})\n";
                 ShowInfo(stats);
             }
