@@ -116,6 +116,20 @@ namespace Quatrene
             return false;
         }
 
+        public bool CanAddStone(byte x, byte y)
+        {
+            if (GameMode != GameMode.Add)
+                return false;
+
+            var p = GetPlayer();
+            if (GetStones(p) <= 0)
+                return true;
+
+            if (GetStoneAt(x, y, 3) == Value.None)
+                return true;
+            return false;
+        }
+
         public bool DoAddStone(int x, int y)
         {
             if (!AiMode)
@@ -162,19 +176,15 @@ namespace Quatrene
             return true;
         }
 
-        public bool DoRemoveStone(int x, int y, int z)
+        public bool CanRemoveStone(int x, int y, int z)
         {
-            if (!AiMode)
-                MainControl.HideMessage();
-
             if (GameMode != GameMode.Remove)
                 return false;
-
             var st = GetStoneAt((byte)x, (byte)y, (byte)z);
             if (st == Value.None)
             {
                 if (!AiMode)
-                    MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
+                    MainControl.ShowError($"there is no stone at [{x},{y},{z}]");
                 return false;
             }
             if (ToRemove != st)
@@ -195,6 +205,16 @@ namespace Quatrene
                     MainControl.ShowError("only top stones can be taken in classic mode");
                 return false;
             }
+            return true;
+        }
+
+        public bool DoRemoveStone(int x, int y, int z)
+        {
+            if (!AiMode)
+                MainControl.HideMessage();
+
+            if (!CanRemoveStone(x, y, z))
+                return false;
 
             if (!RemoveStone((byte)x, (byte)y, (byte)z))
             {
@@ -213,8 +233,8 @@ namespace Quatrene
 
         public bool RandomMove(bool onlyValidMoves = true)
         {
-            byte m, x, y, z;
-            return RandomMoveExt(onlyValidMoves, out m, out x, out y, out z);
+            Move move;
+            return RandomMoveExt(onlyValidMoves, out move);
         }
 
         public void AIMove()
@@ -222,7 +242,7 @@ namespace Quatrene
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            var move = AI.Move(this, 6, 6);
+            var move = AI.Move(this, 6, 4);
 
             watch.Stop();
             var ms = watch.ElapsedMilliseconds;
@@ -230,18 +250,17 @@ namespace Quatrene
             MainControl.ShowMessage($"AI moved ({move}) in {ms} ms ({ts} ticks)");
         }
 
-        public bool RandomMoveExt(bool onlyValidMoves, out byte moveType,
-            out byte x, out byte y, out byte z)
+        public bool RandomMoveExt(bool onlyValidMoves, out Move move)
         {
-            moveType = x = y = z = 0;
+            move.moveType = move.x = move.y = move.z = 0;
             var attempts = 0;
             if (GameMode == GameMode.Add)
             {
                 do
                 {
-                    x = (byte)UnityEngine.Random.Range(0, 4);
-                    y = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoAddStone(x, y))
+                    move.x = (byte)UnityEngine.Random.Range(0, 4);
+                    move.y = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoAddStone(move.x, move.y))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
@@ -249,13 +268,13 @@ namespace Quatrene
             }
             if (GameMode == GameMode.Remove)
             {
-                moveType = 1;
+                move.moveType = 1;
                 do
                 {
-                    x = (byte)UnityEngine.Random.Range(0, 4);
-                    y = (byte)UnityEngine.Random.Range(0, 4);
-                    z = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoRemoveStone(x, y, z))
+                    move.x = (byte)UnityEngine.Random.Range(0, 4);
+                    move.y = (byte)UnityEngine.Random.Range(0, 4);
+                    move.z = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoRemoveStone(move.x, move.y, move.z))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
