@@ -1,4 +1,6 @@
-﻿namespace Quatrene
+﻿using System.Collections.Generic;
+
+namespace Quatrene
 {
     public struct Move
     {
@@ -48,6 +50,8 @@
             if (generator(true, next, out nextState.move))
             {
                 var val = nextState.Eval();
+                if (depth == 0)
+                    AI.Moves.Add(nextState);
                 if (val > bestNext || tries == 0)
                 {
                     bestNext = val;
@@ -131,10 +135,12 @@
         public static int Width, Depth;
         public static byte Player;
         public static int Tries;
+        public static List<GameState> Moves = new List<GameState>();
 
         public static GameState Move(Game game, int depth, int width)
         {
             Tries = 0;
+            Moves.Clear();
             Width = width;
             Depth = depth;
             Player = game.GetPlayer();
@@ -146,12 +152,8 @@
             var score = state.Eval();
             Game.AiMode = false;
 
-            UnityEngine.Debug.Log($"Value of current position is {score}.");
             if (state.best != null)
-            {
-                UnityEngine.Debug.Log($"Best move: {state.best}.");
                 state.best.move.Apply(game, true);
-            }
             return state.best;
         }
     }

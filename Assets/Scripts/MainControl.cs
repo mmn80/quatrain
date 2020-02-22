@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -133,11 +134,14 @@ namespace Quatrene
             {
                 var ms = Game.aiTimer.ElapsedMilliseconds;
                 var ts = Game.aiTimer.ElapsedTicks;
-                var stats = "<color=#158>AI stats</color>\n\n";
-                stats += $"<color=#158>Move:</color>\t{Game.aiMove}\n";
-                stats += $"<color=#158>Time:</color>\t\t{ms} ms ({ts} ticks)\n";
+                var stats = $"<color=#158>Move:</color>\t{Game.aiMove}\n";
+                stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
                 stats += $"<color=#158>Score:</color>\t{Game.aiMove.score}\n";
-                stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n";
+                stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n\n";
+                stats += $"<color=#158>Next best moves:</color>\n";
+                foreach (var state in AI.Moves.
+                    OrderByDescending(s => s.score).Take(5))
+                        stats += $"\t{state}\t({state.score})\n";
                 ShowInfo(stats);
             }
         }
