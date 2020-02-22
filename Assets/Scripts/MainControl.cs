@@ -132,7 +132,7 @@ namespace Quatrene
 
         public static void ShowAiDebugInfo()
         {
-            var bests = AI.Moves.
+            var bests = Game.Moves.
                 OrderByDescending(s => s.AiScore).
                 Take(5).ToArray();
             var best = bests[0];
@@ -141,7 +141,7 @@ namespace Quatrene
             var stats = $"<color=#158>Move:</color>\t{best.AiMove}\n";
             stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
             stats += $"<color=#158>Score:</color>\t{best.AiScore}\n";
-            stats += $"<color=#158>Moves:</color>\t{AI.Tries}\n\n";
+            stats += $"<color=#158>Moves:</color>\t{Game.Tries}\n\n";
             stats += $"<color=#158>Next best moves:</color>\n";
             foreach (var g in bests.Skip(1))
                 stats += $"\t{g.AiMove}  ({g.AiScore})\n";

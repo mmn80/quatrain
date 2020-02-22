@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace Quatrene
     public enum Value { None = 0, White = 1, Black = 2 }
     public enum StoneType { White = 0, Black = 1 }
 
-    public struct Game
+    public partial struct Game
     {
         public static StoneType Value2Stone(Value val) =>
             val == Value.Black ? StoneType.Black : StoneType.White;
@@ -253,70 +252,6 @@ namespace Quatrene
             ProcessQuatrains(x, y, z, true);
 
             return true;
-        }
-
-        public bool RandomMove(bool onlyValidMoves = true)
-        {
-            Move move;
-            return RandomMoveExt(onlyValidMoves, out move);
-        }
-
-        public void AIMove()
-        {
-            if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
-                return;
-
-            aiTimer = new Stopwatch();
-            aiTimer.Start();
-
-            AI.Move(ref this, 6, 4);
-
-            aiTimer.Stop();
-
-            if (ShowAiDebugInfo)
-                MainControl.ShowAiDebugInfo();
-        }
-
-        public static Stopwatch aiTimer;
-
-        public float GetAiScore()
-        {
-            var score = GetScore(AI.Player);
-            var other = AI.Player == 0 ? 1 : 0;
-            return score - GetScore((byte)other);
-        }
-
-        public bool RandomMoveExt(bool onlyValidMoves, out Move move)
-        {
-            move.moveType = move.x = move.y = move.z = 0;
-            var attempts = 0;
-            if (GameMode == GameMode.Add)
-            {
-                do
-                {
-                    move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    move.y = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoAddStone(move.x, move.y))
-                        return true;
-                }
-                while (!onlyValidMoves || attempts++ < 20);
-                return false;
-            }
-            if (GameMode == GameMode.Remove)
-            {
-                move.moveType = 1;
-                do
-                {
-                    move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    move.y = (byte)UnityEngine.Random.Range(0, 4);
-                    move.z = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoRemoveStone(move.x, move.y, move.z))
-                        return true;
-                }
-                while (!onlyValidMoves || attempts++ < 20);
-                return false;
-            }
-            return false;
         }
 
         bool IsTopStone(int x, int y, int z) =>
