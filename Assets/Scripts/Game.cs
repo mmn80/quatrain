@@ -19,14 +19,15 @@ namespace Quatrene
 
         public Game(ref Game src)
         {
-            stones = new byte[] { 32, 32 };
-            score = new byte[] { 0, 0 };
-            board = new UInt64[] { 0, 0, 0, 0 };
-
+            stones0 = src.stones0;
+            stones1 = src.stones1;
+            score0 = src.score0;
+            score1 = src.score1;
+            board0 = src.board0;
+            board1 = src.board1;
+            board2 = src.board2;
+            board3 = src.board3;
             game = src.game;
-            src.stones.CopyTo(stones, 0);
-            src.score.CopyTo(score, 0);
-            src.board.CopyTo(board, 0);
             quatrainStones = src.quatrainStones;
 
             aiValue = new AiValue();
@@ -36,9 +37,9 @@ namespace Quatrene
         public Game(bool dummy)
         {
             game = 0;
-            stones = new byte[] { 32, 32 };
-            score = new byte[] { 0, 0 };
-            board = new UInt64[] { 0, 0, 0, 0 };
+            stones0 = stones1 = 32;
+            score0 = score1 = 0;
+            board0 = board1 = board2 = board3 = 0;
             quatrainStones = 0;
 
             aiValue = new AiValue();
@@ -46,21 +47,21 @@ namespace Quatrene
         }
 
         byte game;
-        byte[] stones;
-        byte[] score;
-        UInt64[] board;
+        byte stones0, stones1;
+        byte score0, score1;
+        UInt64 board0, board1, board2, board3;
         UInt64 quatrainStones;
 
         public AiValue aiValue;
         public byte AiDepth;
 
-        public byte GetStones(byte player) => stones[player];
+        public byte GetStones(byte player) => player == 0 ? stones0 : stones1;
         void TookStone(byte player)
         {
-            stones[player]--;
-            score[player == 0 ? (byte)1 : (byte)0]++;
+            if (player == 0) stones0--; else stones1--;
+            if (player == 0) score1++; else score0++;
         }
-        public byte GetScore(byte player) => score[player];
+        public byte GetScore(byte player) => player == 0 ? score0 : score1;
         byte GetMode() => (byte)(game & 0x0F);
         void SetMode(byte m) => game = (byte)(game & 0xF0 | m);
         public byte GetPlayer() => (byte)(game >> 6);
@@ -107,15 +108,42 @@ namespace Quatrene
             set => SetToRemove((byte)value);
         }
 
-        StoneAtPos GetStoneAt(byte x, byte y, byte z) =>
-            (StoneAtPos)(byte)(((board[z] << (60 - y * 16 - x * 4)) >> 60));
+        StoneAtPos GetStoneAt(byte x, byte y, byte z)
+        {
+            switch (z)
+            {
+                case 0: return (StoneAtPos)(byte)
+                    (((board0 << (60 - y * 16 - x * 4)) >> 60));
+                case 1: return (StoneAtPos)(byte)
+                    (((board1 << (60 - y * 16 - x * 4)) >> 60));
+                case 2: return (StoneAtPos)(byte)
+                    (((board2 << (60 - y * 16 - x * 4)) >> 60));
+                case 3: return (StoneAtPos)(byte)
+                    (((board3 << (60 - y * 16 - x * 4)) >> 60));
+            }
+            return 0;
+        }
 
         void SetStoneAt(byte x, byte y, byte z, StoneAtPos v)
         {
             var shift = y * 16 + x * 4;
             var mask = (UInt64)0xF << shift;
             var val = (UInt64)v << shift;
-            board[z] = (board[z] & ~mask) | val;
+            switch (z)
+            {
+                case 0:
+                    board0 = (board0 & ~mask) | val;
+                    break;
+                case 1:
+                    board1 = (board1 & ~mask) | val;
+                    break;
+                case 2:
+                    board2 = (board2 & ~mask) | val;
+                    break;
+                case 3:
+                    board3 = (board3 & ~mask) | val;
+                    break;
+            }
         }
 
         bool AddStoneAt(byte x, byte y, out byte z)
@@ -127,7 +155,7 @@ namespace Quatrene
                 if (GetStoneAt(x, y, z) == StoneAtPos.None)
                 {
                     SetStoneAt(x, y, z, (StoneAtPos)(p + 1));
-                    stones[p]--;
+                    if (p == 0) stones0--; else stones1--;
                     RegenerateQuatrains();
                     return true;
                 }
@@ -188,7 +216,7 @@ namespace Quatrene
             var s = GetStoneAt(x, y, z);
             if (s == StoneAtPos.None)
                 return false;
-            score[s == StoneAtPos.Black ? (byte)0 : (byte)1]++;
+            if (s == StoneAtPos.Black) score0++; else score1++;
             for (byte i = z; i < 4; i++)
                 SetStoneAt(x, y, i, i >= 3 ? StoneAtPos.None :
                     GetStoneAt(x, y, (byte)(i + 1)));
@@ -286,7 +314,7 @@ namespace Quatrene
         {
             MainControl.ShowMessage(String.Format(
                 "#{0:X16}\n#{1:X16}\n#{2:X16}\n#{3:X16}",
-                board[0], board[1], board[2], board[3]));
+                board0, board1, board2, board3));
         }
 
         public static bool ShowQuatrainsDebugInfo = false;
