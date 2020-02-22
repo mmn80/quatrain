@@ -24,6 +24,15 @@ namespace Quatrene
 
         public static void ShowError(string message) => ShowMessage(message, true);
 
+        public static void ShowStoneError(string message, int x, int y, int z)
+        {
+            if (Game.AiMode)
+                return;
+            var stone = stones[x, y, z];
+            if (stone)
+                stone.ShowError(message);
+        }
+
         public static void HideMessage() => ShowMessage("");
 
         public static void ShowInfo(string message)

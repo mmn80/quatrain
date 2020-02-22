@@ -72,13 +72,13 @@ namespace Quatrene
                 GetComponents<AudioSource>()[0].Play();
         }
 
-        public void PlayErrorSound()
+        void PlayErrorSound()
         {
             if (!MainControl.EffectsMuted)
                 GetComponents<AudioSource>()[1].Play();
         }
 
-        void ShowError(string message)
+        public void ShowError(string message)
         {
             MainControl.ShowError(message);
             PlayErrorSound();
