@@ -121,7 +121,7 @@ namespace Quatrene
             board[z] = (board[z] & ~mask) | val;
         }
 
-        bool AddStone(byte x, byte y, out byte z)
+        bool AddStoneAt(byte x, byte y, out byte z)
         {
             var p = GetPlayer();
             z = 0;
@@ -153,7 +153,7 @@ namespace Quatrene
             return false;
         }
 
-        public bool DoAddStone(int x, int y)
+        public bool AddStone(int x, int y)
         {
             if (!AiMode)
                 MainControl.HideMessage();
@@ -171,7 +171,7 @@ namespace Quatrene
             }
 
             byte z;
-            if (!AddStone((byte)x, (byte)y, out z))
+            if (!AddStoneAt((byte)x, (byte)y, out z))
             {
                 if (!AiMode)
                     MainControl.ShowError($"Stack [{x},{y}] is full.");
@@ -186,7 +186,7 @@ namespace Quatrene
             return true;
         }
 
-        bool RemoveStone(byte x, byte y, byte z)
+        bool RemoveStoneAt(byte x, byte y, byte z)
         {
             var s = GetStoneAt(x, y, z);
             if (s == Value.None)
@@ -231,7 +231,7 @@ namespace Quatrene
             return true;
         }
 
-        public bool DoRemoveStone(int x, int y, int z)
+        public bool RemoveStone(int x, int y, int z)
         {
             if (!AiMode)
                 MainControl.HideMessage();
@@ -239,7 +239,7 @@ namespace Quatrene
             if (!CanRemoveStone(x, y, z))
                 return false;
 
-            if (!RemoveStone((byte)x, (byte)y, (byte)z))
+            if (!RemoveStoneAt((byte)x, (byte)y, (byte)z))
             {
                 if (!AiMode)
                     MainControl.ShowError($"There is no stone at [{x},{y},{z}].");

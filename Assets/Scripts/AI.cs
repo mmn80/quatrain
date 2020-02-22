@@ -27,18 +27,6 @@ namespace Quatrene
         public byte moveType;
         public byte x, y, z;
 
-        public bool Apply(ref Game game)
-        {
-            if (moveType == 0)
-                return game.DoAddStone(x, y);
-            else if (moveType == 1)
-                return game.DoRemoveStone(x, y, z);
-            else if (moveType == 2)
-                return game.RandomMove(true);
-            else
-                return false;
-        }
-
         public override string ToString() =>
             (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
@@ -55,8 +43,7 @@ namespace Quatrene
         {
             var next = new Game(ref this);
             next.AiMove = move;
-
-            if (next.AiMove.Apply(ref next))
+            if (next.ApplyAiMove())
             {
                 Game nextBest;
                 var val = next.Eval(out nextBest);
@@ -71,6 +58,18 @@ namespace Quatrene
                 tries++;
                 Tries++;
             }
+        }
+
+        public bool ApplyAiMove()
+        {
+            if (AiMove.moveType == 0)
+                return AddStone(AiMove.x, AiMove.y);
+            else if (AiMove.moveType == 1)
+                return RemoveStone(AiMove.x, AiMove.y, AiMove.z);
+            else if (AiMove.moveType == 2)
+                return RandomMove(true);
+            else
+                return false;
         }
 
         public float Eval(out Game best)
@@ -136,7 +135,10 @@ namespace Quatrene
             Game.AiMode = false;
 
             if (best.AiDepth > 0)
-                best.AiMove.Apply(ref this);
+            {
+                AiMove = best.AiMove;
+                ApplyAiMove();
+            }
 
             aiTimer.Stop();
 
@@ -162,7 +164,7 @@ namespace Quatrene
                 {
                     AiMove.x = (byte)UnityEngine.Random.Range(0, 4);
                     AiMove.y = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoAddStone(AiMove.x, AiMove.y))
+                    if (AddStone(AiMove.x, AiMove.y))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
@@ -176,7 +178,7 @@ namespace Quatrene
                     AiMove.x = (byte)UnityEngine.Random.Range(0, 4);
                     AiMove.y = (byte)UnityEngine.Random.Range(0, 4);
                     AiMove.z = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoRemoveStone(AiMove.x, AiMove.y, AiMove.z))
+                    if (RemoveStone(AiMove.x, AiMove.y, AiMove.z))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
