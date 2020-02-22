@@ -261,12 +261,10 @@ namespace Quatrene
             return RandomMoveExt(onlyValidMoves, out move);
         }
 
-        public IEnumerator AIMove()
+        public void AIMove()
         {
             if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
-                yield break;
-
-            yield return new WaitForSecondsRealtime(0.1f);
+                return;
 
             aiTimer = new Stopwatch();
             aiTimer.Start();

@@ -121,13 +121,6 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
-        IEnumerator MakeAiMove()
-        {
-            yield return new WaitForSecondsRealtime(0.5f);
-            if (AiPlayers[game.GetPlayer()])
-                StartCoroutine(game.AIMove());
-        }
-
         public static void ShowAiDebugInfo()
         {
             var bests = AI.Moves.
@@ -146,12 +139,6 @@ namespace Quatrene
             ShowInfo(stats);
         }
 
-        public bool AddStone(int x, int y)
-        {
-            StartCoroutine(MakeAiMove());
-            return game.DoAddStone(x, y);
-        }
-
         public static void OnAfterAdd(int x, int y, int z)
         {
             stones[x, y, z] = Stone.MakeStone(x, y, z,
@@ -160,12 +147,6 @@ namespace Quatrene
             Instance.UpdateUI();
 
             HighlightStones();
-        }
-
-        public bool RemoveStone(int x, int y, int z)
-        {
-            StartCoroutine(MakeAiMove());
-            return game.DoRemoveStone(x, y, z);
         }
 
         public static void OnAfterRemove(int x, int y, int z)
@@ -229,6 +210,27 @@ namespace Quatrene
                         else if (game.IsQuatrainStone(x, y, z))
                             s.Highlighted = true;
                     }
+        }
+
+
+        IEnumerator AiLoop()
+        {
+            while (true)
+            {
+                yield return new WaitForSecondsRealtime(0.5f);
+                if (game.GameMode != GameMode.Lobby &&
+                    game.GameMode != GameMode.GameOver &&
+                    AiPlayers[game.GetPlayer()])
+                        game.AIMove();
+            }
+        }
+
+        void Awake() => Instance = this;
+
+        void Start()
+        {
+            NewGame();
+            StartCoroutine(AiLoop());
         }
 
         public GameObject WhiteStonePrefab;
@@ -296,10 +298,6 @@ namespace Quatrene
             }
             return sb.ToString();
         }
-
-        void Awake() => Instance = this;
-
-        void Start() => NewGame();
 
         const string helpInfo = @"<color=#158>CONTROLS</color>
 
@@ -431,7 +429,7 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F5))
                 game.RandomMove();
             else if (Input.GetKeyUp(KeyCode.F6))
-                StartCoroutine(game.AIMove());
+                game.AIMove();
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }

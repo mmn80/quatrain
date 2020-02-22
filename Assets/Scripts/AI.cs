@@ -21,14 +21,12 @@ namespace Quatrene
         public byte moveType;
         public byte x, y, z;
 
-        public bool Apply(ref Game game, bool forReals = false)
+        public bool Apply(ref Game game)
         {
             if (moveType == 0)
-                return forReals ? MainControl.Instance.AddStone(x, y) :
-                    game.DoAddStone(x, y);
+                return game.DoAddStone(x, y);
             else
-                return forReals ? MainControl.Instance.RemoveStone(x, y, z) :
-                    game.DoRemoveStone(x, y, z);
+                return game.DoRemoveStone(x, y, z);
         }
 
         public override string ToString() =>
@@ -152,7 +150,7 @@ namespace Quatrene
             Game.AiMode = false;
 
             if (best.AiDepth > 0)
-                best.AiMove.Apply(ref game, true);
+                best.AiMove.Apply(ref game);
         }
     }
 }
