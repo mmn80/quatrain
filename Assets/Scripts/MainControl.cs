@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Quatrene
@@ -43,6 +44,11 @@ namespace Quatrene
             "Player 1", "Player 2"
         };
 
+        static bool[] AiPlayers = new bool[]
+        {
+            false, false
+        };
+
         static bool NewGame()
         {
             game = new Game();
@@ -56,14 +62,27 @@ namespace Quatrene
                             x < 2 ? StoneType.White : StoneType.Black,
                             true, false);
 
-            ShowMessage("press <color=#158>N</color> to start new game");
+            ShowMessage("press <color=#158>N</color> to start new game\n" +
+                "press <color=#158>C</color> to play against the computer");
             Instance.UpdateUI();
 
             return true;
         }
 
-        static bool StartGame()
+        static bool StartGame(bool againstAi)
         {
+            AiPlayers[0] = false;
+            AiPlayers[1] = againstAi;
+            if (againstAi)
+            {
+                if (PlayerNames[0] == "Player 1")
+                    PlayerNames[0] = "Hombre";
+                if (PlayerNames[1] == "Player 2")
+                    PlayerNames[1] = "Computador";
+                Instance.Player1.text = PlayerNames[0];
+                Instance.Player2.text = PlayerNames[1];
+            }
+
             game.GameMode = GameMode.Add;
 
             Instance.UpdateUI();
@@ -101,6 +120,19 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
+        IEnumerator MakeAiMove()
+        {
+            yield return new WaitForSecondsRealtime(0.5f);
+            if (AiPlayers[game.GetPlayer()])
+                StartCoroutine(game.AIMove());
+        }
+
+        public bool AddStone(int x, int y)
+        {
+            StartCoroutine(MakeAiMove());
+            return game.DoAddStone(x, y);
+        }
+
         public static void OnAfterAdd(int x, int y, int z)
         {
             stones[x, y, z] = Stone.MakeStone(x, y, z,
@@ -109,6 +141,12 @@ namespace Quatrene
             Instance.UpdateUI();
 
             HighlightStones();
+        }
+
+        public bool RemoveStone(int x, int y, int z)
+        {
+            StartCoroutine(MakeAiMove());
+            return game.DoRemoveStone(x, y, z);
         }
 
         public static void OnAfterRemove(int x, int y, int z)
@@ -260,7 +298,8 @@ namespace Quatrene
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 
-- <color=#158>N</color>\t: start new game
+- <color=#158>N</color>\t: start new hot seat game
+- <color=#158>C</color>\t: start new game against the computer
 - <color=#158>Esc</color>\t: quit (current) game
 ";
 
@@ -320,7 +359,10 @@ namespace Quatrene
             }
             else if (game.GameMode == GameMode.Lobby &&
                     Input.GetKeyUp(KeyCode.N))
-                StartGame();
+                StartGame(false);
+            else if (game.GameMode == GameMode.Lobby &&
+                    Input.GetKeyUp(KeyCode.C))
+                StartGame(true);
             else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;
@@ -366,7 +408,7 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F5))
                 game.RandomMove();
             else if (Input.GetKeyUp(KeyCode.F6))
-                game.AIMove();
+                StartCoroutine(game.AIMove());
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }

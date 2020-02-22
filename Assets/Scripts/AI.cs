@@ -5,12 +5,14 @@
         public byte moveType;
         public byte x, y, z;
 
-        public bool Apply(Game game)
+        public bool Apply(Game game, bool forReals = false)
         {
             if (moveType == 0)
-                return game.DoAddStone(x, y);
+                return forReals ? MainControl.Instance.AddStone(x, y) :
+                    game.DoAddStone(x, y);
             else
-                return game.DoRemoveStone(x, y, z);
+                return forReals ? MainControl.Instance.RemoveStone(x, y, z) :
+                    game.DoRemoveStone(x, y, z);
         }
 
         public override string ToString() =>
@@ -144,7 +146,7 @@
             if (state.best != null)
             {
                 UnityEngine.Debug.Log($"Best move: {state.best}.");
-                state.best.move.Apply(game);
+                state.best.move.Apply(game, true);
             }
             return state.best;
         }

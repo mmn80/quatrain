@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using UnityEngine;
@@ -237,8 +238,10 @@ namespace Quatrene
             return RandomMoveExt(onlyValidMoves, out move);
         }
 
-        public void AIMove()
+        public IEnumerator AIMove()
         {
+            yield return new WaitForSecondsRealtime(0.1f);
+
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
@@ -247,7 +250,7 @@ namespace Quatrene
             watch.Stop();
             var ms = watch.ElapsedMilliseconds;
             var ts = watch.ElapsedTicks;
-            MainControl.ShowMessage($"AI moved ({move}) in {ms} ms ({ts} ticks)");
+            UnityEngine.Debug.Log($"AI moved ({move}) in {ms} ms ({ts} ticks)");
         }
 
         public bool RandomMoveExt(bool onlyValidMoves, out Move move)
