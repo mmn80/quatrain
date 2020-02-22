@@ -133,18 +133,18 @@ namespace Quatrene
         public static void ShowAiDebugInfo()
         {
             var bests = Game.Moves.
-                OrderByDescending(s => s.AiScore).
+                OrderByDescending(v => v.Score).
                 Take(5).ToArray();
             var best = bests[0];
             var ms = Game.aiTimer.ElapsedMilliseconds;
             var ts = Game.aiTimer.ElapsedTicks;
-            var stats = $"<color=#158>Move:</color>\t{best.AiMove}\n";
+            var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
             stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
-            stats += $"<color=#158>Score:</color>\t{best.AiScore}\n";
+            stats += $"<color=#158>Score:</color>\t{best.Score}\n";
             stats += $"<color=#158>Moves:</color>\t{Game.Tries}\n\n";
             stats += $"<color=#158>Next best moves:</color>\n";
             foreach (var g in bests.Skip(1))
-                stats += $"\t{g.AiMove}  ({g.AiScore})\n";
+                stats += $"\t{g.Move}  ({g.Score})\n";
             ShowInfo(stats);
         }
 
@@ -230,7 +230,7 @@ namespace Quatrene
                 if (game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
                     AiPlayers[game.GetPlayer()])
-                        game.AIMove();
+                        game.MakeAiMove();
             }
         }
 
@@ -438,7 +438,7 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F5))
                 game.RandomMove();
             else if (Input.GetKeyUp(KeyCode.F6))
-                game.AIMove();
+                game.MakeAiMove();
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }
