@@ -84,8 +84,6 @@ namespace Quatrene
 
         public bool RandomMove(bool onlyValidMoves = true)
         {
-            
-
             aiValue.Move.moveType = 3;
             aiValue.Move.x = aiValue.Move.y = aiValue.Move.z = 0;
 
@@ -153,37 +151,42 @@ namespace Quatrene
             {
                 byte tries = 0;
                 float total = 0;
-                if (AiDepth <= 1)
+
+                foreach (var move in GetNextMoves(width))
                 {
-                    if (GameMode == GameMode.Add)
-                    {
-                        for (byte x = 0; x < 4; x++)
-                            for (byte y = 0; y < 4; y++)
-                                if (CanAddStone(x, y))
-                                    TryMove(new Move(0, x, y, 0),
-                                        ref stats, ref total, ref tries,
-                                        depth, width, player);
-                    }
-                    else if (GameMode == GameMode.Remove)
-                    {
-                        for (byte rx = 0; rx < 4; rx++)
-                            for (byte ry = 0; ry < 4; ry++)
-                                for (byte rz = 0; rz < 4; rz++)
-                                    if (CanRemoveStone(rx, ry, rz))
-                                        TryMove(new Move(1, rx, ry, rz),
-                                            ref stats, ref total, ref tries,
-                                            depth, width, player);
-                    }
+                    TryMove(move, ref stats, ref total, ref tries, depth, width, player);
                 }
-                else
-                    for (int i = 0; i < width; i++)
-                        TryMove(new Move(2, 0, 0, 0),
-                            ref stats, ref total, ref tries, depth, width, player);
+
                 if (tries == 0)
                     aiValue.Score = GetAiScore(player);
                 else
                     aiValue.Score = total / tries;
             }
+        }
+
+        IEnumerable<Move> GetNextMoves(byte width)
+        {
+            if (AiDepth <= 1)
+            {
+                if (GameMode == GameMode.Add)
+                {
+                    for (byte x = 0; x < 4; x++)
+                        for (byte y = 0; y < 4; y++)
+                            if (CanAddStone(x, y))
+                                yield return new Move(0, x, y, 0);
+                }
+                else if (GameMode == GameMode.Remove)
+                {
+                    for (byte rx = 0; rx < 4; rx++)
+                        for (byte ry = 0; ry < 4; ry++)
+                            for (byte rz = 0; rz < 4; rz++)
+                                if (CanRemoveStone(rx, ry, rz))
+                                    yield return new Move(1, rx, ry, rz);
+                }
+            }
+            else
+                for (int i = 0; i < width; i++)
+                    yield return  new Move(2, 0, 0, 0);
         }
 
         public void MakeAiMove(byte depth = 6, byte width = 4)
