@@ -19,6 +19,11 @@ namespace Quatrene
 
     public struct Move
     {
+        public Move(byte moveType, byte x, byte y, byte z)
+        {
+            this.moveType = moveType; this.x = x; this.y = y; this.z = z;
+        }
+
         public byte moveType;
         public byte x, y, z;
 
@@ -26,8 +31,12 @@ namespace Quatrene
         {
             if (moveType == 0)
                 return game.DoAddStone(x, y);
-            else
+            else if (moveType == 1)
                 return game.DoRemoveStone(x, y, z);
+            else if (moveType == 2)
+                return game.RandomMove(true);
+            else
+                return false;
         }
 
         public override string ToString() =>
@@ -41,17 +50,16 @@ namespace Quatrene
         public static int Tries;
         public static List<Game> Moves = new List<Game>();
 
-        void GenNextMove(bool random, ref float bestNext, ref Game best,
+        void GenNextMove(Move move, ref float bestNext, ref Game best,
             ref int tries, ref float total)
         {
             var next = new Game(ref this);
-            var ok = (random ?
-                next.RandomGen(true, out next.AiMove) :
-                next.AllGen(true, out next.AiMove));
-            if (ok)
+            next.AiMove = move;
+
+            if (next.AiMove.Apply(ref next))
             {
-                Game nn;
-                var val = next.Eval(out nn);
+                Game nextBest;
+                var val = next.Eval(out nextBest);
                 if (AiDepth == 0)
                     Moves.Add(next);
                 if (val > bestNext || tries == 0)
@@ -64,20 +72,6 @@ namespace Quatrene
                 Tries++;
             }
         }
-
-        bool RandomGen(bool onlyValid, out Move move) =>
-            RandomMoveExt(onlyValid, out move);
-
-        bool AllGen(bool onlyValid, out Move move)
-        {
-            move.moveType = allMove.moveType;
-            move.x = allMove.x;
-            move.y = allMove.y;
-            move.z = allMove.z;
-            return move.Apply(ref this);
-        }
-
-        static Move allMove;
 
         public float Eval(out Game best)
         {
@@ -97,13 +91,8 @@ namespace Quatrene
                         for (byte x = 0; x < 4; x++)
                             for (byte y = 0; y < 4; y++)
                                 if (CanAddStone(x, y))
-                                {
-                                    allMove.moveType = 0;
-                                    allMove.x = x;
-                                    allMove.y = y;
-                                    allMove.z = 0;
-                                    GenNextMove(false, ref bestNext, ref best, ref tries, ref total);
-                                }
+                                    GenNextMove(new Move(0, x, y, 0),
+                                        ref bestNext, ref best, ref tries, ref total);
                     }
                     else if (GameMode == GameMode.Remove)
                     {
@@ -111,18 +100,14 @@ namespace Quatrene
                             for (byte ry = 0; ry < 4; ry++)
                                 for (byte rz = 0; rz < 4; rz++)
                                     if (CanRemoveStone(rx, ry, rz))
-                                    {
-                                        allMove.moveType = 1;
-                                        allMove.x = rx;
-                                        allMove.y = ry;
-                                        allMove.z = rz;
-                                        GenNextMove(false, ref bestNext, ref best, ref tries, ref total);
-                                    }
+                                        GenNextMove(new Move(1, rx, ry, rz),
+                                            ref bestNext, ref best, ref tries, ref total);
                     }
                 }
                 else
                     for (int i = 0; i < Width; i++)
-                        GenNextMove(true, ref bestNext, ref best, ref tries, ref total);
+                        GenNextMove(new Move(2, 0, 0, 0),
+                            ref bestNext, ref best, ref tries, ref total);
                 if (tries == 0)
                     AiScore = GetAiScore();
                 else
@@ -166,21 +151,18 @@ namespace Quatrene
 
         public bool RandomMove(bool onlyValidMoves = true)
         {
-            Move move;
-            return RandomMoveExt(onlyValidMoves, out move);
-        }
+            AiMove.moveType = 2;
+            AiMove.x = AiMove.y = AiMove.z = 0;
 
-        public bool RandomMoveExt(bool onlyValidMoves, out Move move)
-        {
-            move.moveType = move.x = move.y = move.z = 0;
             var attempts = 0;
             if (GameMode == GameMode.Add)
             {
+                AiMove.moveType = 0;
                 do
                 {
-                    move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    move.y = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoAddStone(move.x, move.y))
+                    AiMove.x = (byte)UnityEngine.Random.Range(0, 4);
+                    AiMove.y = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoAddStone(AiMove.x, AiMove.y))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
@@ -188,13 +170,13 @@ namespace Quatrene
             }
             if (GameMode == GameMode.Remove)
             {
-                move.moveType = 1;
+                AiMove.moveType = 1;
                 do
                 {
-                    move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    move.y = (byte)UnityEngine.Random.Range(0, 4);
-                    move.z = (byte)UnityEngine.Random.Range(0, 4);
-                    if (DoRemoveStone(move.x, move.y, move.z))
+                    AiMove.x = (byte)UnityEngine.Random.Range(0, 4);
+                    AiMove.y = (byte)UnityEngine.Random.Range(0, 4);
+                    AiMove.z = (byte)UnityEngine.Random.Range(0, 4);
+                    if (DoRemoveStone(AiMove.x, AiMove.y, AiMove.z))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
