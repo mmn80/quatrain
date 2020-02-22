@@ -5,20 +5,6 @@ using Unity.Jobs;
 
 namespace Quatrene
 {
-    public struct Move
-    {
-        public Move(byte moveType, byte x, byte y, byte z)
-        {
-            this.moveType = moveType; this.x = x; this.y = y; this.z = z;
-        }
-
-        public byte moveType;
-        public byte x, y, z;
-
-        public override string ToString() =>
-            (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
-    }
-
     public struct GameAi : IJob
     {
         public byte depth, width;
@@ -32,9 +18,25 @@ namespace Quatrene
             var tempStats = new AiStats(0);
             game.Eval(depth, width, game.GetPlayer(), ref tempStats);
             tries = tempStats.Tries;
-            //moves.AddRange(tempStats.Moves);
+            moves.Clear();
+            foreach (var m in tempStats.Moves)
+                moves.Add(m);
             result[0] = game.aiValue;
         }
+    }
+
+    public struct Move
+    {
+        public Move(byte moveType, byte x, byte y, byte z)
+        {
+            this.moveType = moveType; this.x = x; this.y = y; this.z = z;
+        }
+
+        public byte moveType;
+        public byte x, y, z;
+
+        public override string ToString() =>
+            (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
 
     public struct AiValue
@@ -76,8 +78,15 @@ namespace Quatrene
                 return false;
         }
 
+        static System.Random Seed = new System.Random();
+
+        static byte Rnd4() => //(byte)UnityEngine.Random.Range(0, 4);
+            (byte)Seed.Next(4);
+
         public bool RandomMove(bool onlyValidMoves = true)
         {
+            
+
             aiValue.Move.moveType = 3;
             aiValue.Move.x = aiValue.Move.y = aiValue.Move.z = 0;
 
@@ -87,8 +96,8 @@ namespace Quatrene
                 aiValue.Move.moveType = 0;
                 do
                 {
-                    aiValue.Move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    aiValue.Move.y = (byte)UnityEngine.Random.Range(0, 4);
+                    aiValue.Move.x = Rnd4();
+                    aiValue.Move.y = Rnd4();
                     if (ApplyAiMove())
                         return true;
                 }
@@ -100,9 +109,9 @@ namespace Quatrene
                 aiValue.Move.moveType = 1;
                 do
                 {
-                    aiValue.Move.x = (byte)UnityEngine.Random.Range(0, 4);
-                    aiValue.Move.y = (byte)UnityEngine.Random.Range(0, 4);
-                    aiValue.Move.z = (byte)UnityEngine.Random.Range(0, 4);
+                    aiValue.Move.x = Rnd4();
+                    aiValue.Move.y = Rnd4();
+                    aiValue.Move.z = Rnd4();
                     if (ApplyAiMove())
                         return true;
                 }
@@ -112,7 +121,7 @@ namespace Quatrene
             return aiValue.Move.moveType < 2;
         }
 
-        void TryMove(Move move, ref AiStats stats, ref float total,
+        void TryMove(Move move, ref AiStats stats, ref float total, ref byte tries,
             byte depth, byte width, byte player)
         {
             var next = new Game(ref this);
@@ -127,6 +136,7 @@ namespace Quatrene
                 if (nextVal.Score > aiValue.Score)
                     aiValue = nextVal;
                 total += nextVal.Score;
+                tries++;
                 stats.Tries++;
             }
         }
@@ -138,11 +148,11 @@ namespace Quatrene
                 Score = -10000,
                 Move = new Move(3, 0, 0, 0)
             };
-            var triesBefore = stats.Tries;
             if (AiDepth >= depth || GameMode == GameMode.GameOver)
                 aiValue.Score = GetAiScore(player);
             else
             {
+                byte tries = 0;
                 float total = 0;
                 if (AiDepth <= 1)
                 {
@@ -152,7 +162,7 @@ namespace Quatrene
                             for (byte y = 0; y < 4; y++)
                                 if (CanAddStone(x, y))
                                     TryMove(new Move(0, x, y, 0),
-                                        ref stats, ref total,
+                                        ref stats, ref total, ref tries,
                                         depth, width, player);
                     }
                     else if (GameMode == GameMode.Remove)
@@ -162,18 +172,18 @@ namespace Quatrene
                                 for (byte rz = 0; rz < 4; rz++)
                                     if (CanRemoveStone(rx, ry, rz))
                                         TryMove(new Move(1, rx, ry, rz),
-                                            ref stats, ref total,
+                                            ref stats, ref total, ref tries,
                                             depth, width, player);
                     }
                 }
                 else
                     for (int i = 0; i < width; i++)
                         TryMove(new Move(2, 0, 0, 0),
-                            ref stats, ref total, depth, width, player);
-                if (triesBefore == stats.Tries)
+                            ref stats, ref total, ref tries, depth, width, player);
+                if (tries == 0)
                     aiValue.Score = GetAiScore(player);
                 else
-                    aiValue.Score = total / width;
+                    aiValue.Score = total / tries;
             }
         }
 
@@ -182,14 +192,15 @@ namespace Quatrene
             if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
                 return;
 
+            Seed = new System.Random();
             aiTimer = new Stopwatch();
             aiTimer.Start();
             AiMode = true;
 
             AiStats = new AiStats(0);
-            //Eval(depth, width, GetPlayer(), ref AiStats);
+            Eval(depth, width, GetPlayer(), ref AiStats);
 
-            MakeECSJob(depth, width);
+            //MakeECSJob(depth, width);
 
             aiTimer.Stop();
 
@@ -202,9 +213,6 @@ namespace Quatrene
 
         void MakeECSJob(byte depth, byte width)
         {
-            // var games = new NativeArray<Game>(1, Allocator.Persistent);
-            // games[0] = this;
-
             var moves = new NativeList<AiValue>(Allocator.Persistent);
             var result = new NativeArray<AiValue>(1, Allocator.Persistent);
 
@@ -212,15 +220,17 @@ namespace Quatrene
             job.game = this;
             job.depth = depth;
             job.width = width;
-            job.moves = moves;
             job.result = result;
+            job.moves = moves;
 
             var handle = job.Schedule();
             handle.Complete();
 
-            AiStats.Moves.AddRange(moves);
-            AiStats.Tries = job.tries;
             aiValue = job.result[0];
+
+            foreach (var m in moves.ToArray())
+                AiStats.Moves.Add(m);
+            AiStats.Tries = job.tries;
 
             moves.Dispose();
             result.Dispose();
