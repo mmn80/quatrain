@@ -37,10 +37,21 @@ namespace Quatrene
         public Move Move;
     }
 
+    public struct AiStats
+    {
+        public AiStats(int tries)
+        {
+            Tries = tries;
+            Moves = new List<AiValue>();
+        }
+
+        public int Tries;
+        public List<AiValue> Moves;
+    }
+
     public partial struct Game
     {
-        public static int Tries;
-        public static List<AiValue> Moves = new List<AiValue>();
+        public static AiStats AiStats;
 
         public float GetAiScore(byte player) =>
             GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0));
@@ -95,7 +106,7 @@ namespace Quatrene
             return aiValue.Move.moveType < 2;
         }
 
-        void TryMove(Move move, ref int tries, ref float total,
+        void TryMove(Move move, ref AiStats stats, ref float total,
             byte depth, byte width, byte player)
         {
             var next = new Game(ref this);
@@ -103,25 +114,25 @@ namespace Quatrene
             if (next.ApplyAiMove())
             {
                 var nextVal = next.aiValue;
-                next.Eval(depth, width, player);
+                next.Eval(depth, width, player, ref stats);
                 nextVal.Score = next.aiValue.Score;
                 if (AiDepth == 0)
-                    Moves.Add(nextVal);
-                if (nextVal.Score > aiValue.Score || tries == 0)
+                    stats.Moves.Add(nextVal);
+                if (nextVal.Score > aiValue.Score)
                     aiValue = nextVal;
                 total += nextVal.Score;
-                tries++;
+                stats.Tries++;
             }
         }
 
-        public int Eval(byte depth, byte width, byte player)
+        public void Eval(byte depth, byte width, byte player, ref AiStats stats)
         {
             aiValue = new AiValue()
             {
                 Score = -10000,
                 Move = new Move(3, 0, 0, 0)
             };
-            var tries = 0;
+            var triesBefore = stats.Tries;
             if (AiDepth >= depth || GameMode == GameMode.GameOver)
                 aiValue.Score = GetAiScore(player);
             else
@@ -135,7 +146,7 @@ namespace Quatrene
                             for (byte y = 0; y < 4; y++)
                                 if (CanAddStone(x, y))
                                     TryMove(new Move(0, x, y, 0),
-                                        ref tries, ref total,
+                                        ref stats, ref total,
                                         depth, width, player);
                     }
                     else if (GameMode == GameMode.Remove)
@@ -145,20 +156,19 @@ namespace Quatrene
                                 for (byte rz = 0; rz < 4; rz++)
                                     if (CanRemoveStone(rx, ry, rz))
                                         TryMove(new Move(1, rx, ry, rz),
-                                            ref tries, ref total,
+                                            ref stats, ref total,
                                             depth, width, player);
                     }
                 }
                 else
                     for (int i = 0; i < width; i++)
                         TryMove(new Move(2, 0, 0, 0),
-                            ref tries, ref total, depth, width, player);
-                if (tries == 0)
+                            ref stats, ref total, depth, width, player);
+                if (triesBefore == stats.Tries)
                     aiValue.Score = GetAiScore(player);
                 else
                     aiValue.Score = total / width;
             }
-            return tries;
         }
 
         public void MakeAiMove(byte depth = 6, byte width = 4)
@@ -169,10 +179,10 @@ namespace Quatrene
             aiTimer = new Stopwatch();
             aiTimer.Start();
 
-            Moves.Clear();
+            AiStats = new AiStats(0);
 
             AiMode = true;
-            Tries = Eval(depth, width, GetPlayer());
+            Eval(depth, width, GetPlayer(), ref AiStats);
             AiMode = false;
 
             ApplyAiMove();
