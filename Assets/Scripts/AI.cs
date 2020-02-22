@@ -21,13 +21,19 @@ namespace Quatrene
 
     public struct GameAi : IJob
     {
-        public Game game;
+        public byte depth, width;
+        public NativeArray<Game> game;
+        public int tries;
+        public NativeList<AiValue> moves;
         public NativeArray<AiValue> result;
 
         public void Execute()
         {
-            game.MakeAiMove();
-            result[0] = game.aiValue;
+            var tempStats = new AiStats(0);
+            game[0].Eval(depth, width, game[0].GetPlayer(), ref tempStats);
+            tries = tempStats.Tries;
+            //moves.AddRange(tempStats.Moves);
+            result[0] = game[0].aiValue;
         }
     }
 
@@ -178,16 +184,37 @@ namespace Quatrene
 
             aiTimer = new Stopwatch();
             aiTimer.Start();
+            AiMode = true;
 
             AiStats = new AiStats(0);
-
-            AiMode = true;
             Eval(depth, width, GetPlayer(), ref AiStats);
-            AiMode = false;
 
-            ApplyAiMove();
+            // var games = new NativeArray<Game>(1, Allocator.Persistent);
+            // games[0] = this;
+
+            // var moves = new NativeList<AiValue>(Allocator.Persistent);
+            // var result = new NativeArray<AiValue>(1, Allocator.Persistent);
+
+            // var job = new GameAi();
+            // job.depth = depth;
+            // job.width = width;
+            // job.moves = moves;
+            // job.result = result;
+
+            // var handle = job.Schedule();
+            // handle.Complete();
+
+            // AiStats.Moves.AddRange(moves);
+            // AiStats.Tries = job.tries;
+            // aiValue = job.result[0];
+
+            // moves.Dispose();
+            // result.Dispose();
 
             aiTimer.Stop();
+
+            AiMode = false;
+            ApplyAiMove();
 
             if (ShowAiDebugInfo)
                 MainControl.ShowAiDebugInfo();
