@@ -1,7 +1,21 @@
 ﻿using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 
 namespace Quatrene
 {
+    public struct MyJob : IJob
+    {
+        public float a;
+        public float b;
+        public NativeArray<float> result;
+
+        public void Execute()
+        {
+            result[0] = a + b;
+        }
+    }
+
     public struct Move
     {
         public byte moveType;

@@ -143,7 +143,7 @@ namespace Quatrene
                     Where(s => s != Game.aiMove).
                     OrderByDescending(s => s.score).
                     Take(5))
-                        stats += $"\t{state}\t({state.score})\n";
+                        stats += $"\t{state}  ({state.score})\n";
                 ShowInfo(stats);
             }
         }
