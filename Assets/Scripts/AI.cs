@@ -9,7 +9,7 @@ namespace Quatrene
     {
         public byte depth, width;
         public Game game;
-        public int tries;
+        public NativeArray<int> tries;
         public NativeList<AiValue> moves;
         public NativeArray<AiValue> result;
 
@@ -17,7 +17,7 @@ namespace Quatrene
         {
             var tempStats = new AiStats(0);
             game.Eval(depth, width, game.GetPlayer(), ref tempStats);
-            tries = tempStats.Tries;
+            tries[0] = tempStats.Tries;
             moves.Clear();
             foreach (var m in tempStats.Moves)
                 moves.Add(m);
@@ -80,8 +80,7 @@ namespace Quatrene
 
         static System.Random Seed = new System.Random();
 
-        static byte Rnd4() => //(byte)UnityEngine.Random.Range(0, 4);
-            (byte)Seed.Next(4);
+        static byte Rnd4() => (byte)Seed.Next(4);
 
         public bool RandomMove(bool onlyValidMoves = true)
         {
@@ -198,9 +197,9 @@ namespace Quatrene
             AiMode = true;
 
             AiStats = new AiStats(0);
-            Eval(depth, width, GetPlayer(), ref AiStats);
+            //Eval(depth, width, GetPlayer(), ref AiStats);
 
-            //MakeECSJob(depth, width);
+            MakeECSJob(depth, width);
 
             aiTimer.Stop();
 
@@ -215,6 +214,7 @@ namespace Quatrene
         {
             var moves = new NativeList<AiValue>(Allocator.Persistent);
             var result = new NativeArray<AiValue>(1, Allocator.Persistent);
+            var tries = new NativeArray<int>(1, Allocator.Persistent);
 
             var job = new GameAi();
             job.game = this;
@@ -222,6 +222,7 @@ namespace Quatrene
             job.width = width;
             job.result = result;
             job.moves = moves;
+            job.tries = tries;
 
             var handle = job.Schedule();
             handle.Complete();
@@ -230,10 +231,11 @@ namespace Quatrene
 
             foreach (var m in moves.ToArray())
                 AiStats.Moves.Add(m);
-            AiStats.Tries = job.tries;
+            AiStats.Tries = job.tries[0];
 
             moves.Dispose();
             result.Dispose();
+            tries.Dispose();
         }
 
         public static Stopwatch aiTimer;
