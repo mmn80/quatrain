@@ -107,11 +107,9 @@ namespace Quatrene
             falling = true;
         }
 
-        Color origColor;
-        float fadePos;
-        bool fadeBack;
         Material mat;
-        const float fadeSpeed = 0.25f;
+        Color origColor;
+        bool wasLastStone = false;
 
         void Update()
         {
@@ -132,36 +130,11 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (IsLastStone || fadePos > 0)
+            if (IsLastStone != wasLastStone)
             {
-                if (!IsLastStone)
-                {
-                    fadePos = 0;
-                    fadeBack = false;
-                }
-                else
-                {
-                    fadePos += (fadeBack ? -1 : 1) * fadeSpeed * Time.deltaTime;
-                    if (fadeBack)
-                    {
-                        if (fadePos < 0)
-                        {
-                            fadePos = 0;
-                            fadeBack = false;
-                        }
-                    }
-                    else
-                    {
-                        if (fadePos > 1)
-                        {
-                            fadePos = 1;
-                            fadeBack = true;
-                        }
-                    }
-                }
-                var p = fadePos * 0.05f + (IsLastStone ? 0.95f : 0);
                 mat.SetColor("_EmissionColor",
-                    Color.Lerp(origColor, Color.yellow, p));
+                    IsLastStone ? Color.yellow : origColor);
+                wasLastStone = IsLastStone;
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
