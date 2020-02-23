@@ -130,21 +130,23 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
+        static string fstr(float f) => f.ToString("0.00000000");
+
         public static void ShowAiDebugInfo()
         {
             var bests = Game.AiStats.Moves.
                 OrderByDescending(v => v.Score).
                 Take(5).ToArray();
-            var best = game.aiValue;
+            var best = bests[0];
             var ms = Game.aiTimer.ElapsedMilliseconds;
             var ts = Game.aiTimer.ElapsedTicks;
             var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
             stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
-            stats += $"<color=#158>Score:</color>\t{best.Score}\n";
+            stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
             stats += $"<color=#158>Moves:</color>\t{Game.AiStats.Tries}\n\n";
             stats += $"<color=#158>Next best moves:</color>\n";
             foreach (var g in bests.Skip(1))
-                stats += $"\t{g.Move}  ({g.Score})\n";
+                stats += $"\t{g.Move}  ({fstr(g.Score)})\n";
             ShowInfo(stats);
         }
 

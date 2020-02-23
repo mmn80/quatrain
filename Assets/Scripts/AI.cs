@@ -13,22 +13,16 @@ namespace Quatrene
         public byte player;
         public NativeArray<Move> moves;
         public NativeArray<int> tries;
-        public NativeArray<AiValue> results;
+        public NativeArray<float> results;
 
         public void Execute(int i)
         {
             var stats = new AiStats(0);
             var next = new Game(ref game);
-            next.aiValue.Move = moves[i];
-            if (next.ApplyAiMove())
-            {
-                var nextVal = next.aiValue;
-                next.Eval(depth, width, player, ref stats);
-                nextVal.Score = next.aiValue.Score;
-                results[i] = nextVal;
-            }
+            if (next.ApplyMove(moves[i]))
+                results[i] = next.Eval(depth, width, player, ref stats);
             else
-                results[i] = game.aiValue;
+                results[i] = -10000;
             tries[i] = stats.Tries;
         }
     }
@@ -71,20 +65,20 @@ namespace Quatrene
 
         static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
-        static float SmallNoise() => Seed.Next(100) * 0.00001f;
+        static float SmallNoise() => (Seed.Next(100) - 50) * 0.000001f;
 
-        public float GetAiScore(byte player) => SmallNoise() +
-            (GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
+        float EvalCurrent(byte player) => SmallNoise() +
+            (float)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
 
-        public bool ApplyAiMove()
+        public bool ApplyMove(Move move)
         {
-            if (aiValue.Move.moveType == 0)
-                return AddStone(aiValue.Move.x, aiValue.Move.y);
-            else if (aiValue.Move.moveType == 1)
-                return RemoveStone(aiValue.Move.x, aiValue.Move.y, aiValue.Move.z);
-            else if (aiValue.Move.moveType == 2)
+            if (move.moveType == 0)
+                return AddStone(move.x, move.y);
+            else if (move.moveType == 1)
+                return RemoveStone(move.x, move.y, move.z);
+            else if (move.moveType == 2)
                 return RandomMove(true);
-            else if (aiValue.Move.moveType == 3)
+            else if (move.moveType == 3)
                 return true;
             else
                 return false;
@@ -92,68 +86,43 @@ namespace Quatrene
 
         public bool RandomMove(bool onlyValidMoves = true)
         {
-            aiValue.Move.moveType = 3;
-            aiValue.Move.x = aiValue.Move.y = aiValue.Move.z = 0;
-
+            Move move = new Move(3, 0, 0, 0);
             var attempts = 0;
             if (GameMode == GameMode.Add)
             {
-                aiValue.Move.moveType = 0;
+                move.moveType = 0;
                 do
                 {
-                    aiValue.Move.x = Rnd4();
-                    aiValue.Move.y = Rnd4();
-                    if (ApplyAiMove())
+                    move.x = Rnd4();
+                    move.y = Rnd4();
+                    if (ApplyMove(move))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
-                aiValue.Move.moveType = 3;
+                move.moveType = 3;
             }
             else if (GameMode == GameMode.Remove)
             {
-                aiValue.Move.moveType = 1;
+                move.moveType = 1;
                 do
                 {
-                    aiValue.Move.x = Rnd4();
-                    aiValue.Move.y = Rnd4();
-                    aiValue.Move.z = Rnd4();
-                    if (ApplyAiMove())
+                    move.x = Rnd4();
+                    move.y = Rnd4();
+                    move.z = Rnd4();
+                    if (ApplyMove(move))
                         return true;
                 }
                 while (!onlyValidMoves || attempts++ < 20);
-                aiValue.Move.moveType = 3;
+                move.moveType = 3;
             }
-            return aiValue.Move.moveType < 2;
+            return move.moveType < 2;
         }
 
-        public float TryMove(Move move, ref AiStats stats,
-            byte depth, byte width, byte player)
+        public float Eval(byte depth, byte width, byte player, ref AiStats stats)
         {
-            var next = new Game(ref this);
-            next.aiValue.Move = move;
-            if (next.ApplyAiMove())
-            {
-                var nextVal = next.aiValue;
-                next.Eval(depth, width, player, ref stats);
-                nextVal.Score = next.aiValue.Score;
-                if (AiDepth == 0)
-                    stats.Moves.Add(nextVal);
-                if (nextVal.Score > aiValue.Score)
-                    aiValue = nextVal;
-                return nextVal.Score;
-            }
-            return -10000;
-        }
-
-        public void Eval(byte depth, byte width, byte player, ref AiStats stats)
-        {
-            aiValue = new AiValue()
-            {
-                Score = -10000,
-                Move = new Move(3, 0, 0, 0)
-            };
-            if (AiDepth >= depth || GameMode == GameMode.GameOver)
-                aiValue.Score = GetAiScore(player);
+            float score = -10000;
+            if (aiDepth >= depth || GameMode == GameMode.GameOver)
+                score = EvalCurrent(player);
             else
             {
                 byte tries = 0;
@@ -161,25 +130,32 @@ namespace Quatrene
 
                 foreach (var move in GetNextMoves(width))
                 {
-                    var score = TryMove(move, ref stats, depth, width, player);
-                    if (score > -1000)
+                    float scoreNext = -10000;
+                    var next = new Game(ref this);
+                    if (next.ApplyMove(move))
+                        scoreNext = next.Eval(depth, width, player, ref stats);
+                    if (scoreNext > -1000)
                     {
-                        total += score;
+                        total += scoreNext;
                         tries++;
                         stats.Tries++;
+                        if (aiDepth == 0)
+                            stats.Moves.Add(new AiValue() {
+                                Move = move, Score = scoreNext });
                     }
                 }
 
                 if (tries == 0)
-                    aiValue.Score = GetAiScore(player);
+                    score = EvalCurrent(player);
                 else
-                    aiValue.Score = total / tries;
+                    score = total / tries;
             }
+            return score;
         }
 
         IEnumerable<Move> GetNextMoves(byte width)
         {
-            if (AiDepth <= 1)
+            if (aiDepth <= 1)
             {
                 if (GameMode == GameMode.Add)
                 {
@@ -209,28 +185,25 @@ namespace Quatrene
 
             Seed = new System.Random();
             aiTimer = new Stopwatch();
-            aiTimer.Start();
-            AiMode = true;
-
             AiStats = new AiStats(0);
 
-            //Eval(depth, width, GetPlayer(), ref AiStats);
-            EvalInParallel(depth, width);
-
+            AiMode = true;
+            aiTimer.Start();
+            var best = EvalInParallel(depth, width);
             aiTimer.Stop();
-
             AiMode = false;
-            ApplyAiMove();
+            
+            ApplyMove(best.Move);
 
             if (ShowAiDebugInfo)
                 MainControl.ShowAiDebugInfo();
         }
 
-        void EvalInParallel(byte depth, byte width)
+        AiValue EvalInParallel(byte depth, byte width)
         {
             var movesArr = GetNextMoves(width).ToArray();
 
-            var results = new NativeArray<AiValue>(64, Allocator.Persistent);
+            var results = new NativeArray<float>(64, Allocator.Persistent);
             var tries = new NativeArray<int>(64, Allocator.Persistent);
             var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
 
@@ -259,18 +232,24 @@ namespace Quatrene
             AiStats.Tries = 0;
             for (int i = 0; i < movesArr.Length; i++)
             {
-                var val = results[i];
+                var result = results[i];
+                var val = new AiValue()
+                {
+                    Score = result,
+                    Move = movesArr[i]
+                };
                 AiStats.Moves.Add(val);
                 AiStats.Tries += tries[i];
-                if (best.Score < val.Score)
+                if (best.Score < result)
                     best = val;
-                total += val.Score;
+                total += result;
             }
-            aiValue = best;
 
             moves.Dispose();
             results.Dispose();
             tries.Dispose();
+
+            return best;
         }
 
         public static Stopwatch aiTimer;

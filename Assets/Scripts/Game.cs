@@ -30,9 +30,7 @@ namespace Quatrene
             game = src.game;
             quatrainStones = src.quatrainStones;
             lastStone = src.lastStone;
-
-            aiValue = new AiValue();
-            AiDepth = (byte)(src.AiDepth + 1);
+            aiDepth = (byte)(src.aiDepth + 1);
         }
 
         public Game(bool dummy)
@@ -43,9 +41,7 @@ namespace Quatrene
             board0 = board1 = board2 = board3 = 0;
             quatrainStones = 0;
             lastStone = 0;
-
-            aiValue = new AiValue();
-            AiDepth = 0;
+            aiDepth = 0;
         }
 
         byte game;
@@ -54,9 +50,7 @@ namespace Quatrene
         UInt64 board0, board1, board2, board3;
         UInt64 quatrainStones;
         byte lastStone;
-
-        public AiValue aiValue;
-        public byte AiDepth;
+        byte aiDepth;
 
         public byte GetStones(byte player) => player == 0 ? stones0 : stones1;
         void TookStone(byte player)
