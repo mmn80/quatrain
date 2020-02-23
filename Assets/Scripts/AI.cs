@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -22,6 +23,35 @@ namespace Quatrene
             foreach (var m in tempStats.Moves)
                 moves.Add(m);
             result[0] = game.aiValue;
+        }
+    }
+
+    public struct GameAiJob : IJobParallelFor
+    {
+        public byte depth, width;
+        public Game game;
+        public byte player;
+        public NativeArray<Move> move;
+        public NativeArray<int> tries;
+        public NativeArray<AiValue> result;
+
+        public void Execute(int i)
+        {
+            var tempStats = new AiStats(0);
+            var next = new Game(ref game);
+            next.aiValue.Move = move[i];
+            if (next.ApplyAiMove())
+            {
+                var nextVal = next.aiValue;
+                next.Eval(depth, width, player, ref tempStats);
+                nextVal.Score = next.aiValue.Score;
+                if (game.AiDepth == 0)
+                    tempStats.Moves.Add(nextVal);
+                result[i] = nextVal;
+            }
+            else
+                result[i] = game.aiValue;
+            tries[i] = tempStats.Tries;
         }
     }
 
@@ -118,7 +148,7 @@ namespace Quatrene
             return aiValue.Move.moveType < 2;
         }
 
-        void TryMove(Move move, ref AiStats stats, ref float total, ref byte tries,
+        public void TryMove(Move move, ref AiStats stats, ref float total, ref byte tries,
             byte depth, byte width, byte player)
         {
             var next = new Game(ref this);
@@ -153,9 +183,8 @@ namespace Quatrene
                 float total = 0;
 
                 foreach (var move in GetNextMoves(width))
-                {
-                    TryMove(move, ref stats, ref total, ref tries, depth, width, player);
-                }
+                    TryMove(move, ref stats, ref total, ref tries,
+                        depth, width, player);
 
                 if (tries == 0)
                     aiValue.Score = GetAiScore(player);
@@ -200,9 +229,10 @@ namespace Quatrene
             AiMode = true;
 
             AiStats = new AiStats(0);
-            //Eval(depth, width, GetPlayer(), ref AiStats);
 
-            MakeECSJob(depth, width);
+            //Eval(depth, width, GetPlayer(), ref AiStats);
+            //MakeECSJob(depth, width);
+            MakeECSParallelJob(depth, width);
 
             aiTimer.Stop();
 
@@ -235,6 +265,54 @@ namespace Quatrene
             foreach (var m in moves.ToArray())
                 AiStats.Moves.Add(m);
             AiStats.Tries = job.tries[0];
+
+            moves.Dispose();
+            result.Dispose();
+            tries.Dispose();
+        }
+
+        void MakeECSParallelJob(byte depth, byte width)
+        {
+            var result = new NativeArray<AiValue>(64, Allocator.Persistent);
+            var tries = new NativeArray<int>(64, Allocator.Persistent);
+            var movesArr = GetNextMoves(width).ToArray();
+            var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
+
+            var job = new GameAiJob();
+            job.game = this;
+            job.player = GetPlayer();
+            job.depth = depth;
+            job.width = width;
+            job.move = moves;
+            job.result = result;
+            job.tries = tries;
+
+            var handle = job.Schedule(movesArr.Length, 1);
+            handle.Complete();
+
+            var best = new AiValue()
+            {
+                Score = -10000,
+                Move = new Move(3, 0, 0, 0)
+            };
+            float total = 0;
+
+            AiStats.Tries = 0;
+            for (int i = 0; i < movesArr.Length; i++)
+            {
+                var res = result[i];
+                AiStats.Moves.Add(res);
+                AiStats.Tries += tries[i];
+                if (best.Score < res.Score)
+                    best = res;
+                total += res.Score;
+            }
+
+            aiValue = best;
+            if (movesArr.Length > 0)
+                aiValue.Score = total / movesArr.Length;
+            else
+                aiValue.Score = GetScore(GetPlayer());
 
             moves.Dispose();
             result.Dispose();
