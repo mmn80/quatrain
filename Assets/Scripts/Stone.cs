@@ -39,6 +39,7 @@ namespace Quatrene
         public AudioClip RemoveSound;
 
         public bool Highlighted { get; set; }
+        public bool IsLastStone { get; set; }
 
         public int PosX { get; private set; }
         public int PosY { get; private set; }
@@ -100,6 +101,8 @@ namespace Quatrene
             falling = true;
         }
 
+        bool lastIsLast = false;
+        Color origColor;
         void Update()
         {
             if (falling)
@@ -117,6 +120,16 @@ namespace Quatrene
                 if (!Highlighted && !mouseIsOver)
                     speed = normalRotationSpeed * (normalRotationDir ? 1 : -1);
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
+            }
+
+            if (IsLastStone != lastIsLast)
+            {
+                var r = GetComponent<MeshRenderer>();
+                if (IsLastStone)
+                    origColor = r.material.GetColor("_EmissionColor");
+                r.material.SetColor("_EmissionColor",
+                    IsLastStone ? Color.yellow : origColor);
+                lastIsLast = IsLastStone;
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&

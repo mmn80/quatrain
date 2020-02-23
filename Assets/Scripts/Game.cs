@@ -29,6 +29,7 @@ namespace Quatrene
             board3 = src.board3;
             game = src.game;
             quatrainStones = src.quatrainStones;
+            lastStone = src.lastStone;
 
             aiValue = new AiValue();
             AiDepth = (byte)(src.AiDepth + 1);
@@ -41,6 +42,7 @@ namespace Quatrene
             score0 = score1 = 0;
             board0 = board1 = board2 = board3 = 0;
             quatrainStones = 0;
+            lastStone = 0;
 
             aiValue = new AiValue();
             AiDepth = 0;
@@ -51,6 +53,7 @@ namespace Quatrene
         byte score0, score1;
         UInt64 board0, board1, board2, board3;
         UInt64 quatrainStones;
+        byte lastStone;
 
         public AiValue aiValue;
         public byte AiDepth;
@@ -68,6 +71,15 @@ namespace Quatrene
         void SetPlayer(byte p) => game = (byte)(game & 0x3F | (p << 6));
         byte GetToRemove() => (byte)((game >> 4) & 0x3);
         void SetToRemove(byte p) => game = (byte)(game & 0xCF | (p << 4));
+        public Place GetLastStone() => new Place(
+            (byte)(lastStone >> 6),
+            (byte)((byte)(lastStone << 2) >> 6),
+            (byte)((byte)(lastStone << 4) >> 6),
+            (byte)((byte)(lastStone << 6) >> 6)
+        );
+        void SetLastStone(Place place) =>
+            lastStone = (byte)(place.Stone |
+                (byte)(place.Z << 2) | (byte)(place.Y << 4) | (byte)(place.X << 6));
 
         public GameMode GameMode
         {
@@ -156,6 +168,7 @@ namespace Quatrene
                 {
                     SetStoneAt(x, y, z, (StoneAtPos)(p + 1));
                     if (p == 0) stones0--; else stones1--;
+                    SetLastStone(new Place(x, y, z, (byte)(p + 1)));
                     RegenerateQuatrains();
                     return true;
                 }

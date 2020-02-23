@@ -205,6 +205,7 @@ namespace Quatrene
 
         static void HighlightStones(bool reset = false)
         {
+            var last = game.GetLastStone();
             if (stones == null)
                 return;
             for (byte x = 0; x < 4; x++)
@@ -218,9 +219,10 @@ namespace Quatrene
                             s.Highlighted = false;
                         else if (game.IsQuatrainStone(x, y, z))
                             s.Highlighted = true;
+                        s.IsLastStone = (last.Stone != 0 &&
+                            last.X == x && last.Y == y && last.Z == z);
                     }
         }
-
 
         IEnumerator AiLoop()
         {
@@ -435,6 +437,8 @@ namespace Quatrene
                 ShowInfo(helpInfo);
             else if (Input.GetKeyUp(KeyCode.F2))
                 ShowInfo(creditsInfo);
+            else if (Input.GetKeyUp(KeyCode.F3))
+                ShowInfo($"Last stone: {game.GetLastStone()}");
             else if (Input.GetKeyUp(KeyCode.F5))
                 game.RandomMove();
             else if (Input.GetKeyUp(KeyCode.F6))
