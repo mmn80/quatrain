@@ -14,7 +14,7 @@ namespace Quatrene
         static StoneType Value2Stone(StoneAtPos val) =>
             val == StoneAtPos.Black ? StoneType.Black : StoneType.White;
 
-        public static bool TakeTopStonesOnly = false;
+        public static bool TakeTopStonesOnly = true;
         public static bool AiMode = false;
 
         public Game(ref Game src)

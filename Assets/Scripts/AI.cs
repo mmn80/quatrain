@@ -6,26 +6,6 @@ using Unity.Jobs;
 
 namespace Quatrene
 {
-    public struct GameAi : IJob
-    {
-        public byte depth, width;
-        public Game game;
-        public NativeArray<int> tries;
-        public NativeList<AiValue> moves;
-        public NativeArray<AiValue> result;
-
-        public void Execute()
-        {
-            var tempStats = new AiStats(0);
-            game.Eval(depth, width, game.GetPlayer(), ref tempStats);
-            tries[0] = tempStats.Tries;
-            moves.Clear();
-            foreach (var m in tempStats.Moves)
-                moves.Add(m);
-            result[0] = game.aiValue;
-        }
-    }
-
     public struct GameAiJob : IJobParallelFor
     {
         public byte depth, width;
@@ -231,8 +211,7 @@ namespace Quatrene
             AiStats = new AiStats(0);
 
             //Eval(depth, width, GetPlayer(), ref AiStats);
-            //MakeECSJob(depth, width);
-            MakeECSParallelJob(depth, width);
+            EvalInParallel(depth, width);
 
             aiTimer.Stop();
 
@@ -243,35 +222,7 @@ namespace Quatrene
                 MainControl.ShowAiDebugInfo();
         }
 
-        void MakeECSJob(byte depth, byte width)
-        {
-            var moves = new NativeList<AiValue>(Allocator.Persistent);
-            var result = new NativeArray<AiValue>(1, Allocator.Persistent);
-            var tries = new NativeArray<int>(1, Allocator.Persistent);
-
-            var job = new GameAi();
-            job.game = this;
-            job.depth = depth;
-            job.width = width;
-            job.result = result;
-            job.moves = moves;
-            job.tries = tries;
-
-            var handle = job.Schedule();
-            handle.Complete();
-
-            aiValue = job.result[0];
-
-            foreach (var m in moves.ToArray())
-                AiStats.Moves.Add(m);
-            AiStats.Tries = job.tries[0];
-
-            moves.Dispose();
-            result.Dispose();
-            tries.Dispose();
-        }
-
-        void MakeECSParallelJob(byte depth, byte width)
+        void EvalInParallel(byte depth, byte width)
         {
             var result = new NativeArray<AiValue>(64, Allocator.Persistent);
             var tries = new NativeArray<int>(64, Allocator.Persistent);
@@ -287,7 +238,8 @@ namespace Quatrene
             job.result = result;
             job.tries = tries;
 
-            var handle = job.Schedule(movesArr.Length, 1);
+            var handle = job.Schedule(movesArr.Length, 2);
+
             handle.Complete();
 
             var best = new AiValue()
