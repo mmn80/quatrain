@@ -48,6 +48,12 @@ namespace Quatrene
         float normalRotationSpeed;
         bool normalRotationDir;
 
+        void Start()
+        {
+            mat = GetComponent<MeshRenderer>().material;
+            origColor = mat.GetColor("_EmissionColor");
+        }
+
         public void Init(int x, int y, int z, bool animation, bool sound)
         {
             this.PosX = x;
@@ -101,8 +107,12 @@ namespace Quatrene
             falling = true;
         }
 
-        bool lastIsLast = false;
         Color origColor;
+        float fadePos;
+        bool fadeBack;
+        Material mat;
+        const float fadeSpeed = 0.25f;
+
         void Update()
         {
             if (falling)
@@ -122,14 +132,36 @@ namespace Quatrene
                 transform.parent.Rotate(Vector3.up, speed * Time.deltaTime);
             }
 
-            if (IsLastStone != lastIsLast)
+            if (IsLastStone || fadePos > 0)
             {
-                var r = GetComponent<MeshRenderer>();
-                if (IsLastStone)
-                    origColor = r.material.GetColor("_EmissionColor");
-                r.material.SetColor("_EmissionColor",
-                    IsLastStone ? Color.yellow : origColor);
-                lastIsLast = IsLastStone;
+                if (!IsLastStone)
+                {
+                    fadePos = 0;
+                    fadeBack = false;
+                }
+                else
+                {
+                    fadePos += (fadeBack ? -1 : 1) * fadeSpeed * Time.deltaTime;
+                    if (fadeBack)
+                    {
+                        if (fadePos < 0)
+                        {
+                            fadePos = 0;
+                            fadeBack = false;
+                        }
+                    }
+                    else
+                    {
+                        if (fadePos > 1)
+                        {
+                            fadePos = 1;
+                            fadeBack = true;
+                        }
+                    }
+                }
+                var p = fadePos * 0.05f + (IsLastStone ? 0.95f : 0);
+                mat.SetColor("_EmissionColor",
+                    Color.Lerp(origColor, Color.yellow, p));
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
