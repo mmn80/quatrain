@@ -24,7 +24,7 @@ namespace Quatrene
 
         public static void ShowError(string message) => ShowMessage(message, true);
 
-        public static void ShowStoneError(string message, int x, int y, int z)
+        public static void ShowStoneError(string message, byte x, byte y, byte z)
         {
             if (Game.AiMode)
                 return;
@@ -65,9 +65,9 @@ namespace Quatrene
 
             DestroyAllStones();
 
-            for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
-                    for (int z = 0; z < 4; z++)
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
                         stones[x, y, z] = Stone.MakeStone(x, y, z,
                             x < 2 ? StoneType.White : StoneType.Black,
                             true, false);
@@ -102,9 +102,9 @@ namespace Quatrene
 
             if (stones == null)
                 stones = new Stone[4, 4, 4];
-            for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
-                    for (int z = 0; z < 4; z++)
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
                         stones[x, y, z] = null;
 
             return true;
@@ -150,7 +150,7 @@ namespace Quatrene
             ShowInfo(stats);
         }
 
-        public static void OnAfterAdd(int x, int y, int z)
+        public static void OnAfterAdd(byte x, byte y, byte z)
         {
             stones[x, y, z] = Stone.MakeStone(x, y, z,
                 (StoneType)game.GetPlayer());
@@ -160,14 +160,14 @@ namespace Quatrene
             HighlightStones();
         }
 
-        public static void OnAfterRemove(int x, int y, int z)
+        public static void OnAfterRemove(byte x, byte y, byte z)
         {
             Stone.DestroyStone(stones[x, y, z]);
             stones[x, y, z] = null;
-            for (int i = z; i < 4; i++)
+            for (byte i = z; i < 4; i++)
                 stones[x, y, i] = i >= 3 ? null :
                     stones[x, y, i + 1];
-            for (int i = z; i < 4; i++)
+            for (byte i = z; i < 4; i++)
             {
                 var stone = stones[x, y, i];
                 if (stone == null)
@@ -442,7 +442,7 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F3))
                 ShowInfo($"Last stone: {game.GetLastStone()}");
             else if (Input.GetKeyUp(KeyCode.F5))
-                game.RandomMove();
+                game.MakeRandomMove();
             else if (Input.GetKeyUp(KeyCode.F6))
                 game.MakeAiMove();
             else if (Input.GetMouseButtonUp(0))

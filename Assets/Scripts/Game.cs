@@ -185,7 +185,7 @@ namespace Quatrene
             return false;
         }
 
-        public bool AddStone(int x, int y)
+        public bool AddStone(byte x, byte y)
         {
             if (!AiMode)
                 MainControl.HideMessage();
@@ -203,7 +203,7 @@ namespace Quatrene
             }
 
             byte z;
-            if (!AddStoneAt((byte)x, (byte)y, out z))
+            if (!AddStoneAt(x, y, out z))
             {
                 if (!AiMode)
                     MainControl.ShowError($"Stack [{x},{y}] is full.");
@@ -231,11 +231,11 @@ namespace Quatrene
             return true;
         }
 
-        public bool CanRemoveStone(int x, int y, int z)
+        public bool CanRemoveStone(byte x, byte y, byte z)
         {
             if (GameMode != GameMode.Remove)
                 return false;
-            var st = GetStoneAt((byte)x, (byte)y, (byte)z);
+            var st = GetStoneAt(x, y, z);
             if (st == StoneAtPos.None)
             {
                 if (!AiMode)
@@ -248,7 +248,7 @@ namespace Quatrene
                     MainControl.ShowStoneError("can't take your own stone", x, y, z);
                 return false;
             }
-            if (IsQuatrainStone((byte)x, (byte)y, (byte)z))
+            if (IsQuatrainStone(x, y, z))
             {
                 if (!AiMode)
                     MainControl.ShowStoneError("can't take from quatrains", x, y, z);
@@ -263,7 +263,7 @@ namespace Quatrene
             return true;
         }
 
-        public bool RemoveStone(int x, int y, int z)
+        public bool RemoveStone(byte x, byte y, byte z)
         {
             if (!AiMode)
                 MainControl.HideMessage();
@@ -271,7 +271,7 @@ namespace Quatrene
             if (!CanRemoveStone(x, y, z))
                 return false;
 
-            if (!RemoveStoneAt((byte)x, (byte)y, (byte)z))
+            if (!RemoveStoneAt(x, y, z))
             {
                 if (!AiMode)
                     MainControl.ShowError($"There is no stone at [{x},{y},{z}].");
@@ -285,9 +285,6 @@ namespace Quatrene
 
             return true;
         }
-
-        bool IsTopStone(int x, int y, int z) =>
-            IsTopStone((byte)x, (byte)y, (byte)z);
 
         bool IsTopStone(byte x, byte y, byte z)
         {
@@ -467,15 +464,15 @@ namespace Quatrene
             }
         }
 
-        bool AnyQuatrainAt(int x, int y, int z, bool allowAbove,
+        bool AnyQuatrainAt(byte x, byte y, byte z, bool allowAbove,
             out StoneType quatrainType)
         {
             quatrainType = StoneType.White;
             while (z < 4)
             {
-                if (IsQuatrainStone((byte)x, (byte)y, (byte)z))
+                if (IsQuatrainStone(x, y, z))
                 {
-                    var s = GetStoneAt((byte)x, (byte)y, (byte)z);
+                    var s = GetStoneAt(x, y, z);
                     quatrainType = Value2Stone(s);
                     return true;
                 }
@@ -486,7 +483,7 @@ namespace Quatrene
             return false;
         }
 
-        void ProcessQuatrains(int x, int y, int z,
+        void ProcessQuatrains(byte x, byte y, byte z,
             bool allowAbove = false)
         {
             StoneType ty;

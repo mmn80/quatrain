@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Unity.Collections;
@@ -29,13 +30,34 @@ namespace Quatrene
 
     public struct Move
     {
-        public Move(byte moveType, byte x, byte y, byte z)
+        private byte m;
+
+        public Move(byte _moveType, byte _x, byte _y, byte _z)
         {
-            this.moveType = moveType; this.x = x; this.y = y; this.z = z;
+            m = (byte)((byte)(_moveType << 6) | 
+                (byte)(_z << 4) | (byte)(_y << 2) | _x);
         }
 
-        public byte moveType;
-        public byte x, y, z;
+        public byte x
+        {
+            get => (byte)((byte)(m << 6) >> 6);
+            set => m |= value;
+        }
+        public byte y
+        {
+            get => (byte)((byte)(m << 4) >> 6);
+            set => m |= (byte)(value << 2);
+        }
+        public byte z
+        {
+            get => (byte)((byte)(m << 2) >> 6);
+            set => m |= (byte)(value << 4);
+        }
+        public byte moveType
+        {
+            get => (byte)(m >> 6);
+            set => m |= (byte)(value << 6);
+        }
 
         public override string ToString() =>
             (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
@@ -76,46 +98,8 @@ namespace Quatrene
                 return AddStone(move.x, move.y);
             else if (move.moveType == 1)
                 return RemoveStone(move.x, move.y, move.z);
-            else if (move.moveType == 2)
-                return RandomMove(true);
-            else if (move.moveType == 3)
-                return true;
             else
                 return false;
-        }
-
-        public bool RandomMove(bool onlyValidMoves = true)
-        {
-            Move move = new Move(3, 0, 0, 0);
-            var attempts = 0;
-            if (GameMode == GameMode.Add)
-            {
-                move.moveType = 0;
-                do
-                {
-                    move.x = Rnd4();
-                    move.y = Rnd4();
-                    if (ApplyMove(move))
-                        return true;
-                }
-                while (!onlyValidMoves || attempts++ < 20);
-                move.moveType = 3;
-            }
-            else if (GameMode == GameMode.Remove)
-            {
-                move.moveType = 1;
-                do
-                {
-                    move.x = Rnd4();
-                    move.y = Rnd4();
-                    move.z = Rnd4();
-                    if (ApplyMove(move))
-                        return true;
-                }
-                while (!onlyValidMoves || attempts++ < 20);
-                move.moveType = 3;
-            }
-            return move.moveType < 2;
         }
 
         public float Eval(byte depth, byte width, byte player, ref AiStats stats)
@@ -128,8 +112,20 @@ namespace Quatrene
                 byte tries = 0;
                 float total = 0;
 
-                foreach (var move in GetNextMoves(width))
+                var moves = GetValidMoves().ToArray();
+
+                byte i = 0;
+                if (aiDepth > 1)
+                    i = (byte)Seed.Next(moves.Length);
+                UInt64 usedMoves = 0;
+                byte usedMovesNo = 0;
+                while (true)
                 {
+                    if (aiDepth > 1)
+                        while ((usedMoves & ((UInt64)1 << i)) != 0)
+                            i = (byte)Seed.Next(moves.Length);
+
+                    var move = moves[i];
                     float scoreNext = -10000;
                     var next = new Game(ref this);
                     if (next.ApplyMove(move))
@@ -143,6 +139,14 @@ namespace Quatrene
                             stats.Moves.Add(new AiValue() {
                                 Move = move, Score = scoreNext });
                     }
+
+                    if (aiDepth > 1)
+                    {
+                        if (++usedMovesNo >= width)
+                            break;
+                    }
+                    else if (++i >= moves.Length)
+                        break;
                 }
 
                 if (tries == 0)
@@ -153,29 +157,23 @@ namespace Quatrene
             return score;
         }
 
-        IEnumerable<Move> GetNextMoves(byte width)
+        IEnumerable<Move> GetValidMoves()
         {
-            if (aiDepth <= 1)
+            if (GameMode == GameMode.Add)
             {
-                if (GameMode == GameMode.Add)
-                {
-                    for (byte x = 0; x < 4; x++)
-                        for (byte y = 0; y < 4; y++)
-                            if (CanAddStone(x, y))
-                                yield return new Move(0, x, y, 0);
-                }
-                else if (GameMode == GameMode.Remove)
-                {
-                    for (byte rx = 0; rx < 4; rx++)
-                        for (byte ry = 0; ry < 4; ry++)
-                            for (byte rz = 0; rz < 4; rz++)
-                                if (CanRemoveStone(rx, ry, rz))
-                                    yield return new Move(1, rx, ry, rz);
-                }
+                for (byte x = 0; x < 4; x++)
+                    for (byte y = 0; y < 4; y++)
+                        if (CanAddStone(x, y))
+                            yield return new Move(0, x, y, 0);
             }
-            else
-                for (int i = 0; i < width; i++)
-                    yield return new Move(2, 0, 0, 0);
+            else if (GameMode == GameMode.Remove)
+            {
+                for (byte x = 0; x < 4; x++)
+                    for (byte y = 0; y < 4; y++)
+                        for (byte z = 0; z < 4; z++)
+                            if (CanRemoveStone(x, y, z))
+                                yield return new Move(1, x, y, z);
+            }
         }
 
         public void MakeAiMove(byte depth = 6, byte width = 4)
@@ -189,31 +187,17 @@ namespace Quatrene
 
             AiMode = true;
             aiTimer.Start();
-            var best = EvalInParallel(depth, width);
-            aiTimer.Stop();
-            AiMode = false;
-            
-            ApplyMove(best.Move);
 
-            if (ShowAiDebugInfo)
-                MainControl.ShowAiDebugInfo();
-        }
-
-        AiValue EvalInParallel(byte depth, byte width)
-        {
-            var movesArr = GetNextMoves(width).ToArray();
-
+            var movesArr = GetValidMoves().ToArray();
             var results = new NativeArray<float>(64, Allocator.Persistent);
             var tries = new NativeArray<int>(64, Allocator.Persistent);
             var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
 
             var job = new GameAiJob();
-
             job.game = this;
             job.player = GetPlayer();
             job.depth = depth;
             job.width = width;
-
             job.moves = moves;
             job.results = results;
             job.tries = tries;
@@ -225,7 +209,7 @@ namespace Quatrene
             var best = new AiValue()
             {
                 Score = -10000,
-                Move = new Move(3, 0, 0, 0)
+                Move = new Move(2, 0, 0, 0)
             };
             float total = 0;
 
@@ -249,9 +233,39 @@ namespace Quatrene
             results.Dispose();
             tries.Dispose();
 
-            return best;
+            aiTimer.Stop();
+            AiMode = false;
+
+            ApplyMove(best.Move);
+
+            if (ShowAiDebugInfo)
+                MainControl.ShowAiDebugInfo();
         }
 
         public static Stopwatch aiTimer;
+
+        public bool MakeRandomMove()
+        {
+            var attempts = 0;
+            if (GameMode == GameMode.Add)
+            {
+                do
+                {
+                    if (ApplyMove(new Move(0, Rnd4(), Rnd4(), 0)))
+                        return true;
+                }
+                while (attempts++ < 20);
+            }
+            else if (GameMode == GameMode.Remove)
+            {
+                do
+                {
+                    if (ApplyMove(new Move(1, Rnd4(), Rnd4(), Rnd4())))
+                        return true;
+                }
+                while (attempts++ < 20);
+            }
+            return false;
+        }
     }
 }

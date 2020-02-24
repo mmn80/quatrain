@@ -4,7 +4,7 @@ namespace Quatrene
 {
     public class Stick : MonoBehaviour
     {
-        public int PosX, PosY;
+        public byte PosX, PosY;
 
         public Material highlightMaterial;
         Material originalMaterial;

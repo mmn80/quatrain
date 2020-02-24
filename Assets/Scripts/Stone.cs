@@ -8,10 +8,10 @@ namespace Quatrene
 
         const float StoneHeight = 0.3f;
 
-        public static Vector3 GetStonePos(int x, int y, int h) =>
+        public static Vector3 GetStonePos(byte x, byte y, byte h) =>
             new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
-        public static Stone MakeStone(int x, int y, int z, StoneType type,
+        public static Stone MakeStone(byte x, byte y, byte z, StoneType type,
             bool animation = false, bool sound = true)
         {
             var prefab = type == StoneType.White ?
@@ -41,9 +41,9 @@ namespace Quatrene
         public bool Highlighted { get; set; }
         public bool IsLastStone { get; set; }
 
-        public int PosX { get; private set; }
-        public int PosY { get; private set; }
-        public int PosZ { get; private set; }
+        public byte PosX { get; private set; }
+        public byte PosY { get; private set; }
+        public byte PosZ { get; private set; }
 
         float normalRotationSpeed;
         bool normalRotationDir;
@@ -54,7 +54,7 @@ namespace Quatrene
             origColor = mat.GetColor("_EmissionColor");
         }
 
-        public void Init(int x, int y, int z, bool animation, bool sound)
+        public void Init(byte x, byte y, byte z, bool animation, bool sound)
         {
             this.PosX = x;
             this.PosY = y;
