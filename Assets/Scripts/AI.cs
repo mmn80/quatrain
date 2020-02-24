@@ -240,29 +240,5 @@ namespace Quatrene
         }
 
         public static Stopwatch aiTimer;
-
-        public bool MakeRandomMove()
-        {
-            var attempts = 0;
-            if (GameMode == GameMode.Add)
-            {
-                do
-                {
-                    if (ApplyMove(new Move(0, Rnd4(), Rnd4(), 0)))
-                        return true;
-                }
-                while (attempts++ < 20);
-            }
-            else if (GameMode == GameMode.Remove)
-            {
-                do
-                {
-                    if (ApplyMove(new Move(1, Rnd4(), Rnd4(), Rnd4())))
-                        return true;
-                }
-                while (attempts++ < 20);
-            }
-            return false;
-        }
     }
 }

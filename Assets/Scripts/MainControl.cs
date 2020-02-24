@@ -134,6 +134,8 @@ namespace Quatrene
 
         public static void ShowAiDebugInfo()
         {
+            if (Game.AiStats.Moves == null)
+                return;
             var bests = Game.AiStats.Moves.
                 OrderByDescending(v => v.Score).
                 Take(5).ToArray();
@@ -327,6 +329,8 @@ namespace Quatrene
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
+- <color=#158>F3</color>\t: show AI info
+- <color=#158>F5</color>\t: make AI move
 
 - <color=#158>H</color>\t: start new hot seat game
 - <color=#158>C</color>\t: start new game against the computer
@@ -373,14 +377,27 @@ namespace Quatrene
                 txt.color = Color.Lerp(origColor, highlightColor, highlightScore);
             }
 
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (IsInputOn())
             {
-                if (IsInputOn())
+                if (Input.GetKeyDown(KeyCode.Escape))
                 {
                     UserInput.gameObject.SetActive(false);
                     HideMessage();
                 }
-                else if (game.GameMode == GameMode.Lobby)
+                else if (Input.GetKeyUp(KeyCode.Return))
+                {
+                    PlayerNames[renamingPlayer] = UserInput.text;
+                    (renamingPlayer == 0 ? Player1 : Player2).text =
+                        UserInput.text;
+                    UserInput.gameObject.SetActive(false);
+                    HideMessage();
+                }
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (game.GameMode == GameMode.Lobby)
                     Application.Quit();
                 else if (game.GameMode == GameMode.GameOver)
                     NewGame();
@@ -388,48 +405,38 @@ namespace Quatrene
                     game.GameOver(true, 2);
             }
             else if (game.GameMode == GameMode.Lobby &&
-                    Input.GetKeyUp(KeyCode.H))
-                StartGame(false);
+                Input.GetKeyUp(KeyCode.H))
+                    StartGame(false);
             else if (game.GameMode == GameMode.Lobby &&
-                    Input.GetKeyUp(KeyCode.C))
-                StartGame(true);
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha1))
+                Input.GetKeyUp(KeyCode.C))
+                    StartGame(true);
+            else if (Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;
                 StartRename();
             }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha2))
+            else if (Input.GetKeyUp(KeyCode.Alpha2))
             {
                 renamingPlayer = 1;
                 StartRename();
             }
-            else if (IsInputOn() && Input.GetKeyUp(KeyCode.Return))
-            {
-                PlayerNames[renamingPlayer] = UserInput.text;
-                (renamingPlayer == 0 ? Player1 : Player2).text =
-                    UserInput.text;
-                UserInput.gameObject.SetActive(false);
-                HideMessage();
-            }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha3))
+            else if (Input.GetKeyUp(KeyCode.Alpha3))
             {
                 Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
                 ShowMessage(Game.TakeTopStonesOnly ?
                     "classic mode activated\ncan only take top stones" :
                     "neo mode activated\ncan take stones from bellow");
             }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha5))
+            else if (Input.GetKeyUp(KeyCode.Alpha5))
                 Stone.RotateRandomly = !Stone.RotateRandomly;
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha6))
+            else if (Input.GetKeyUp(KeyCode.Alpha6))
             {
                 var m = GetComponents<AudioSource>()[0];
                 m.mute = !m.mute;
             }
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha7))
+            else if (Input.GetKeyUp(KeyCode.Alpha7))
                 EffectsMuted = !EffectsMuted;
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha8))
-                ShowAiDebugInfo();
-            else if (!IsInputOn() && Input.GetKeyUp(KeyCode.Alpha9))
+            else if (Input.GetKeyUp(KeyCode.Alpha9))
             {
                 Game.ShowAiDebugInfo = !Game.ShowAiDebugInfo;
                 ShowMessage((Game.ShowAiDebugInfo ? "showing" : "hiding") +
@@ -440,10 +447,8 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F2))
                 ShowInfo(creditsInfo);
             else if (Input.GetKeyUp(KeyCode.F3))
-                ShowInfo($"Last stone: {game.GetLastStone()}");
+                ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
-                game.MakeRandomMove();
-            else if (Input.GetKeyUp(KeyCode.F6))
                 game.MakeAiMove();
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
