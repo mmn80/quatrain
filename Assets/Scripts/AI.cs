@@ -30,7 +30,8 @@ namespace Quatrene
 
     public struct Move
     {
-        private byte m;
+        [ReadOnly]
+        private readonly byte m;
 
         public Move(byte _moveType, byte _x, byte _y, byte _z)
         {
@@ -41,22 +42,18 @@ namespace Quatrene
         public byte x
         {
             get => (byte)((byte)(m << 6) >> 6);
-            set => m |= value;
         }
         public byte y
         {
             get => (byte)((byte)(m << 4) >> 6);
-            set => m |= (byte)(value << 2);
         }
         public byte z
         {
             get => (byte)((byte)(m << 2) >> 6);
-            set => m |= (byte)(value << 4);
         }
         public byte moveType
         {
             get => (byte)(m >> 6);
-            set => m |= (byte)(value << 6);
         }
 
         public override string ToString() =>
