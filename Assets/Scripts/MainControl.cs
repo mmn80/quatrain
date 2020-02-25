@@ -54,9 +54,9 @@ namespace Quatrene
             "Player 1", "Player 2"
         };
 
-        static bool[] AiPlayers = new bool[]
+        static PlayerType[] PlayerTypes = new PlayerType[]
         {
-            false, false
+            PlayerType.Human, PlayerType.Human
         };
 
         static bool NewGame()
@@ -73,23 +73,21 @@ namespace Quatrene
                             true, false);
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
-                "press <color=#158>C</color> to play against the computer");
+                "press <color=#158>V</color> or <color=#158>C</color> to play against AI");
             Instance.UpdateUI();
 
             return true;
         }
 
-        static bool StartGame(bool againstAi)
+        static bool StartGame(PlayerType enemy)
         {
-            AiPlayers[0] = false;
-            AiPlayers[1] = againstAi;
-            if (againstAi)
+            PlayerTypes[0] = PlayerType.Human;
+            PlayerTypes[1] = enemy;
+            if (enemy != PlayerType.Human)
             {
-                if (PlayerNames[0] == "Player 1")
-                    PlayerNames[0] = "hombre";
-                if (PlayerNames[1] == "Player 2")
-                    PlayerNames[1] = "computador";
-                Instance.Player1.text = PlayerNames[0];
+                if (PlayerNames[1] == "Player 2" ||
+                        PlayerNames[1] == "Vegas" || PlayerNames[1] == "Carlos")
+                    PlayerNames[1] = enemy.ToString();
                 Instance.Player2.text = PlayerNames[1];
             }
 
@@ -130,7 +128,7 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
-        static string fstr(float f) => f.ToString("0.00000000");
+        static string fstr(double f) => f.ToString("0.0000000000");
 
         public static void ShowAiDebugInfo()
         {
@@ -235,8 +233,8 @@ namespace Quatrene
                 yield return new WaitForSecondsRealtime(0.5f);
                 if (game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
-                    AiPlayers[game.GetPlayer()])
-                        game.MakeAiMove();
+                    PlayerTypes[game.GetPlayer()] != PlayerType.Human)
+                        game.MakeAiMove(PlayerTypes[game.GetPlayer()]);
             }
         }
 
@@ -330,10 +328,10 @@ namespace Quatrene
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 - <color=#158>F3</color>\t: show AI info
-- <color=#158>F5</color>\t: make AI move
+- <color=#158>F5 F6</color>\t: make Vegas or Carlos AI move
 
-- <color=#158>H</color>\t: start new hot seat game
-- <color=#158>C</color>\t: start new game against the computer
+- <color=#158>H</color>\t: start new game against a human
+- <color=#158>VC</color>\t: start new game against Vegas or Carlos
 - <color=#158>Esc</color>\t: quit (current) game
 ";
 
@@ -406,10 +404,13 @@ namespace Quatrene
             }
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.H))
-                    StartGame(false);
+                    StartGame(PlayerType.Human);
+            else if (game.GameMode == GameMode.Lobby &&
+                Input.GetKeyUp(KeyCode.V))
+                    StartGame(PlayerType.Vegas);
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.C))
-                    StartGame(true);
+                StartGame(PlayerType.Carlos);
             else if (Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;
@@ -449,7 +450,9 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F3))
                 ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
-                game.MakeAiMove();
+                game.MakeAiMove(PlayerType.Vegas);
+            else if (Input.GetKeyUp(KeyCode.F6))
+                game.MakeAiMove(PlayerType.Carlos);
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }

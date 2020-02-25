@@ -7,6 +7,8 @@ using Unity.Jobs;
 
 namespace Quatrene
 {
+    public enum PlayerType { Human, Vegas, Carlos }
+
     public struct GameAiJob : IJobParallelFor
     {
         public byte depth, width;
@@ -14,14 +16,14 @@ namespace Quatrene
         public byte player;
         public NativeArray<Move> moves;
         public NativeArray<int> tries;
-        public NativeArray<float> results;
+        public NativeArray<double> results;
 
         public void Execute(int i)
         {
             var stats = new AiStats(0);
             var next = new Game(ref game);
             if (next.ApplyMove(moves[i]))
-                results[i] = next.Eval(depth, width, player, ref stats);
+                results[i] = next.EvalVegas(depth, width, player, ref stats);
             else
                 results[i] = -10000;
             tries[i] = stats.Tries;
@@ -62,7 +64,7 @@ namespace Quatrene
 
     public struct AiValue
     {
-        public float Score;
+        public double Score;
         public Move Move;
     }
 
@@ -84,10 +86,10 @@ namespace Quatrene
 
         static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
-        static float SmallNoise() => (Seed.Next(100) - 50) * 0.000001f;
+        static double SmallNoise() => (Seed.Next(100) - 50) * 0.00000001f;
 
-        float EvalCurrent(byte player) => SmallNoise() +
-            (float)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
+        double EvalCurrent(byte player) => SmallNoise() +
+            (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
 
         public bool ApplyMove(Move move)
         {
@@ -99,15 +101,15 @@ namespace Quatrene
                 return false;
         }
 
-        public float Eval(byte depth, byte width, byte player, ref AiStats stats)
+        public double EvalVegas(byte depth, byte width, byte player, ref AiStats stats)
         {
-            float score = -10000;
+            double score = -10000;
             if (aiDepth >= depth || GameMode == GameMode.GameOver)
                 score = EvalCurrent(player);
             else
             {
                 byte tries = 0;
-                float total = 0;
+                double total = 0;
 
                 var moves = GetValidMoves().ToArray();
 
@@ -123,10 +125,10 @@ namespace Quatrene
                             i = (byte)Seed.Next(moves.Length);
 
                     var move = moves[i];
-                    float scoreNext = -10000;
+                    double scoreNext = -10000;
                     var next = new Game(ref this);
                     if (next.ApplyMove(move))
-                        scoreNext = next.Eval(depth, width, player, ref stats);
+                        scoreNext = next.EvalVegas(depth, width, player, ref stats);
                     if (scoreNext > -1000)
                     {
                         total += scoreNext;
@@ -173,7 +175,7 @@ namespace Quatrene
             }
         }
 
-        public void MakeAiMove(byte depth = 6, byte width = 4)
+        public void MakeAiMove(PlayerType player, byte depth = 6, byte width = 4)
         {
             if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
                 return;
@@ -186,7 +188,7 @@ namespace Quatrene
             aiTimer.Start();
 
             var movesArr = GetValidMoves().ToArray();
-            var results = new NativeArray<float>(64, Allocator.Persistent);
+            var results = new NativeArray<double>(64, Allocator.Persistent);
             var tries = new NativeArray<int>(64, Allocator.Persistent);
             var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
 
@@ -208,7 +210,7 @@ namespace Quatrene
                 Score = -10000,
                 Move = new Move(2, 0, 0, 0)
             };
-            float total = 0;
+            double total = 0;
 
             AiStats.Tries = 0;
             for (int i = 0; i < movesArr.Length; i++)
