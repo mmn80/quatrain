@@ -85,9 +85,7 @@ namespace Quatrene
             PlayerTypes[1] = enemy;
             if (enemy != PlayerType.Human)
             {
-                if (PlayerNames[1] == "Player 2" ||
-                        PlayerNames[1] == "Vegas" || PlayerNames[1] == "Carlos")
-                    PlayerNames[1] = enemy.ToString();
+                PlayerNames[1] = enemy.ToString();
                 Instance.Player2.text = PlayerNames[1];
             }
 
@@ -128,7 +126,7 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
-        static string fstr(double f) => f.ToString("0.0000000000");
+        static string fstr(double f) => f.ToString("0.000000000000");
 
         public static void ShowAiDebugInfo()
         {
@@ -231,10 +229,11 @@ namespace Quatrene
             while (true)
             {
                 yield return new WaitForSecondsRealtime(0.5f);
+                var player = PlayerTypes[game.GetPlayer()];
                 if (game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
-                    PlayerTypes[game.GetPlayer()] != PlayerType.Human)
-                        game.MakeAiMove(PlayerTypes[game.GetPlayer()]);
+                    player != PlayerType.Human)
+                        game.MakeAiMove(player);
             }
         }
 

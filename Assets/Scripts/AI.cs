@@ -11,7 +11,9 @@ namespace Quatrene
 
     public struct GameAiJob : IJobParallelFor
     {
+        public PlayerType playerType;
         public byte depth, width;
+        public int playouts;
         public Game game;
         public byte player;
         public NativeArray<Move> moves;
@@ -20,13 +22,20 @@ namespace Quatrene
 
         public void Execute(int i)
         {
-            var stats = new AiStats(0);
+            var totalTries = 0;
             var next = new Game(ref game);
             if (next.ApplyMove(moves[i]))
-                results[i] = next.EvalVegas(depth, width, player, ref stats);
+            {
+                if (playerType == PlayerType.Vegas)
+                    results[i] = next.EvalVegas(depth, width, player, ref totalTries);
+                else if (playerType == PlayerType.Carlos)
+                    results[i] = next.EvalCarlos(playouts, player, ref totalTries);
+                else
+                    results[i] = -10000;
+            }
             else
                 results[i] = -10000;
-            tries[i] = stats.Tries;
+            tries[i] = totalTries;
         }
     }
 
@@ -101,7 +110,7 @@ namespace Quatrene
                 return false;
         }
 
-        public double EvalVegas(byte depth, byte width, byte player, ref AiStats stats)
+        public double EvalVegas(byte depth, byte width, byte player, ref int totalTries)
         {
             double score = -10000;
             if (aiDepth >= depth || GameMode == GameMode.GameOver)
@@ -128,15 +137,12 @@ namespace Quatrene
                     double scoreNext = -10000;
                     var next = new Game(ref this);
                     if (next.ApplyMove(move))
-                        scoreNext = next.EvalVegas(depth, width, player, ref stats);
+                        scoreNext = next.EvalVegas(depth, width, player, ref totalTries);
                     if (scoreNext > -1000)
                     {
                         total += scoreNext;
                         tries++;
-                        stats.Tries++;
-                        if (aiDepth == 0)
-                            stats.Moves.Add(new AiValue() {
-                                Move = move, Score = scoreNext });
+                        totalTries++;
                     }
 
                     if (aiDepth > 1)
@@ -154,6 +160,37 @@ namespace Quatrene
                     score = total / tries;
             }
             return score;
+        }
+
+        public double EvalCarlos(int playouts, byte player, ref int tries)
+        {
+            int wins = 0, losses = 0, draws = 0;
+            for (int i = 0; i < playouts; i++)
+            {
+                var g = this;
+                while (g.GameMode != GameMode.GameOver)
+                {
+                    var moves = g.GetValidMoves().ToArray();
+                    var move = moves[(byte)Seed.Next(moves.Length)];
+                    g = new Game(ref g);
+                    if (!g.ApplyMove(move))
+                        break;
+                    tries++;
+                }
+                if (g.GameMode != GameMode.GameOver)
+                    continue;
+                var myScore = g.GetScore(player);
+                var otherScore = g.GetScore((byte)(player == 0 ? 1 : 0));
+                if (myScore > otherScore)
+                    wins++;
+                else if (otherScore > myScore)
+                    losses++;
+                else
+                    draws++;
+            }
+            if (wins == 0 && losses == 0)
+                return 0;
+            return (double)wins / (wins + losses);
         }
 
         IEnumerable<Move> GetValidMoves()
@@ -175,7 +212,8 @@ namespace Quatrene
             }
         }
 
-        public void MakeAiMove(PlayerType player, byte depth = 6, byte width = 4)
+        public void MakeAiMove(PlayerType player, byte depth = 6, byte width = 4,
+            byte playouts = 100)
         {
             if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
                 return;
@@ -195,8 +233,10 @@ namespace Quatrene
             var job = new GameAiJob();
             job.game = this;
             job.player = GetPlayer();
+            job.playerType = player;
             job.depth = depth;
             job.width = width;
+            job.playouts = playouts;
             job.moves = moves;
             job.results = results;
             job.tries = tries;
