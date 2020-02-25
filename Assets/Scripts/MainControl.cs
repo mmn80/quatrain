@@ -79,13 +79,18 @@ namespace Quatrene
             return true;
         }
 
-        static bool StartGame(PlayerType enemy)
+        static bool StartGame(PlayerType player1, PlayerType player2)
         {
-            PlayerTypes[0] = PlayerType.Human;
-            PlayerTypes[1] = enemy;
-            if (enemy != PlayerType.Human)
+            PlayerTypes[0] = player1;
+            if (player1 != PlayerType.Human)
             {
-                PlayerNames[1] = enemy.ToString();
+                PlayerNames[0] = player1.ToString();
+                Instance.Player1.text = PlayerNames[0];
+            }
+            PlayerTypes[1] = player2;
+            if (player2 != PlayerType.Human)
+            {
+                PlayerNames[1] = player2.ToString();
                 Instance.Player2.text = PlayerNames[1];
             }
 
@@ -403,13 +408,16 @@ namespace Quatrene
             }
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.H))
-                    StartGame(PlayerType.Human);
+                    StartGame(PlayerType.Human, PlayerType.Human);
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.V))
-                    StartGame(PlayerType.Vegas);
+                    StartGame(PlayerType.Human, PlayerType.Vegas);
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.C))
-                StartGame(PlayerType.Carlos);
+                StartGame(PlayerType.Human, PlayerType.Carlos);
+            else if (game.GameMode == GameMode.Lobby &&
+                Input.GetKeyUp(KeyCode.X))
+                StartGame(PlayerType.Vegas, PlayerType.Carlos);
             else if (Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;
