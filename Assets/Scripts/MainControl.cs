@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Linq;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -141,8 +143,8 @@ namespace Quatrene
                 OrderByDescending(v => v.Score).
                 Take(5).ToArray();
             var best = bests[0];
-            var ms = Game.aiTimer.ElapsedMilliseconds;
-            var ts = Game.aiTimer.ElapsedTicks;
+            var ms = aiTimer.ElapsedMilliseconds;
+            var ts = aiTimer.ElapsedTicks;
             var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
             stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
             stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
@@ -235,11 +237,99 @@ namespace Quatrene
             {
                 yield return new WaitForSecondsRealtime(0.5f);
                 var player = PlayerTypes[game.GetPlayer()];
-                if (game.GameMode != GameMode.Lobby &&
+                if (!waitingForAi && game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
                     player != PlayerType.Human)
-                        game.MakeAiMove(player);
+                        MakeAiMove(player);
             }
+        }
+
+        void MakeAiMove(PlayerType player) =>
+            StartCoroutine(MakeAiMoveAsync(player));
+
+        static bool waitingForAi = false;
+        static System.Diagnostics.Stopwatch aiTimer;
+
+        IEnumerator MakeAiMoveAsync(PlayerType player,
+            byte depth = 6, byte width = 4, byte playouts = 100)
+        {
+            if (game.GameMode == GameMode.Lobby || game.GameMode == GameMode.GameOver)
+                yield break;
+
+            Game.Seed = new System.Random();
+            aiTimer = new System.Diagnostics.Stopwatch();
+            Game.AiStats = new AiStats(0);
+
+            Game.AiMode = true;
+            aiTimer.Start();
+
+            var movesArr = game.GetValidMoves().ToArray();
+            var results = new NativeArray<double>(64, Allocator.Persistent);
+            var tries = new NativeArray<int>(64, Allocator.Persistent);
+            var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
+
+            var job = new GameAiJob();
+            job.game = game;
+            job.player = game.GetPlayer();
+            job.playerType = player;
+            job.depth = depth;
+            job.width = width;
+            job.playouts = playouts;
+            job.moves = moves;
+            job.results = results;
+            job.tries = tries;
+
+            var handle = job.Schedule(movesArr.Length, 2);
+
+            waitingForAi = true;
+            while (waitingForAi)
+            {
+                yield return new WaitForSecondsRealtime(0.1f);
+
+                if (handle.IsCompleted)
+                    waitingForAi = false;
+            }
+            handle.Complete();
+
+            double total = 0;
+            var best = new AiValue()
+            {
+                Score = -10000,
+                Move = new Move(2, 0, 0, 0)
+            };
+            Game.AiStats.Tries = 0;
+            for (int i = 0; i < movesArr.Length; i++)
+            {
+                var result = results[i];
+                var val = new AiValue()
+                {
+                    Score = result,
+                    Move = movesArr[i]
+                };
+                Game.AiStats.Moves.Add(val);
+                Game.AiStats.Tries += tries[i];
+                if (best.Score < result)
+                    best = val;
+                total += result;
+            }
+
+            moves.Dispose();
+            results.Dispose();
+            tries.Dispose();
+
+            aiTimer.Stop();
+            Game.AiMode = false;
+
+            if (total == 0 && player == PlayerType.Carlos)
+            {
+                ShowInfo("<color=#158>Carlos:</color> I resign.");
+                game.GameOver(false, 0);
+            }
+            else
+                game.ApplyMove(best.Move);
+
+            if (Game.ShowAiDebugInfo)
+                ShowAiDebugInfo();
         }
 
         void Awake() => Instance = this;
@@ -457,9 +547,9 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F3))
                 ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
-                game.MakeAiMove(PlayerType.Vegas);
+                MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
-                game.MakeAiMove(PlayerType.Carlos);
+                MakeAiMove(PlayerType.Carlos);
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }

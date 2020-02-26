@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
@@ -93,7 +92,7 @@ namespace Quatrene
     {
         public static AiStats AiStats;
 
-        static System.Random Seed = new System.Random();
+        public static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
         static double SmallNoise() => (Seed.Next(100) - 50) * 0.00000001f;
 
@@ -195,7 +194,7 @@ namespace Quatrene
             return (double)wins / (wins + losses);
         }
 
-        IEnumerable<Move> GetValidMoves()
+        public IEnumerable<Move> GetValidMoves()
         {
             if (GameMode == GameMode.Add)
             {
@@ -213,82 +212,5 @@ namespace Quatrene
                                 yield return new Move(1, x, y, z);
             }
         }
-
-        public void MakeAiMove(PlayerType player, byte depth = 6, byte width = 4,
-            byte playouts = 100)
-        {
-            if (GameMode == GameMode.Lobby || GameMode == GameMode.GameOver)
-                return;
-
-            Seed = new System.Random();
-            aiTimer = new Stopwatch();
-            AiStats = new AiStats(0);
-
-            AiMode = true;
-            aiTimer.Start();
-
-            var movesArr = GetValidMoves().ToArray();
-            var results = new NativeArray<double>(64, Allocator.Persistent);
-            var tries = new NativeArray<int>(64, Allocator.Persistent);
-            var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
-
-            var job = new GameAiJob();
-            job.game = this;
-            job.player = GetPlayer();
-            job.playerType = player;
-            job.depth = depth;
-            job.width = width;
-            job.playouts = playouts;
-            job.moves = moves;
-            job.results = results;
-            job.tries = tries;
-
-            var handle = job.Schedule(movesArr.Length, 2);
-
-            handle.Complete();
-
-            var best = new AiValue()
-            {
-                Score = -10000,
-                Move = new Move(2, 0, 0, 0)
-            };
-            double total = 0;
-
-            AiStats.Tries = 0;
-            for (int i = 0; i < movesArr.Length; i++)
-            {
-                var result = results[i];
-                var val = new AiValue()
-                {
-                    Score = result,
-                    Move = movesArr[i]
-                };
-                AiStats.Moves.Add(val);
-                AiStats.Tries += tries[i];
-                if (best.Score < result)
-                    best = val;
-                total += result;
-            }
-
-            moves.Dispose();
-            results.Dispose();
-            tries.Dispose();
-
-            aiTimer.Stop();
-            AiMode = false;
-
-            if (total == 0 && player == PlayerType.Carlos)
-            {
-                MainControl.ShowInfo("<color=#158>Carlos:</color> I resign.");
-                GameOver(false, 0);
-            }
-            else
-                ApplyMove(best.Move);
-
-            if (ShowAiDebugInfo)
-                MainControl.ShowAiDebugInfo();
-        }
-
-        public static Stopwatch aiTimer;
     }
 }
