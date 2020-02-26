@@ -29,7 +29,7 @@ namespace Quatrene
                 if (playerType == PlayerType.Vegas)
                     results[i] = next.EvalVegas(depth, width, player, ref totalTries);
                 else if (playerType == PlayerType.Carlos)
-                    results[i] = next.EvalCarlos(playouts, player, ref totalTries);
+                    results[i] = next.EvalCarlos(playouts, player, out totalTries);
                 else
                     results[i] = -10000;
             }
@@ -162,11 +162,13 @@ namespace Quatrene
             return score;
         }
 
-        public double EvalCarlos(int playouts, byte player, ref int tries)
+        public double EvalCarlos(int playouts, byte player, out int tries)
         {
-            int wins = 0, losses = 0, draws = 0;
-            for (int i = 0; i < playouts; i++)
+            tries = 0;
+            int wins = 0, losses = 0, draws = 0, lastTries = -1;
+            while (tries < playouts * 64 && lastTries != tries)
             {
+                lastTries = tries;
                 var g = this;
                 while (g.GameMode != GameMode.GameOver)
                 {
@@ -275,7 +277,13 @@ namespace Quatrene
             aiTimer.Stop();
             AiMode = false;
 
-            ApplyMove(best.Move);
+            if (total == 0 && player == PlayerType.Carlos)
+            {
+                MainControl.ShowInfo("<color=#158>Carlos:</color> I resign.");
+                GameOver(false, 0);
+            }
+            else
+                ApplyMove(best.Move);
 
             if (ShowAiDebugInfo)
                 MainControl.ShowAiDebugInfo();
