@@ -189,9 +189,10 @@ namespace Quatrene
                 else
                     draws++;
             }
-            if (wins == 0 && losses == 0)
+            var games = wins + losses + draws;
+            if (games == 0)
                 return 0;
-            return (double)wins / (wins + losses);
+            return ((double)wins + draws / 10d) / games;
         }
 
         public IEnumerable<Move> GetValidMoves()
