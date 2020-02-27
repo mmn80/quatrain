@@ -84,6 +84,7 @@ namespace Quatrene
 
         static bool StartGame(PlayerType player1, PlayerType player2)
         {
+            historyPos = -1;
             gameHistory.Clear();
 
             if (PlayerTypes[0] != player1)
@@ -159,6 +160,25 @@ namespace Quatrene
         }
 
         public static List<Position> gameHistory = new List<Position>();
+        static int historyPos = 0;
+
+        public static void HistoryBack()
+        {
+            if (waitingForAi)
+            {
+                ShowError("wait for ai to finish");
+                return;
+            }
+            if (gameHistory.Count == 0 || historyPos == 0)
+            {
+                ShowError("back to start");
+                return;
+            }
+            historyPos--;
+            var prev = gameHistory[historyPos];
+            game = prev.Game;
+            Instance.UpdateUI();
+        }
 
         public static void OnAfterAdd(byte x, byte y, byte z)
         {
@@ -169,6 +189,7 @@ namespace Quatrene
                     Score = 0, TotalScore = 0,
                     Move = new Move(0, x, y, z)
                 });
+            historyPos = gameHistory.Count - 1;
 
             stones[x, y, z] = Stone.MakeStone(x, y, z,
                 (StoneType)game.GetPlayer());
@@ -187,6 +208,7 @@ namespace Quatrene
                     Score = 0, TotalScore = 0,
                     Move = new Move(1, x, y, z)
                 });
+            historyPos = gameHistory.Count - 1;
 
             Stone.DestroyStone(stones[x, y, z]);
             stones[x, y, z] = null;
@@ -260,7 +282,7 @@ namespace Quatrene
                 var player = PlayerTypes[game.GetPlayer()];
                 if (!waitingForAi && game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
-                    player != PlayerType.Human)
+                    player != PlayerType.Human && !paused)
                         MakeAiMove(player);
             }
         }
@@ -270,6 +292,7 @@ namespace Quatrene
 
         static bool waitingForAi = false;
         static System.Diagnostics.Stopwatch aiTimer;
+        static bool paused = false;
 
         IEnumerator MakeAiMoveAsync(PlayerType player,
             byte depth = 6, byte width = 4, byte playouts = 100)
@@ -357,6 +380,7 @@ namespace Quatrene
                     }
                 }
             gameHistory.Add(pos);
+            historyPos = gameHistory.Count - 1;
 
             if ((total == 0 && player == PlayerType.Carlos) || best.Score < -5)
             {
@@ -617,6 +641,11 @@ namespace Quatrene
                 MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos);
+            else if (Input.GetKeyUp(KeyCode.Space))
+            {
+                paused = !paused;
+                ShowInfo("ai is " + (paused ? "" : "not ") + "paused");
+            }
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
         }
