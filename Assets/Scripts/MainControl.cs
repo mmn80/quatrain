@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
@@ -83,15 +84,17 @@ namespace Quatrene
 
         static bool StartGame(PlayerType player1, PlayerType player2)
         {
-            PlayerTypes[0] = player1;
-            if (player1 != PlayerType.Human)
+            gameHistory.Clear();
+
+            if (PlayerTypes[0] != player1)
             {
+                PlayerTypes[0] = player1;
                 PlayerNames[0] = player1.ToString();
                 Instance.Player1.text = PlayerNames[0];
             }
-            PlayerTypes[1] = player2;
-            if (player2 != PlayerType.Human)
+            if (PlayerTypes[1] != player2)
             {
+                PlayerTypes[1] = player2;
                 PlayerNames[1] = player2.ToString();
                 Instance.Player2.text = PlayerNames[1];
             }
@@ -113,22 +116,22 @@ namespace Quatrene
             return true;
         }
 
-        public static void OnGameOver(bool quit, byte winner)
+        public static void OnGameOver()
         {
+            var winner = game.GetWinner();
             Instance.UpdateUI(true);
             HideMessage();
-            if (quit)
-            {
-                Instance.PlayGameOverSound();
-                ShowMessage("game over");
-            }
-            else
-            {
+            if (winner != 2 && (PlayerTypes[winner] == PlayerType.Human || (
+                PlayerTypes[0] != PlayerType.Human &&
+                PlayerTypes[1] != PlayerType.Human
+            )))
                 Instance.PlayAmenSound();
-                ShowMessage("game over\nwinner is <color=#D9471A>" +
-                    (winner == 2 ? "nobody" : PlayerNames[winner]) + "</color>\n");
+            else
+                Instance.PlayGameOverSound();
+            ShowMessage("game over\nwinner is <color=#D9471A>" +
+                (winner == 2 ? "nobody" : PlayerNames[winner]) + "</color>\n");
+            if (winner != 2)
                 Instance.HighlightScore(5, winner);
-            }
         }
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
@@ -155,8 +158,18 @@ namespace Quatrene
             ShowInfo(stats);
         }
 
+        public static List<Position> gameHistory = new List<Position>();
+
         public static void OnAfterAdd(byte x, byte y, byte z)
         {
+            if (PlayerTypes[game.GetPlayer()] == PlayerType.Human)
+                gameHistory.Add(new Position()
+                {
+                    Game = game,
+                    Score = 0, TotalScore = 0,
+                    Move = new Move(0, x, y, z)
+                });
+
             stones[x, y, z] = Stone.MakeStone(x, y, z,
                 (StoneType)game.GetPlayer());
 
@@ -167,6 +180,14 @@ namespace Quatrene
 
         public static void OnAfterRemove(byte x, byte y, byte z)
         {
+            if (PlayerTypes[game.GetPlayer()] == PlayerType.Human)
+                gameHistory.Add(new Position()
+                {
+                    Game = game,
+                    Score = 0, TotalScore = 0,
+                    Move = new Move(1, x, y, z)
+                });
+
             Stone.DestroyStone(stones[x, y, z]);
             stones[x, y, z] = null;
             for (byte i = z; i < 4; i++)
@@ -268,17 +289,10 @@ namespace Quatrene
             var tries = new NativeArray<int>(64, Allocator.Persistent);
             var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
 
-            var job = new GameAiJob();
-            job.game = game;
-            job.player = game.GetPlayer();
-            job.playerType = player;
-            job.depth = depth;
-            job.width = width;
-            job.playouts = playouts;
-            job.moves = moves;
-            job.results = results;
-            job.tries = tries;
-
+            var job = new GameAiJob() { game = game, player = game.GetPlayer(),
+                playerType = player, depth = depth, width = width,
+                playouts = playouts, moves = moves, results = results,
+                tries = tries };
             var handle = job.Schedule(movesArr.Length, 2);
 
             waitingForAi = true;
@@ -320,16 +334,65 @@ namespace Quatrene
             aiTimer.Stop();
             Game.AiMode = false;
 
-            if (total == 0 && player == PlayerType.Carlos)
+            if (game.GameMode == GameMode.GameOver)
             {
-                ShowInfo("<color=#158>Carlos:</color> I resign.");
-                game.GameOver(false, 0);
+                OnGameOver();
+                yield break;
+            }
+
+            var pos = new Position() {
+                Game = game, Move = best.Move,
+                Score = best.Score, TotalScore = total };
+            Position lastPos = new Position();
+            var foundLastPos = false;
+            if (gameHistory.Count > 0)
+                for (int i = gameHistory.Count - 1; i >= 0; i--)
+                {
+                    var p = gameHistory[i];
+                    if (p.Game.GetPlayer() == game.GetPlayer())
+                    {
+                        lastPos = p;
+                        foundLastPos = true;
+                        break;
+                    }
+                }
+            gameHistory.Add(pos);
+
+            if ((total == 0 && player == PlayerType.Carlos) || best.Score < -5)
+            {
+                AiDialog("This is hopeless... I quit.");
+                game.GameOver();
             }
             else
+            {
+                if (player == PlayerType.Carlos)
+                {
+                    if (foundLastPos && pos.Score - lastPos.Score > 0.2 &&
+                            pos.Move.moveType == 0)
+                        AiDialog($"I bet you didn't see this comming!");
+                }
+                else if (player == PlayerType.Vegas)
+                {
+                    if (foundLastPos && pos.Score - lastPos.Score > 1 &&
+                            pos.Move.moveType == 0)
+                        AiDialog("Gotcha!");
+                }
                 game.ApplyMove(best.Move);
+            }
 
             if (Game.ShowAiDebugInfo)
                 ShowAiDebugInfo();
+        }
+
+        public void AiDialog(string message) =>
+            StartCoroutine(AiDialogAsync(message));
+
+        public IEnumerator AiDialogAsync(string message)
+        {
+            var player = PlayerTypes[game.GetPlayer()];
+            ShowInfo($"<color=#158>{player}:</color> {message}");
+            yield return new WaitForSecondsRealtime(3);
+            HideInfo();
         }
 
         void Awake() => Instance = this;
@@ -490,11 +553,15 @@ namespace Quatrene
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (game.GameMode == GameMode.Lobby)
+#if UNITY_EDITOR
+                    UnityEditor.EditorApplication.isPlaying = false;
+#else
                     Application.Quit();
+#endif
                 else if (game.GameMode == GameMode.GameOver)
                     NewGame();
                 else
-                    game.GameOver(true, 2);
+                    game.GameOver();
             }
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.H))

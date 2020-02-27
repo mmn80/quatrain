@@ -76,6 +76,14 @@ namespace Quatrene
         public Move Move;
     }
 
+    public struct Position
+    {
+        public Game Game;
+        public Move Move;
+        public double Score;
+        public double TotalScore;
+    }
+
     public struct AiStats
     {
         public AiStats(int tries)

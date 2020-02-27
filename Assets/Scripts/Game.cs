@@ -81,11 +81,20 @@ namespace Quatrene
             set => SetMode((byte)value);
         }
 
-        public void GameOver(bool quit, byte winner)
+        public void GameOver()
         {
             GameMode = GameMode.GameOver;
             if (!AiMode)
-                MainControl.OnGameOver(quit, winner);
+                MainControl.OnGameOver();
+        }
+
+        public byte GetWinner()
+        {
+            if (GetScore(0) > GetScore(1))
+                return 0;
+            else if (GetScore(1) > GetScore(0))
+                return 1;
+            return 2;
         }
 
         void NextTurn()
@@ -98,14 +107,7 @@ namespace Quatrene
                 MainControl.OnPlayerSwitch();
 
             if (GetStones(0) == 0 && GetStones(1) == 0)
-            {
-                byte winner = 2;
-                if (GetScore(0) > GetScore(1))
-                    winner = 0;
-                else if (GetScore(1) > GetScore(0))
-                    winner = 1;
-                GameOver(false, winner);
-            }
+                GameOver();
         }
 
         public StoneAtPos ToRemove
