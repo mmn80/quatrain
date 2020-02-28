@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace Quatrene
@@ -11,7 +10,7 @@ namespace Quatrene
 
     public partial struct Game
     {
-        public static StoneType Value2Stone(StoneAtPos val) =>
+        public static StoneType StoneAtPos2Stone(StoneAtPos val) =>
             val == StoneAtPos.Black ? StoneType.Black : StoneType.White;
 
         public static bool TakeTopStonesOnly = true;
@@ -19,6 +18,7 @@ namespace Quatrene
 
         public Game(ref Game src)
         {
+            game = src.game;
             stones0 = src.stones0;
             stones1 = src.stones1;
             score0 = src.score0;
@@ -27,7 +27,6 @@ namespace Quatrene
             board1 = src.board1;
             board2 = src.board2;
             board3 = src.board3;
-            game = src.game;
             quatrainStones = src.quatrainStones;
             lastStone = src.lastStone;
             aiDepth = (byte)(src.aiDepth + 1);
@@ -344,9 +343,6 @@ namespace Quatrene
                 board0, board1, board2, board3));
         }
 
-        public static bool ShowQuatrainsDebugInfo = false;
-        public static bool ShowAiDebugInfo = false;
-
         #region Quatrains generators
 
         static Quatrain[] quatrainsSrc;
@@ -454,13 +450,6 @@ namespace Quatrene
             if (quatrainsSrc == null)
                 InitQuatrainsSrc();
 
-            Stopwatch watch = null;
-            if (ShowQuatrainsDebugInfo && !AiMode)
-            {
-                watch = new Stopwatch();
-                watch.Start();
-            }
-
             for (byte i = 0; i < 76; i++)
             {
                 var src = quatrainsSrc[i];
@@ -477,14 +466,6 @@ namespace Quatrene
                     SetQuatrainStone(src.P3.X, src.P3.Y, src.P3.Z);
                 }
             }
-
-            if (!AiMode && ShowQuatrainsDebugInfo)
-            {
-                watch.Stop();
-                var ms = watch.ElapsedMilliseconds;
-                var ts = watch.ElapsedTicks;
-                MainControl.ShowMessage($"quatrains evaluated in {ms} ms ({ts} ticks)");
-            }
         }
 
         bool AnyQuatrainAt(byte x, byte y, byte z, bool allowAbove,
@@ -496,7 +477,7 @@ namespace Quatrene
                 if (IsQuatrainStone(x, y, z))
                 {
                     var s = GetStoneAt(x, y, z);
-                    quatrainType = Value2Stone(s);
+                    quatrainType = StoneAtPos2Stone(s);
                     return true;
                 }
                 if (!allowAbove)

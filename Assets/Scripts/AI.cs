@@ -70,7 +70,7 @@ namespace Quatrene
             (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
 
-    public struct AiValue
+    public struct ScoredMove
     {
         public double Score;
         public Move Move;
@@ -82,24 +82,12 @@ namespace Quatrene
         public Move Move;
         public double Score;
         public double TotalScore;
-    }
-
-    public struct AiStats
-    {
-        public AiStats(int tries)
-        {
-            Tries = tries;
-            Moves = new List<AiValue>();
-        }
-
         public int Tries;
-        public List<AiValue> Moves;
+        public List<ScoredMove> Moves;
     }
 
     public partial struct Game
     {
-        public static AiStats AiStats;
-
         public static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
         static double SmallNoise() => (Seed.Next(100) - 50) * 0.00000001f;

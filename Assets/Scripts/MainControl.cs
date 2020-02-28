@@ -38,6 +38,8 @@ namespace Quatrene
 
         public static void HideMessage() => ShowMessage("");
 
+        public static bool AutoShowAiDebugInfo = false;
+
         public static void ShowInfo(string message)
         {
             var txt = Instance.Info;
@@ -150,9 +152,12 @@ namespace Quatrene
 
         public static void ShowAiDebugInfo()
         {
-            if (Game.AiStats.Moves == null)
+            if (historyPos == -1)
                 return;
-            var bests = Game.AiStats.Moves.
+            var pos = gameHistory[historyPos];
+            if (pos.Moves == null)
+                return;
+            var bests = pos.Moves.
                 OrderByDescending(v => v.Score).
                 Take(5).ToArray();
             var best = bests[0];
@@ -161,7 +166,7 @@ namespace Quatrene
             var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
             stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
             stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
-            stats += $"<color=#158>Moves:</color>\t{Game.AiStats.Tries}\n\n";
+            stats += $"<color=#158>Moves:</color>\t{pos.Tries}\n\n";
             stats += $"<color=#158>Next best moves:</color>\n";
             foreach (var g in bests.Skip(1))
                 stats += $"\t{g.Move}  ({fstr(g.Score)})\n";
@@ -213,6 +218,22 @@ namespace Quatrene
             UpdateGameFromHistory();
         }
 
+        public static Position GetPreviousPosition(out bool foundLastPos)
+        {
+            foundLastPos = false;
+            if (gameHistory.Count > 0 && historyPos == gameHistory.Count - 1)
+                for (int i = historyPos - 1; i >= 0; i--)
+                {
+                    var p = gameHistory[i];
+                    if (p.Game.GetPlayer() == game.GetPlayer())
+                    {
+                        foundLastPos = true;
+                        return p;
+                    }
+                }
+            return new Position();
+        }
+
         static void UpdateGameFromHistory()
         {
             var g = gameHistory[historyPos];
@@ -239,7 +260,7 @@ namespace Quatrene
                             }
                             continue;
                         }
-                        var gs = Game.Value2Stone(g);
+                        var gs = Game.StoneAtPos2Stone(g);
                         if (s == null)
                         {
                             stones[x, y, z] = Stone.MakeStone(x, y, z, gs);
@@ -356,7 +377,6 @@ namespace Quatrene
 
             Game.Seed = new System.Random();
             aiTimer = new System.Diagnostics.Stopwatch();
-            Game.AiStats = new AiStats(0);
 
             Game.AiMode = true;
             aiTimer.Start();
@@ -383,22 +403,23 @@ namespace Quatrene
             handle.Complete();
 
             double total = 0;
-            var best = new AiValue()
+            var best = new ScoredMove()
             {
                 Score = -10000,
                 Move = new Move(2, 0, 0, 0)
             };
-            Game.AiStats.Tries = 0;
+            var totalTries = 0;
+            var scoredMoves = new List<ScoredMove>();
             for (int i = 0; i < movesArr.Length; i++)
             {
                 var result = results[i];
-                var val = new AiValue()
+                var val = new ScoredMove()
                 {
                     Score = result,
                     Move = movesArr[i]
                 };
-                Game.AiStats.Moves.Add(val);
-                Game.AiStats.Tries += tries[i];
+                scoredMoves.Add(val);
+                totalTries += tries[i];
                 if (best.Score < result)
                     best = val;
                 total += result;
@@ -417,27 +438,16 @@ namespace Quatrene
                 yield break;
             }
 
-            
-            Position lastPos = new Position();
-            var foundLastPos = false;
-            if (gameHistory.Count > 0 && historyPos == gameHistory.Count - 1)
-                for (int i = historyPos - 1; i >= 0; i--)
-                {
-                    var p = gameHistory[i];
-                    if (p.Game.GetPlayer() == game.GetPlayer())
-                    {
-                        lastPos = p;
-                        foundLastPos = true;
-                        break;
-                    }
-                }
             if ((total == 0 && player == PlayerType.Carlos) || best.Score < -5)
             {
                 AiDialog("This is hopeless... I quit.");
                 game.GameOver();
+                gameHistory.Add(new Position());
             }
             else
             {
+                bool foundLastPos;
+                var lastPos = GetPreviousPosition(out foundLastPos);
                 if (player == PlayerType.Carlos)
                 {
                     if (foundLastPos && best.Score - lastPos.Score > 0.2 &&
@@ -450,13 +460,16 @@ namespace Quatrene
                             best.Move.moveType == 0)
                         AiDialog("Gotcha!");
                 }
-                if (game.ApplyMove(best.Move))
-                    gameHistory[historyPos] = new Position() {
-                        Game = game, Move = best.Move,
-                        Score = best.Score, TotalScore = total };
+                game.ApplyMove(best.Move);
             }
 
-            if (Game.ShowAiDebugInfo)
+            gameHistory[historyPos] = new Position()
+            {
+                Game = game, Move = best.Move, Moves = scoredMoves,
+                Score = best.Score, TotalScore = total, Tries = totalTries
+            };
+
+            if (AutoShowAiDebugInfo)
                 ShowAiDebugInfo();
         }
 
@@ -682,8 +695,8 @@ namespace Quatrene
                 EffectsMuted = !EffectsMuted;
             else if (Input.GetKeyUp(KeyCode.Alpha9))
             {
-                Game.ShowAiDebugInfo = !Game.ShowAiDebugInfo;
-                ShowMessage((Game.ShowAiDebugInfo ? "showing" : "hiding") +
+                AutoShowAiDebugInfo = !AutoShowAiDebugInfo;
+                ShowMessage((AutoShowAiDebugInfo ? "showing" : "hiding") +
                     " AI debug info");
             }
             else if (Input.GetKeyUp(KeyCode.F1))
