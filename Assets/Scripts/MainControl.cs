@@ -332,6 +332,8 @@ namespace Quatrene
             aiTimer.Stop();
             Game.AiMode = false;
 
+            if (paused)
+                yield break;
             if (game.GameMode == GameMode.GameOver)
             {
                 OnGameOver();
@@ -618,7 +620,7 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.Space))
             {
                 paused = !paused;
-                ShowInfo("ai is " + (paused ? "" : "not ") + "paused");
+                AiDialog(paused ? "I'm taking a break. Brb." : "I'm back!");
             }
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
