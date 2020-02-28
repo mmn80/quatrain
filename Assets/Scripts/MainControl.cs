@@ -51,14 +51,13 @@ namespace Quatrene
         public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
 
         public static Game game = new Game(true);
+        public static GameHistory history = new GameHistory();
 
         static Stone[,,] stones = new Stone[4, 4, 4];
-
         static string[] PlayerNames = new string[]
         {
             "Player 1", "Player 2"
         };
-
         static PlayerType[] PlayerTypes = new PlayerType[]
         {
             PlayerType.Human, PlayerType.Human
@@ -67,8 +66,7 @@ namespace Quatrene
         static bool NewGame()
         {
             game = new Game(true);
-            gameHistory.Clear();
-            historyPos = -1;
+            history.Clear();
 
             DestroyAllStones();
 
@@ -88,7 +86,7 @@ namespace Quatrene
 
         static bool StartGame(PlayerType player1, PlayerType player2)
         {
-            gameHistory.Clear();
+            history.Clear();
 
             if (PlayerTypes[0] != player1)
             {
@@ -104,14 +102,11 @@ namespace Quatrene
             }
 
             game.GameMode = GameMode.Add;
-            gameHistory.Add(new Position()
+            history.Add(new Position()
             {
-                Game = game,
-                Score = 0,
-                TotalScore = 0,
-                Move = new Move()
+                Game = game, Move = new Move(),
+                Score = 0, TotalScore = 0,
             });
-            historyPos = 0;
 
             Instance.UpdateUI();
             HideMessage();
@@ -148,102 +143,7 @@ namespace Quatrene
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
-        static string fstr(double f) => f.ToString("0.000000000000");
-
-        public static void ShowAiDebugInfo()
-        {
-            if (historyPos == -1)
-                return;
-            var pos = gameHistory[historyPos];
-            if (pos.Moves == null)
-                return;
-            var bests = pos.Moves.
-                OrderByDescending(v => v.Score).
-                Take(5).ToArray();
-            var best = bests[0];
-            var ms = aiTimer.ElapsedMilliseconds;
-            var ts = aiTimer.ElapsedTicks;
-            var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
-            stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
-            stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
-            stats += $"<color=#158>Moves:</color>\t{pos.Tries}\n\n";
-            stats += $"<color=#158>Next best moves:</color>\n";
-            foreach (var g in bests.Skip(1))
-                stats += $"\t{g.Move}  ({fstr(g.Score)})\n";
-            ShowInfo(stats);
-        }
-
-        public static List<Position> gameHistory = new List<Position>();
-        public static int historyPos = -1;
-
-        public static void HistoryBack()
-        {
-            if (waitingForAi)
-            {
-                ShowError("wait for ai to finish");
-                return;
-            }
-            if (historyPos < 0 || game.GameMode == GameMode.Lobby)
-            {
-                ShowError("no live game");
-                return;
-            }
-            if (gameHistory.Count == 0 || historyPos <= 0)
-            {
-                ShowError("back to start");
-                return;
-            }
-            historyPos--;
-            UpdateGameFromHistory();
-        }
-
-        public static void HistoryForward()
-        {
-            if (waitingForAi)
-            {
-                ShowError("wait for ai to finish");
-                return;
-            }
-            if (historyPos < 0 || game.GameMode == GameMode.Lobby)
-            {
-                ShowError("no live game");
-                return;
-            }
-            if (gameHistory.Count == 0 || historyPos >= gameHistory.Count - 1)
-            {
-                ShowError("already at the end");
-                return;
-            }
-            historyPos++;
-            UpdateGameFromHistory();
-        }
-
-        public static Position GetPreviousPosition(out bool foundLastPos)
-        {
-            foundLastPos = false;
-            if (gameHistory.Count > 0 && historyPos == gameHistory.Count - 1)
-                for (int i = historyPos - 1; i >= 0; i--)
-                {
-                    var p = gameHistory[i];
-                    if (p.Game.GetPlayer() == game.GetPlayer())
-                    {
-                        foundLastPos = true;
-                        return p;
-                    }
-                }
-            return new Position();
-        }
-
-        static void UpdateGameFromHistory()
-        {
-            var g = gameHistory[historyPos];
-            game = g.Game;
-            RefreshStones();
-            Instance.UpdateUI();
-            ShowInfo($"<color=#158>game position:</color> {historyPos + 1} of {gameHistory.Count}");
-        }
-
-        static void RefreshStones()
+        public static void RefreshStones()
         {
             for (byte x = 0; x < 4; x++)
                 for (byte y = 0; y < 4; y++)
@@ -365,8 +265,8 @@ namespace Quatrene
         void MakeAiMove(PlayerType player) =>
             StartCoroutine(MakeAiMoveAsync(player));
 
-        static bool waitingForAi = false;
-        static System.Diagnostics.Stopwatch aiTimer;
+        public static bool waitingForAi = false;
+        public static System.Diagnostics.Stopwatch aiTimer;
         static bool paused = false;
 
         IEnumerator MakeAiMoveAsync(PlayerType player,
@@ -442,35 +342,35 @@ namespace Quatrene
             {
                 AiDialog("This is hopeless... I quit.");
                 game.GameOver();
-                gameHistory.Add(new Position());
+                history.Add(new Position());
             }
             else
             {
-                bool foundLastPos;
-                var lastPos = GetPreviousPosition(out foundLastPos);
+                bool found;
+                var lastPos = history.GetPreviousPosition(game.GetPlayer(), out found);
                 if (player == PlayerType.Carlos)
                 {
-                    if (foundLastPos && best.Score - lastPos.Score > 0.2 &&
+                    if (found && best.Score - lastPos.Score > 0.2 &&
                             best.Move.moveType == 0)
                         AiDialog($"I bet you didn't see this comming!");
                 }
                 else if (player == PlayerType.Vegas)
                 {
-                    if (foundLastPos && best.Score - lastPos.Score > 1 &&
+                    if (found && best.Score - lastPos.Score > 1 &&
                             best.Move.moveType == 0)
                         AiDialog("Gotcha!");
                 }
                 game.ApplyMove(best.Move);
             }
 
-            gameHistory[historyPos] = new Position()
+            history.Update(new Position()
             {
                 Game = game, Move = best.Move, Moves = scoredMoves,
                 Score = best.Score, TotalScore = total, Tries = totalTries
-            };
+            });
 
             if (AutoShowAiDebugInfo)
-                ShowAiDebugInfo();
+                history.ShowAiDebugInfo();
         }
 
         public void AiDialog(string message) =>
@@ -704,15 +604,15 @@ namespace Quatrene
             else if (Input.GetKeyUp(KeyCode.F2))
                 ShowInfo(creditsInfo);
             else if (Input.GetKeyUp(KeyCode.F3))
-                ShowAiDebugInfo();
+                history.ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
                 MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos);
             else if (Input.GetKeyUp(KeyCode.LeftArrow) && Input.GetKey(KeyCode.LeftControl))
-                HistoryBack();
+                history.GoBack();
             else if (Input.GetKeyUp(KeyCode.RightArrow) && Input.GetKey(KeyCode.LeftControl))
-                HistoryForward();
+                history.GoForward();
             else if (Input.GetKeyUp(KeyCode.Space))
             {
                 paused = !paused;

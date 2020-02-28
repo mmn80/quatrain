@@ -86,6 +86,121 @@ namespace Quatrene
         public List<ScoredMove> Moves;
     }
 
+    public class GameHistory
+    {
+        List<Position> history = new List<Position>();
+        int current = -1;
+
+        public void Clear()
+        {
+            history.Clear();
+            current = -1;
+        }
+
+        public void Add(Position pos)
+        {
+            history.Add(pos);
+            current = history.Count - 1;
+        }
+
+        public void Update(Position pos)
+        {
+            history[current] = pos;
+        }
+
+        public Position GetPreviousPosition(byte player, out bool foundIt)
+        {
+            foundIt = false;
+            if (history.Count > 0 && current == history.Count - 1)
+                for (int i = current - 1; i >= 0; i--)
+                {
+                    var p = history[i];
+                    if (p.Game.GetPlayer() == player)
+                    {
+                        foundIt = true;
+                        return p;
+                    }
+                }
+            return new Position();
+        }
+
+        public void GoBack()
+        {
+            if (MainControl.waitingForAi)
+            {
+                MainControl.ShowError("wait for ai to finish");
+                return;
+            }
+            if (current < 0 || MainControl.game.GameMode == GameMode.Lobby)
+            {
+                MainControl.ShowError("no live game");
+                return;
+            }
+            if (history.Count == 0 || current <= 0)
+            {
+                MainControl.ShowError("back to start");
+                return;
+            }
+            current--;
+            UpdateGameFromHistory();
+        }
+
+        public void GoForward()
+        {
+            if (MainControl.waitingForAi)
+            {
+                MainControl.ShowError("wait for ai to finish");
+                return;
+            }
+            if (current < 0 || MainControl.game.GameMode == GameMode.Lobby)
+            {
+                MainControl.ShowError("no live game");
+                return;
+            }
+            if (history.Count == 0 || current >= history.Count - 1)
+            {
+                MainControl.ShowError("already at the end");
+                return;
+            }
+            current++;
+            UpdateGameFromHistory();
+        }
+
+        void UpdateGameFromHistory()
+        {
+            var g = history[current];
+            MainControl.game = g.Game;
+            MainControl.RefreshStones();
+            MainControl.Instance.UpdateUI();
+            MainControl.ShowInfo($"<color=#158>game position:</color> {current + 1} of {history.Count}");
+        }
+
+        static string fstr(double f) => f.ToString("0.000000000000");
+
+        public void ShowAiDebugInfo()
+        {
+            if (current == -1)
+                return;
+            var pos = history[current];
+            if (pos.Moves == null)
+                return;
+            var bests = pos.Moves.
+                OrderByDescending(v => v.Score).
+                Take(6).ToArray();
+            var best = bests[0];
+            var ms = MainControl.aiTimer.ElapsedMilliseconds;
+            var ts = MainControl.aiTimer.ElapsedTicks;
+            var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
+            stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
+            stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
+            stats += $"<color=#158>Moves:</color>\t{pos.Tries}\n\n";
+            stats += $"<color=#158>Next best moves:</color>\n";
+            foreach (var g in bests.Skip(1))
+                stats += $"\t{g.Move}  ({fstr(g.Score)})\n";
+            MainControl.ShowInfo(stats);
+        }
+    }
+
     public partial struct Game
     {
         public static System.Random Seed = new System.Random();

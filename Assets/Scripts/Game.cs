@@ -217,14 +217,11 @@ namespace Quatrene
             ProcessQuatrains(x, y, z);
 
             if (!AiMode)
-            {
-                MainControl.gameHistory.Add(new Position()
+                MainControl.history.Add(new Position()
                 {
                     Game = this, Move = new Move(0, x, y, z),
                     Score = 0, TotalScore = 0,
                 });
-                MainControl.historyPos = MainControl.gameHistory.Count - 1;
-            }
 
             return true;
         }
@@ -295,15 +292,12 @@ namespace Quatrene
             ProcessQuatrains(x, y, z, true);
 
             if (!AiMode)
-            {
-                MainControl.gameHistory.Add(new Position()
+                MainControl.history.Add(new Position()
                 {
                     Game = this, Move = new Move(1, x, y, z),
                     Score = 0, TotalScore = 0,
 
                 });
-                MainControl.historyPos = MainControl.gameHistory.Count - 1;
-            }
 
             return true;
         }
