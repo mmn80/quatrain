@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Quatrene
+namespace Quatrain
 {
     public class Stick : MonoBehaviour
     {

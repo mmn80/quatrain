@@ -4,7 +4,7 @@ using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace Quatrene
+namespace Quatrain
 {
     public enum PlayerType { Human, Vegas, Carlos }
 

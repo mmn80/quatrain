@@ -6,7 +6,7 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Quatrene
+namespace Quatrain
 {
     public class MainControl : MonoBehaviour
     {

@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using UnityEngine;
 
-namespace Quatrene
+namespace Quatrain
 {
     public enum GameMode { Lobby = 0, Add = 1, Remove = 2, GameOver = 3 }
     public enum StoneType { White = 0, Black = 1 }
