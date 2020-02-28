@@ -112,10 +112,10 @@ namespace Quatrene
         {
             foundIt = false;
             if (history.Count > 0 && current == history.Count - 1)
-                for (int i = current - 1; i >= 0; i--)
+                for (int i = current; i > 0; i--)
                 {
                     var p = history[i];
-                    if (p.Game.GetPlayer() == player)
+                    if (p.Game.GetPlayer() != player)
                     {
                         foundIt = true;
                         return p;
@@ -172,7 +172,7 @@ namespace Quatrene
             MainControl.game = g.Game;
             MainControl.RefreshStones();
             MainControl.Instance.UpdateUI();
-            MainControl.ShowInfo($"<color=#158>game position:</color> {current + 1} of {history.Count}");
+            MainControl.ShowInfo($"<color=#158>Game position:</color> {current + 1} of {history.Count}");
         }
 
         static string fstr(double f) => f.ToString("0.000000000000");

@@ -347,16 +347,16 @@ namespace Quatrene
             else
             {
                 bool found;
-                var lastPos = history.GetPreviousPosition(game.GetPlayer(), out found);
+                var last = history.GetPreviousPosition(game.GetPlayer(), out found);
                 if (player == PlayerType.Carlos)
                 {
-                    if (found && best.Score - lastPos.Score > 0.2 &&
+                    if (found && best.Score - last.Score > 0.2 &&
                             best.Move.moveType == 0)
-                        AiDialog($"I bet you didn't see this comming!");
+                        AiDialog("I bet you didn't see this comming!");
                 }
                 else if (player == PlayerType.Vegas)
                 {
-                    if (found && best.Score - lastPos.Score > 1 &&
+                    if (found && best.Score - last.Score > 1 &&
                             best.Move.moveType == 0)
                         AiDialog("Gotcha!");
                 }
@@ -379,9 +379,11 @@ namespace Quatrene
         public IEnumerator AiDialogAsync(string message)
         {
             var player = PlayerTypes[game.GetPlayer()];
-            ShowInfo($"<color=#158>{player}:</color> {message}");
+            var txt = Instance.AiDialogue;
+            message = message.Replace("\\t", "\t");
+            txt.text = $"<color=#158>{player}:</color> {message}";
             yield return new WaitForSecondsRealtime(3);
-            HideInfo();
+            txt.text = "";
         }
 
         void Awake() => Instance = this;
@@ -398,7 +400,7 @@ namespace Quatrene
         public Text Player1, Player2;
         public Text Player1Stones, Player2Stones;
         public Text Player1Score, Player2Score;
-        public Text Messages, Info;
+        public Text Messages, Info, AiDialogue;
 
         public InputField UserInput;
 
