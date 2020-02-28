@@ -8,6 +8,6 @@
     "CpuMinTargetX32": 1,
     "CpuMaxTargetX32": 2,
     "CpuMinTargetX64": 3,
-    "CpuMaxTargetX64": 4
+    "CpuMaxTargetX64": 6
   }
 }
