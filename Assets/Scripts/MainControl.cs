@@ -65,6 +65,8 @@ namespace Quatrene
         static bool NewGame()
         {
             game = new Game(true);
+            gameHistory.Clear();
+            historyPos = -1;
 
             DestroyAllStones();
 
@@ -84,7 +86,6 @@ namespace Quatrene
 
         static bool StartGame(PlayerType player1, PlayerType player2)
         {
-            historyPos = -1;
             gameHistory.Clear();
 
             if (PlayerTypes[0] != player1)
@@ -101,6 +102,14 @@ namespace Quatrene
             }
 
             game.GameMode = GameMode.Add;
+            gameHistory.Add(new Position()
+            {
+                Game = game,
+                Score = 0,
+                TotalScore = 0,
+                Move = new Move()
+            });
+            historyPos = 0;
 
             Instance.UpdateUI();
             HideMessage();
@@ -160,7 +169,7 @@ namespace Quatrene
         }
 
         public static List<Position> gameHistory = new List<Position>();
-        static int historyPos = 0;
+        public static int historyPos = -1;
 
         public static void HistoryBack()
         {
@@ -169,28 +178,82 @@ namespace Quatrene
                 ShowError("wait for ai to finish");
                 return;
             }
-            if (gameHistory.Count == 0 || historyPos == 0)
+            if (historyPos < 0 || game.GameMode == GameMode.Lobby)
+            {
+                ShowError("no live game");
+                return;
+            }
+            if (gameHistory.Count == 0 || historyPos <= 0)
             {
                 ShowError("back to start");
                 return;
             }
             historyPos--;
-            var prev = gameHistory[historyPos];
-            game = prev.Game;
+            UpdateGameFromHistory();
+        }
+
+        public static void HistoryForward()
+        {
+            if (waitingForAi)
+            {
+                ShowError("wait for ai to finish");
+                return;
+            }
+            if (historyPos < 0 || game.GameMode == GameMode.Lobby)
+            {
+                ShowError("no live game");
+                return;
+            }
+            if (gameHistory.Count == 0 || historyPos >= gameHistory.Count - 1)
+            {
+                ShowError("already at the end");
+                return;
+            }
+            historyPos++;
+            UpdateGameFromHistory();
+        }
+
+        static void UpdateGameFromHistory()
+        {
+            var g = gameHistory[historyPos];
+            game = g.Game;
+            RefreshStones();
             Instance.UpdateUI();
+            ShowInfo($"<color=#158>game position:</color> {historyPos + 1} of {gameHistory.Count}");
+        }
+
+        static void RefreshStones()
+        {
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = stones[x, y, z];
+                        var g = game.GetStoneAt(x, y, z);
+                        if (g == StoneAtPos.None)
+                        {
+                            if (s != null)
+                            {
+                                Stone.DestroyStone(s);
+                                stones[x, y, z] = null;
+                            }
+                            continue;
+                        }
+                        var gs = Game.Value2Stone(g);
+                        if (s == null)
+                        {
+                            stones[x, y, z] = Stone.MakeStone(x, y, z, gs);
+                            continue;
+                        }
+                        if (s.StoneType == gs)
+                            continue;
+                        Stone.DestroyStone(s);
+                        stones[x, y, z] = Stone.MakeStone(x, y, z, gs);
+                    }
         }
 
         public static void OnAfterAdd(byte x, byte y, byte z)
         {
-            if (PlayerTypes[game.GetPlayer()] == PlayerType.Human)
-                gameHistory.Add(new Position()
-                {
-                    Game = game,
-                    Score = 0, TotalScore = 0,
-                    Move = new Move(0, x, y, z)
-                });
-            historyPos = gameHistory.Count - 1;
-
             stones[x, y, z] = Stone.MakeStone(x, y, z,
                 (StoneType)game.GetPlayer());
 
@@ -201,15 +264,6 @@ namespace Quatrene
 
         public static void OnAfterRemove(byte x, byte y, byte z)
         {
-            if (PlayerTypes[game.GetPlayer()] == PlayerType.Human)
-                gameHistory.Add(new Position()
-                {
-                    Game = game,
-                    Score = 0, TotalScore = 0,
-                    Move = new Move(1, x, y, z)
-                });
-            historyPos = gameHistory.Count - 1;
-
             Stone.DestroyStone(stones[x, y, z]);
             stones[x, y, z] = null;
             for (byte i = z; i < 4; i++)
@@ -363,13 +417,11 @@ namespace Quatrene
                 yield break;
             }
 
-            var pos = new Position() {
-                Game = game, Move = best.Move,
-                Score = best.Score, TotalScore = total };
+            
             Position lastPos = new Position();
             var foundLastPos = false;
-            if (gameHistory.Count > 0)
-                for (int i = gameHistory.Count - 1; i >= 0; i--)
+            if (gameHistory.Count > 0 && historyPos == gameHistory.Count - 1)
+                for (int i = historyPos - 1; i >= 0; i--)
                 {
                     var p = gameHistory[i];
                     if (p.Game.GetPlayer() == game.GetPlayer())
@@ -379,9 +431,6 @@ namespace Quatrene
                         break;
                     }
                 }
-            gameHistory.Add(pos);
-            historyPos = gameHistory.Count - 1;
-
             if ((total == 0 && player == PlayerType.Carlos) || best.Score < -5)
             {
                 AiDialog("This is hopeless... I quit.");
@@ -391,17 +440,20 @@ namespace Quatrene
             {
                 if (player == PlayerType.Carlos)
                 {
-                    if (foundLastPos && pos.Score - lastPos.Score > 0.2 &&
-                            pos.Move.moveType == 0)
+                    if (foundLastPos && best.Score - lastPos.Score > 0.2 &&
+                            best.Move.moveType == 0)
                         AiDialog($"I bet you didn't see this comming!");
                 }
                 else if (player == PlayerType.Vegas)
                 {
-                    if (foundLastPos && pos.Score - lastPos.Score > 1 &&
-                            pos.Move.moveType == 0)
+                    if (foundLastPos && best.Score - lastPos.Score > 1 &&
+                            best.Move.moveType == 0)
                         AiDialog("Gotcha!");
                 }
-                game.ApplyMove(best.Move);
+                if (game.ApplyMove(best.Move))
+                    gameHistory[historyPos] = new Position() {
+                        Game = game, Move = best.Move,
+                        Score = best.Score, TotalScore = total };
             }
 
             if (Game.ShowAiDebugInfo)
@@ -510,6 +562,9 @@ namespace Quatrene
 - <color=#158>F2</color>\t: show credits
 - <color=#158>F3</color>\t: show AI info
 - <color=#158>F5 F6</color>\t: make Vegas or Carlos AI move
+
+- <color=#158>Space</color>: pause AI vs. AI game
+- <color=#158>Ctrl+←→</color>: navigate game history
 
 - <color=#158>H</color>\t: start new game against a human
 - <color=#158>VC</color>\t: start new game against Vegas or Carlos
@@ -641,6 +696,10 @@ namespace Quatrene
                 MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos);
+            else if (Input.GetKeyUp(KeyCode.LeftArrow) && Input.GetKey(KeyCode.LeftControl))
+                HistoryBack();
+            else if (Input.GetKeyUp(KeyCode.RightArrow) && Input.GetKey(KeyCode.LeftControl))
+                HistoryForward();
             else if (Input.GetKeyUp(KeyCode.Space))
             {
                 paused = !paused;

@@ -11,7 +11,7 @@ namespace Quatrene
 
     public partial struct Game
     {
-        static StoneType Value2Stone(StoneAtPos val) =>
+        public static StoneType Value2Stone(StoneAtPos val) =>
             val == StoneAtPos.Black ? StoneType.Black : StoneType.White;
 
         public static bool TakeTopStonesOnly = true;
@@ -116,7 +116,7 @@ namespace Quatrene
             set => SetToRemove((byte)value);
         }
 
-        StoneAtPos GetStoneAt(byte x, byte y, byte z)
+        public StoneAtPos GetStoneAt(byte x, byte y, byte z)
         {
             switch (z)
             {
@@ -217,6 +217,16 @@ namespace Quatrene
 
             ProcessQuatrains(x, y, z);
 
+            if (!AiMode)
+            {
+                MainControl.gameHistory.Add(new Position()
+                {
+                    Game = this, Move = new Move(0, x, y, z),
+                    Score = 0, TotalScore = 0,
+                });
+                MainControl.historyPos = MainControl.gameHistory.Count - 1;
+            }
+
             return true;
         }
 
@@ -284,6 +294,17 @@ namespace Quatrene
                 MainControl.OnAfterRemove(x, y, z);
 
             ProcessQuatrains(x, y, z, true);
+
+            if (!AiMode)
+            {
+                MainControl.gameHistory.Add(new Position()
+                {
+                    Game = this, Move = new Move(1, x, y, z),
+                    Score = 0, TotalScore = 0,
+
+                });
+                MainControl.historyPos = MainControl.gameHistory.Count - 1;
+            }
 
             return true;
         }
@@ -485,7 +506,7 @@ namespace Quatrene
             return false;
         }
 
-        void ProcessQuatrains(byte x, byte y, byte z,
+        public void ProcessQuatrains(byte x, byte y, byte z,
             bool allowAbove = false)
         {
             StoneType ty;

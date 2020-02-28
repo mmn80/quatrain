@@ -19,9 +19,12 @@ namespace Quatrene
             if (MainControl.IsInputOn())
                 return;
 
-            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            var ctrl = Input.GetKey(KeyCode.LeftControl);
+            if (!ctrl && (Input.GetKey(KeyCode.A) ||
+                    Input.GetKey(KeyCode.LeftArrow)))
                 aSpeed = -AngularSpeed;
-            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            else if (!ctrl && (Input.GetKey(KeyCode.D) ||
+                    Input.GetKey(KeyCode.RightArrow)))
                 aSpeed = AngularSpeed;
             else if (aSpeed < 0)
                 aSpeed = Mathf.Min(aSpeed + AngularAcceleration * Time.deltaTime, 0);
@@ -31,9 +34,11 @@ namespace Quatrene
                 cam.transform.RotateAround(Vector3.zero, Vector3.up, aSpeed * Time.deltaTime);
 
             var hMaxSpeed = AngularSpeed / 2;
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+            if (!ctrl && (Input.GetKey(KeyCode.W) ||
+                    Input.GetKey(KeyCode.UpArrow)))
                 hSpeed = -hMaxSpeed;
-            else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+            else if (!ctrl && (Input.GetKey(KeyCode.S) ||
+                    Input.GetKey(KeyCode.DownArrow)))
                 hSpeed = hMaxSpeed;
             else if (hSpeed < 0)
                 hSpeed = Mathf.Min(hSpeed + AngularAcceleration * Time.deltaTime, 0);
