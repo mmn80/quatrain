@@ -267,7 +267,7 @@ namespace Quatrene
 
         public static bool waitingForAi = false;
         public static System.Diagnostics.Stopwatch aiTimer;
-        static bool paused = false;
+        public static bool paused = false;
 
         IEnumerator MakeAiMoveAsync(PlayerType player,
             byte depth = 6, byte width = 4, byte playouts = 100)

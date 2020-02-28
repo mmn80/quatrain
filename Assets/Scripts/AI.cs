@@ -168,6 +168,7 @@ namespace Quatrene
 
         void UpdateGameFromHistory()
         {
+            MainControl.paused = true;
             var g = history[current];
             MainControl.game = g.Game;
             MainControl.RefreshStones();
