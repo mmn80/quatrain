@@ -16,7 +16,7 @@ namespace Quatrain
         public static GameObject Load(string path)
         {
 #if UNITY_EDITOR
-            var go = UnityEditor.AssetDatabase.
+            return UnityEditor.AssetDatabase.
                 LoadAssetAtPath<GameObject>(path);
 #else
             const string BASE_PATH = "Assets/Resources/";
@@ -25,19 +25,19 @@ namespace Quatrain
             var ext = System.IO.Path.GetExtension(path);
             if (ext != "")
                 path = path.Substring(0, path.Length - ext.Length);
-            GameObject go;
             try
             {
-                go = Resources.Load<GameObject>(path);
+                var go = Resources.Load<GameObject>(path);
                 if (!go)
                     MainControl.ShowError($"{path}\nFaild loading resource.");
+                return go;
             }
             catch (System.Exception ex)
             {
                 MainControl.ShowError($"{path}\nException: {ex.Message}");
+                return null;
             }
 #endif
-            return go;
         }
 
         public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
