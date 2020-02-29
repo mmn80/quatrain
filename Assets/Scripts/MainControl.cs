@@ -658,7 +658,8 @@ namespace Quatrain
                 MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos);
-            else if (Input.GetKeyUp(KeyCode.LeftArrow) && ctrl)
+            else if ((Input.GetKeyUp(KeyCode.LeftArrow) && ctrl) ||
+                    Input.GetKeyUp(KeyCode.Backspace))
                 history.GoBack();
             else if (Input.GetKeyUp(KeyCode.RightArrow) && ctrl)
                 history.GoForward();
