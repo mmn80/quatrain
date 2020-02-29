@@ -110,7 +110,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PosX: 0
   PosY: 0
-  highlightMaterial: {fileID: 2100000, guid: 07ad6fa18d5acbd4fa829a2dad9b97f0, type: 2}
+  NormalVariants:
+  - {fileID: 2100000, guid: 9cf5e3868f435794fb6ac9092255642a, type: 2}
+  - {fileID: 2100000, guid: 88f0448d68b1e6e41861c1b130d22a5c, type: 2}
+  HighlightVariants:
+  - {fileID: 2100000, guid: 07ad6fa18d5acbd4fa829a2dad9b97f0, type: 2}
+  - {fileID: 2100000, guid: 8c06d32cd7187e1498b2498e09f1cdd1, type: 2}
 --- !u!82 &1015045320095936604
 AudioSource:
   m_ObjectHideFlags: 0

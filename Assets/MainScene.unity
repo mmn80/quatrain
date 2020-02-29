@@ -2858,6 +2858,18 @@ MonoBehaviour:
   BlackStoneVariants:
   - Assets/Resources/Prefabs/BlackStone.prefab
   - Assets/Resources/Prefabs/BlackStoneSimple.prefab
+  BoardVariants:
+  - {fileID: 2100000, guid: 9cf5e3868f435794fb6ac9092255642a, type: 2}
+  - {fileID: 2100000, guid: 8aac9c1af5caf8341a4ae0e89cdf3317, type: 2}
+  BackgroundVariants:
+  - {r: 0.17254902, g: 0.14117648, b: 0.2, a: 0}
+  - {r: 0.22745098, g: 0.21176471, b: 0.33333334, a: 0}
+  Lights:
+  - {fileID: 705507994}
+  - {fileID: 645376559}
+  LightsIntensities:
+  - 1
+  - 0.05
   Player1: {fileID: 1545254128}
   Player2: {fileID: 1643719277}
   Player1Stones: {fileID: 359246081}

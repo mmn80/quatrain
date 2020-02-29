@@ -40,6 +40,8 @@ namespace Quatrain
 #endif
         }
 
+        public static int Variant = 0;
+
         public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
         {
             var txt = Instance.Messages;
@@ -414,6 +416,10 @@ namespace Quatrain
         }
 
         public string[] WhiteStoneVariants, BlackStoneVariants;
+        public Material[] BoardVariants;
+        public Color[] BackgroundVariants;
+        public Light[] Lights;
+        public float[] LightsIntensities;
 
         public Text Player1, Player2;
         public Text Player1Stones, Player2Stones;
@@ -619,41 +625,38 @@ namespace Quatrain
                 if (CameraControl.Orthographic)
                     Camera.main.orthographicSize = 4;
                 Camera.main.orthographic = CameraControl.Orthographic;
-                MainControl.ShowMessage(CameraControl.Orthographic ?
+                ShowMessage(CameraControl.Orthographic ?
                     "orthgraphic" : "perspective");
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.P))
             {
                 camOpts.renderPostProcessing = !camOpts.renderPostProcessing;
-                MainControl.ShowMessage("post processing " +
+                ShowMessage("post processing " +
                     (camOpts.renderPostProcessing ?
                         "enabled" : "disabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.A))
             {
                 Camera.main.allowMSAA = !Camera.main.allowMSAA;
-                MainControl.ShowMessage("MSAA " +
-                    (Camera.main.allowMSAA ?
-                        "enabled" : "disabled"));
+                ShowMessage("MSAA " +
+                    (Camera.main.allowMSAA ? "enabled" : "disabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.S))
             {
                 camOpts.renderShadows = !camOpts.renderShadows;
-                MainControl.ShowMessage("shadows " +
-                    (camOpts.renderShadows ?
-                        "enabled" : "disabled"));
+                ShowMessage("shadows " +
+                    (camOpts.renderShadows ? "enabled" : "disabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.M))
             {
                 var m = GetComponents<AudioSource>()[0];
                 m.mute = !m.mute;
-                MainControl.ShowMessage("music " +
-                    (m.mute ? "muted" : "enabled"));
+                ShowMessage("music " + (m.mute ? "muted" : "enabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.E))
             {
                 EffectsMuted = !EffectsMuted;
-                MainControl.ShowMessage("sound effects " +
+                ShowMessage("sound effects " +
                     (EffectsMuted ? "muted" : "enabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha0))
@@ -684,10 +687,19 @@ namespace Quatrain
             }
             else if (Input.GetKeyUp(KeyCode.F9))
             {
-                Stone.Variant = Stone.Variant == 0 ? 1 : 0;
+                Variant = Variant == 0 ? 1 : 0;
                 DestroyAllStones(game.GameMode == GameMode.Lobby);
                 if (game.GameMode != GameMode.Lobby)
                     RefreshStones();
+                Stick.VariantChanged();
+                var r = transform.GetChild(0).gameObject.
+                    GetComponent<MeshRenderer>();
+                r.material = BoardVariants[Variant];
+                Camera.main.backgroundColor = BackgroundVariants[Variant];
+                for (int i = 0; i < Lights.Length; i++)
+                    Lights[i].intensity = LightsIntensities[i] *
+                        (Variant == 0 ? 1 : 1.25f);
+                ShowMessage(Variant == 0 ? "night" : "day");
             }
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();
