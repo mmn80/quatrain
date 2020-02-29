@@ -4,6 +4,7 @@ using System.Linq;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace Quatrain
@@ -392,6 +393,7 @@ namespace Quatrain
 
         void Start()
         {
+            camOpts = Camera.main.GetComponent<UniversalAdditionalCameraData>();
             NewGame();
             StartCoroutine(AiLoop());
         }
@@ -408,6 +410,8 @@ namespace Quatrain
 
         Color selectedPlayer = Color.green;
         Color origPlayer = new Color(0.4f, 0.4f, 0.4f);
+
+        UniversalAdditionalCameraData camOpts;
 
         public void UpdateUI(bool highlight = false)
         {
@@ -468,12 +472,15 @@ namespace Quatrain
 - <color=#158>=-</color>\t: zoom camera
 - <color=#158>Alt+Enter</color>: toggle full screen
 
-- <color=#158>12</color>\t: rename player 1 & 2
-- <color=#158>3</color>\t: toggle classic game rules
-- <color=#158>4</color>\t: toggle orthographic camera mode
-- <color=#158>5</color>\t: toggle slow rotation of stones
-- <color=#158>6</color>\t: (un)mute music
-- <color=#158>7</color>\t: (un)mute effects
+- <color=#158>Ctrl+12</color>\t: rename player 1 (or 2)
+- <color=#158>Ctrl+N</color>\t: toggle classic game rules
+- <color=#158>Ctrl+R</color>\t: toggle slow rotation of stones
+- <color=#158>Ctrl+O</color>\t: toggle orthographic camera mode
+- <color=#158>Ctrl+P</color>\t: toggle rendering of post processing effects
+- <color=#158>Ctrl+A</color>\t: toggle MSAA
+- <color=#158>Ctrl+S</color>\t: toggle rendering of shadows
+- <color=#158>Ctrl+M</color>\t: (un)mute music
+- <color=#158>Ctrl+E</color>\t: (un)mute effects
 
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
@@ -546,6 +553,8 @@ namespace Quatrain
                 return;
             }
 
+            var ctrl = Input.GetKey(KeyCode.LeftControl);
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (game.GameMode == GameMode.Lobby)
@@ -571,33 +580,69 @@ namespace Quatrain
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.X))
                 StartGame(PlayerType.Vegas, PlayerType.Carlos);
-            else if (Input.GetKeyUp(KeyCode.Alpha1))
+            else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;
                 StartRename();
             }
-            else if (Input.GetKeyUp(KeyCode.Alpha2))
+            else if (ctrl && Input.GetKeyUp(KeyCode.Alpha2))
             {
                 renamingPlayer = 1;
                 StartRename();
             }
-            else if (Input.GetKeyUp(KeyCode.Alpha3))
+            else if (ctrl && Input.GetKeyUp(KeyCode.N))
             {
                 Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
                 ShowMessage(Game.TakeTopStonesOnly ?
                     "classic mode activated\ncan only take top stones" :
                     "neo mode activated\ncan take stones from bellow");
             }
-            else if (Input.GetKeyUp(KeyCode.Alpha5))
+            else if (ctrl && Input.GetKeyUp(KeyCode.R))
                 Stone.RotateRandomly = !Stone.RotateRandomly;
-            else if (Input.GetKeyUp(KeyCode.Alpha6))
+            else if (ctrl && Input.GetKeyUp(KeyCode.O))
+            {
+                CameraControl.Orthographic = !CameraControl.Orthographic;
+                if (CameraControl.Orthographic)
+                    Camera.main.orthographicSize = 4;
+                Camera.main.orthographic = CameraControl.Orthographic;
+                MainControl.ShowMessage(CameraControl.Orthographic ?
+                    "orthgraphic" : "perspective");
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.P))
+            {
+                camOpts.renderPostProcessing = !camOpts.renderPostProcessing;
+                MainControl.ShowMessage("post processing " +
+                    (camOpts.renderPostProcessing ?
+                        "enabled" : "disabled"));
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.A))
+            {
+                Camera.main.allowMSAA = !Camera.main.allowMSAA;
+                MainControl.ShowMessage("MSAA " +
+                    (Camera.main.allowMSAA ?
+                        "enabled" : "disabled"));
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.S))
+            {
+                camOpts.renderShadows = !camOpts.renderShadows;
+                MainControl.ShowMessage("shadows " +
+                    (camOpts.renderShadows ?
+                        "enabled" : "disabled"));
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.M))
             {
                 var m = GetComponents<AudioSource>()[0];
                 m.mute = !m.mute;
+                MainControl.ShowMessage("music " +
+                    (m.mute ? "muted" : "enabled"));
             }
-            else if (Input.GetKeyUp(KeyCode.Alpha7))
+            else if (ctrl && Input.GetKeyUp(KeyCode.E))
+            {
                 EffectsMuted = !EffectsMuted;
-            else if (Input.GetKeyUp(KeyCode.Alpha9))
+                MainControl.ShowMessage("sound effects " +
+                    (EffectsMuted ? "muted" : "enabled"));
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.Alpha0))
             {
                 AutoShowAiDebugInfo = !AutoShowAiDebugInfo;
                 ShowMessage((AutoShowAiDebugInfo ? "showing" : "hiding") +
@@ -613,9 +658,9 @@ namespace Quatrain
                 MakeAiMove(PlayerType.Vegas);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos);
-            else if (Input.GetKeyUp(KeyCode.LeftArrow) && Input.GetKey(KeyCode.LeftControl))
+            else if (Input.GetKeyUp(KeyCode.LeftArrow) && ctrl)
                 history.GoBack();
-            else if (Input.GetKeyUp(KeyCode.RightArrow) && Input.GetKey(KeyCode.LeftControl))
+            else if (Input.GetKeyUp(KeyCode.RightArrow) && ctrl)
                 history.GoForward();
             else if (Input.GetKeyUp(KeyCode.Space))
             {

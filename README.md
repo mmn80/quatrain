@@ -1,6 +1,6 @@
 # Quatrain
 
-A free Unity 2019.3 game using URP for rendering ECS jobs for AI.
+A free Unity 2019.3 game using URP for rendering and ECS jobs for AI.
 It's a form of 3D mill.
 
 ## Free assets used

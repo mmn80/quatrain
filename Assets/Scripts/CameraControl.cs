@@ -76,16 +76,6 @@ namespace Quatrain
                     }
                 }
             }
-
-            if (Input.GetKeyUp(KeyCode.Alpha4))
-            {
-                Orthographic = !Orthographic;
-                if (Orthographic)
-                    cam.orthographicSize = 4;
-                cam.orthographic = Orthographic;
-
-                MainControl.ShowMessage(Orthographic ? "orthgraphic" : "perspective");
-            }
         }
     }
 }
