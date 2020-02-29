@@ -11,12 +11,14 @@ namespace Quatrain
         public static Vector3 GetStonePos(byte x, byte y, byte h) =>
             new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
+        public static int Variant = 0;
+
         public static Stone MakeStone(byte x, byte y, byte z, StoneType type,
             bool animation = false, bool sound = true)
         {
             var prefabPath = type == StoneType.White ?
-                MainControl.Instance.WhiteStonePath :
-                MainControl.Instance.BlackStonePath;
+                MainControl.Instance.WhiteStoneVariants[Variant] :
+                MainControl.Instance.BlackStoneVariants[Variant];
             var prefab = MainControl.Load(prefabPath);
             var pos = Stone.GetStonePos(x, y, z);
             if (animation)

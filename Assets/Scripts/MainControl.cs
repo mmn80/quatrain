@@ -30,12 +30,11 @@ namespace Quatrain
             {
                 go = Resources.Load<GameObject>(path);
                 if (!go)
-                    MainControl.ShowError($"NULL");
+                    MainControl.ShowError($"{path}\nFaild loading resource.");
             }
             catch (System.Exception ex)
             {
-                MainControl.ShowError($"Exception: {ex.Message}");
-                throw;
+                MainControl.ShowError($"{path}\nException: {ex.Message}");
             }
 #endif
             return go;
@@ -97,14 +96,7 @@ namespace Quatrain
             game = new Game(true);
             history.Clear();
 
-            DestroyAllStones();
-
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                        stones[x, y, z] = Stone.MakeStone(x, y, z,
-                            x < 2 ? StoneType.White : StoneType.Black,
-                            true, false);
+            DestroyAllStones(true);
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
                 "press <color=#158>V</color> or <color=#158>C</color> to play against AI");
@@ -140,14 +132,7 @@ namespace Quatrain
             Instance.UpdateUI();
             HideMessage();
 
-            DestroyAllStones();
-
-            if (stones == null)
-                stones = new Stone[4, 4, 4];
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                        stones[x, y, z] = null;
+            DestroyAllStones(false);
 
             return true;
         }
@@ -243,17 +228,19 @@ namespace Quatrain
         public static void OnNoStoneToTake() =>
             ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone to take, next");
 
-        static void DestroyAllStones()
+        static void DestroyAllStones(bool addStartStones)
         {
-            if (stones == null)
-                return;
-            for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
-                    for (int z = 0; z < 4; z++)
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
                     {
                         var s = stones[x, y, z];
                         if (s)
                             Stone.DestroyStone(s);
+                        stones[x, y, z] = !addStartStones ? null :
+                            Stone.MakeStone(x, y, z,
+                                x < 2 ? StoneType.White : StoneType.Black,
+                                true, false);
                     }
         }
 
@@ -426,7 +413,7 @@ namespace Quatrain
             StartCoroutine(AiLoop());
         }
 
-        public string WhiteStonePath, BlackStonePath;
+        public string[] WhiteStoneVariants, BlackStoneVariants;
 
         public Text Player1, Player2;
         public Text Player1Stones, Player2Stones;
@@ -694,6 +681,13 @@ namespace Quatrain
             {
                 paused = !paused;
                 AiDialog(paused ? "I'm taking a break. Brb." : "I'm back!");
+            }
+            else if (Input.GetKeyUp(KeyCode.F9))
+            {
+                Stone.Variant = Stone.Variant == 0 ? 1 : 0;
+                DestroyAllStones(game.GameMode == GameMode.Lobby);
+                if (game.GameMode != GameMode.Lobby)
+                    RefreshStones();
             }
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();

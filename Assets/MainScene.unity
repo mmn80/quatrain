@@ -2852,8 +2852,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 064150b40160859439e9c46630096396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WhiteStonePath: Assets/Resources/Prefabs/WhiteStone.prefab
-  BlackStonePath: Assets/Resources/Prefabs/BlackStone.prefab
+  WhiteStoneVariants:
+  - Assets/Resources/Prefabs/WhiteStone.prefab
+  - Assets/Resources/Prefabs/WhiteStoneSimple.prefab
+  BlackStoneVariants:
+  - Assets/Resources/Prefabs/BlackStone.prefab
+  - Assets/Resources/Prefabs/BlackStoneSimple.prefab
   Player1: {fileID: 1545254128}
   Player2: {fileID: 1643719277}
   Player1Stones: {fileID: 359246081}
