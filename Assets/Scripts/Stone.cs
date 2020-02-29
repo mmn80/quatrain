@@ -14,12 +14,13 @@ namespace Quatrain
         public static Stone MakeStone(byte x, byte y, byte z, StoneType type,
             bool animation = false, bool sound = true)
         {
-            var prefab = type == StoneType.White ?
-                MainControl.Instance.WhiteStonePrefab :
-                MainControl.Instance.BlackStonePrefab;
+            var prefabPath = type == StoneType.White ?
+                MainControl.Instance.WhiteStonePath :
+                MainControl.Instance.BlackStonePath;
+            var prefab = MainControl.Load(prefabPath);
             var pos = Stone.GetStonePos(x, y, z);
             if (animation)
-                pos.y += Stone.StoneHeight * 40  + pos.y * Random.Range(0f, 1f);
+                pos.y += Stone.StoneHeight * 40 + pos.y * Random.Range(0f, 1f);
             var go = GameObject.Instantiate(prefab,
                 pos, Quaternion.identity, MainControl.Instance.transform);
             var sc = go.GetComponentInChildren<Stone>();

@@ -13,6 +13,34 @@ namespace Quatrain
     {
         public static MainControl Instance { get; private set; }
 
+        public static GameObject Load(string path)
+        {
+#if UNITY_EDITOR
+            var go = UnityEditor.AssetDatabase.
+                LoadAssetAtPath<GameObject>(path);
+#else
+            const string BASE_PATH = "Assets/Resources/";
+            if (path.StartsWith(BASE_PATH))
+                path = path.Substring(BASE_PATH.Length);
+            var ext = System.IO.Path.GetExtension(path);
+            if (ext != "")
+                path = path.Substring(0, path.Length - ext.Length);
+            GameObject go;
+            try
+            {
+                go = Resources.Load<GameObject>(path);
+                if (!go)
+                    MainControl.ShowError($"NULL");
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"Exception: {ex.Message}");
+                throw;
+            }
+#endif
+            return go;
+        }
+
         public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
         {
             var txt = Instance.Messages;
@@ -398,8 +426,7 @@ namespace Quatrain
             StartCoroutine(AiLoop());
         }
 
-        public GameObject WhiteStonePrefab;
-        public GameObject BlackStonePrefab;
+        public string WhiteStonePath, BlackStonePath;
 
         public Text Player1, Player2;
         public Text Player1Stones, Player2Stones;
