@@ -137,7 +137,6 @@ namespace Quatrain
                 (winner == 2 ? "nobody" : history.PlayerNames[winner]) + "</color>\n");
             if (winner != 2)
                 Instance.HighlightScore(5, winner);
-            GameStats.ToFile(history);
         }
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
@@ -401,12 +400,13 @@ namespace Quatrain
 - <color=#158>Alt+Enter</color>: toggle full screen
 
 - <color=#158>Ctrl+12</color>\t: rename player 1 (or 2)
+- <color=#158>Ctrl+S</color>\t: seve current game
 - <color=#158>Ctrl+N</color>\t: toggle classic game rules
 - <color=#158>Ctrl+R</color>\t: toggle slow rotation of stones
 - <color=#158>Ctrl+O</color>\t: toggle orthographic camera mode
 - <color=#158>Ctrl+P</color>\t: toggle rendering of post processing effects
 - <color=#158>Ctrl+A</color>\t: toggle MSAA
-- <color=#158>Ctrl+S</color>\t: toggle rendering of shadows
+- <color=#158>Ctrl+H</color>\t: toggle rendering of shadows
 - <color=#158>Ctrl+M</color>\t: (un)mute music
 - <color=#158>Ctrl+E</color>\t: (un)mute effects
 
@@ -511,12 +511,20 @@ namespace Quatrain
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.L))
             {
-                var h = GameStats.FromFile();
+                var path = "";
+                var h = GameStats.FromFile(ref path);
                 if (h != null)
                 {
                     history = h;
                     history.GoToTheEnd();
+                    ShowMessage($"game loaded from:\n{path}");
                 }
+            }
+            else if (ctrl && Input.GetKeyUp(KeyCode.S))
+            {
+                var path = "";
+                if (GameStats.ToFile(history, ref path))
+                    ShowMessage($"game saved to:\n{path}");
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
             {
@@ -559,7 +567,7 @@ namespace Quatrain
                 ShowMessage("MSAA " +
                     (Camera.main.allowMSAA ? "enabled" : "disabled"));
             }
-            else if (ctrl && Input.GetKeyUp(KeyCode.S))
+            else if (ctrl && Input.GetKeyUp(KeyCode.H))
             {
                 camOpts.renderShadows = !camOpts.renderShadows;
                 ShowMessage("shadows " +

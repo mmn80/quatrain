@@ -96,7 +96,7 @@ namespace Quatrain
             System.IO.Path.Combine(UnityEngine.Application.persistentDataPath,
                 "settings.json");
 
-        public static GameStats FromFile(string path = "")
+        public static GameStats FromFile(ref string path)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace Quatrain
             }
         }
 
-        public static bool ToFile(GameStats history, string path = "")
+        public static bool ToFile(GameStats history, ref string path)
         {
             try
             {
