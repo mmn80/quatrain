@@ -8,6 +8,7 @@ namespace Quatrain
     public enum StoneType { White = 0, Black = 1 }
     public enum StoneAtPos { None = 0, White = 1, Black = 2 }
 
+    [Serializable]
     public partial struct Game
     {
         public static StoneType StoneAtPos2Stone(StoneAtPos val) =>
@@ -27,9 +28,9 @@ namespace Quatrain
             board1 = src.board1;
             board2 = src.board2;
             board3 = src.board3;
-            quatrainStones = src.quatrainStones;
-            lastStone = src.lastStone;
-            aiDepth = (byte)(src.aiDepth + 1);
+            qstones = src.qstones;
+            last = src.last;
+            depth = (byte)(src.depth + 1);
         }
 
         public Game(bool dummy)
@@ -38,18 +39,18 @@ namespace Quatrain
             stones0 = stones1 = 32;
             score0 = score1 = 0;
             board0 = board1 = board2 = board3 = 0;
-            quatrainStones = 0;
-            lastStone = 0;
-            aiDepth = 0;
+            qstones = 0;
+            last = 0;
+            depth = 0;
         }
 
-        byte game;
-        byte stones0, stones1;
-        byte score0, score1;
-        UInt64 board0, board1, board2, board3;
-        UInt64 quatrainStones;
-        byte lastStone;
-        byte aiDepth;
+        public byte game;
+        public byte stones0, stones1;
+        public byte score0, score1;
+        public UInt64 board0, board1, board2, board3;
+        public UInt64 qstones;
+        public byte last;
+        public byte depth;
 
         public byte GetStones(byte player) => player == 0 ? stones0 : stones1;
         void TookStone(byte player)
@@ -65,13 +66,13 @@ namespace Quatrain
         byte GetToRemove() => (byte)((game >> 4) & 0x3);
         void SetToRemove(byte p) => game = (byte)(game & 0xCF | (p << 4));
         public Place GetLastStone() => new Place(
-            (byte)(lastStone >> 6),
-            (byte)((byte)(lastStone << 2) >> 6),
-            (byte)((byte)(lastStone << 4) >> 6),
-            (byte)((byte)(lastStone << 6) >> 6)
+            (byte)(last >> 6),
+            (byte)((byte)(last << 2) >> 6),
+            (byte)((byte)(last << 4) >> 6),
+            (byte)((byte)(last << 6) >> 6)
         );
         void SetLastStone(Place place) =>
-            lastStone = (byte)(place.Stone |
+            last = (byte)(place.Stone |
                 (byte)(place.Z << 2) | (byte)(place.Y << 4) | (byte)(place.X << 6));
 
         public GameMode GameMode
@@ -220,7 +221,7 @@ namespace Quatrain
                 MainControl.history.Add(new Position()
                 {
                     Game = this, Move = new Move(0, x, y, z),
-                    Score = 0, TotalScore = 0,
+                    Score = 0, Total = 0,
                 });
 
             return true;
@@ -295,7 +296,7 @@ namespace Quatrain
                 MainControl.history.Add(new Position()
                 {
                     Game = this, Move = new Move(1, x, y, z),
-                    Score = 0, TotalScore = 0,
+                    Score = 0, Total = 0,
 
                 });
 
@@ -431,14 +432,14 @@ namespace Quatrain
         #endregion
 
         void SetQuatrainStone(byte x, byte y, byte z) =>
-            quatrainStones |= ((UInt64)1 << (16 * z + 4 * y + x));
+            qstones |= ((UInt64)1 << (16 * z + 4 * y + x));
 
         public bool IsQuatrainStone(byte x, byte y, byte z) =>
-            (quatrainStones & ((UInt64)1 << (16 * z + 4 * y + x))) != 0;
+            (qstones & ((UInt64)1 << (16 * z + 4 * y + x))) != 0;
 
         void RegenerateQuatrains()
         {
-            quatrainStones = 0;
+            qstones = 0;
             var quatrains = new Quatrain[76];
 
             if (quatrainsSrc == null)

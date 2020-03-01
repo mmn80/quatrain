@@ -72,16 +72,7 @@ namespace Quatrain
         public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
 
         public static Game game = new Game(true);
-        public static GameHistory history = new GameHistory();
-
-        static string[] PlayerNames = new string[]
-        {
-            "Player 1", "Player 2"
-        };
-        static PlayerType[] PlayerTypes = new PlayerType[]
-        {
-            PlayerType.Human, PlayerType.Human
-        };
+        public static GameStats history = new GameStats();
 
         static bool NewGame()
         {
@@ -91,7 +82,8 @@ namespace Quatrain
             Stone.DestroyAllStones(true);
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
-                "press <color=#158>V</color> or <color=#158>C</color> to play against AI");
+                "press <color=#158>V</color>, <color=#158>C</color> or <color=#158>X</color> to play against AI\n" +
+                "press <color=#158>L</color> to load last game");
             Instance.UpdateUI();
 
             return true;
@@ -101,24 +93,24 @@ namespace Quatrain
         {
             history.Clear();
 
-            if (PlayerTypes[0] != player1)
+            if (history.PlayerTypes[0] != player1)
             {
-                PlayerTypes[0] = player1;
-                PlayerNames[0] = player1.ToString();
-                Instance.Player1.text = PlayerNames[0];
+                history.PlayerTypes[0] = player1;
+                history.PlayerNames[0] = player1.ToString();
+                Instance.Player1.text = history.PlayerNames[0];
             }
-            if (PlayerTypes[1] != player2)
+            if (history.PlayerTypes[1] != player2)
             {
-                PlayerTypes[1] = player2;
-                PlayerNames[1] = player2.ToString();
-                Instance.Player2.text = PlayerNames[1];
+                history.PlayerTypes[1] = player2;
+                history.PlayerNames[1] = player2.ToString();
+                Instance.Player2.text = history.PlayerNames[1];
             }
 
             game.GameMode = GameMode.Add;
             history.Add(new Position()
             {
                 Game = game, Move = new Move(),
-                Score = 0, TotalScore = 0,
+                Score = 0, Total = 0,
             });
 
             Instance.UpdateUI();
@@ -134,17 +126,18 @@ namespace Quatrain
             var winner = game.GetWinner();
             Instance.UpdateUI(true);
             HideMessage();
-            if (winner != 2 && (PlayerTypes[winner] == PlayerType.Human || (
-                PlayerTypes[0] != PlayerType.Human &&
-                PlayerTypes[1] != PlayerType.Human
+            if (winner != 2 && (history.PlayerTypes[winner] == PlayerType.Human || (
+                history.PlayerTypes[0] != PlayerType.Human &&
+                history.PlayerTypes[1] != PlayerType.Human
             )))
                 Instance.PlayAmenSound();
             else
                 Instance.PlayGameOverSound();
             ShowMessage("game over\nwinner is <color=#D9471A>" +
-                (winner == 2 ? "nobody" : PlayerNames[winner]) + "</color>\n");
+                (winner == 2 ? "nobody" : history.PlayerNames[winner]) + "</color>\n");
             if (winner != 2)
                 Instance.HighlightScore(5, winner);
+            GameStats.ToFile(history);
         }
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
@@ -184,7 +177,7 @@ namespace Quatrain
             while (true)
             {
                 yield return new WaitForSecondsRealtime(0.5f);
-                var player = PlayerTypes[game.GetPlayer()];
+                var player = history.PlayerTypes[game.GetPlayer()];
                 if (!waitingForAi && game.GameMode != GameMode.Lobby &&
                     game.GameMode != GameMode.GameOver &&
                     player != PlayerType.Human && !paused)
@@ -196,7 +189,6 @@ namespace Quatrain
             StartCoroutine(MakeAiMoveAsync(player));
 
         public static bool waitingForAi = false;
-        public static System.Diagnostics.Stopwatch aiTimer;
         public static bool paused = false;
 
         IEnumerator MakeAiMoveAsync(PlayerType player,
@@ -206,7 +198,7 @@ namespace Quatrain
                 yield break;
 
             Game.Seed = new System.Random();
-            aiTimer = new System.Diagnostics.Stopwatch();
+            var aiTimer = new System.Diagnostics.Stopwatch();
 
             Game.AiMode = true;
             aiTimer.Start();
@@ -298,8 +290,9 @@ namespace Quatrain
 
             history.Update(new Position()
             {
-                Game = game, Move = best.Move, Moves = scoredMoves,
-                Score = best.Score, TotalScore = total, Tries = totalTries
+                Game = game, Move = best.Move, Moves = scoredMoves.ToArray(),
+                Score = best.Score, Total = total, Tries = totalTries,
+                AiMs = aiTimer.ElapsedMilliseconds, AiTicks = aiTimer.ElapsedTicks
             });
 
             if (AutoShowAiDebugInfo)
@@ -311,7 +304,7 @@ namespace Quatrain
 
         public IEnumerator AiDialogAsync(string message)
         {
-            var player = PlayerTypes[game.GetPlayer()];
+            var player = history.PlayerTypes[game.GetPlayer()];
             var txt = Instance.AiDialogue;
             message = message.Replace("\\t", "\t");
             txt.text = $"<color=#158>{player}:</color> {message}";
@@ -348,6 +341,8 @@ namespace Quatrain
 
         public void UpdateUI(bool highlight = false)
         {
+            Player1.text = history.PlayerNames[0];
+            Player2.text = history.PlayerNames[1];
             if (game.GameMode != GameMode.Lobby)
             {
                 var gameEnd = game.GameMode == GameMode.GameOver;
@@ -477,7 +472,7 @@ namespace Quatrain
                 }
                 else if (Input.GetKeyUp(KeyCode.Return))
                 {
-                    PlayerNames[renamingPlayer] = UserInput.text;
+                    history.PlayerNames[renamingPlayer] = UserInput.text;
                     (renamingPlayer == 0 ? Player1 : Player2).text =
                         UserInput.text;
                     UserInput.gameObject.SetActive(false);
@@ -513,6 +508,16 @@ namespace Quatrain
             else if (game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.X))
                 StartGame(PlayerType.Vegas, PlayerType.Carlos);
+            else if (game.GameMode == GameMode.Lobby &&
+                Input.GetKeyUp(KeyCode.L))
+            {
+                var h = GameStats.FromFile();
+                if (h != null)
+                {
+                    history = h;
+                    history.GoToTheEnd();
+                }
+            }
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
             {
                 renamingPlayer = 0;

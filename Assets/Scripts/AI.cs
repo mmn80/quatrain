@@ -38,10 +38,10 @@ namespace Quatrain
         }
     }
 
+    [Serializable]
     public struct Move
     {
-        [ReadOnly]
-        private readonly byte m;
+        public byte m;
 
         public Move(byte _moveType, byte _x, byte _y, byte _z)
         {
@@ -70,51 +70,103 @@ namespace Quatrain
             (moveType == 0 ? $"add {x} {y}" : $"remove {x} {y} {z}");
     }
 
+    [Serializable]
     public struct ScoredMove
     {
         public double Score;
         public Move Move;
     }
 
+    [Serializable]
     public struct Position
     {
         public Game Game;
         public Move Move;
         public double Score;
-        public double TotalScore;
+        public double Total;
         public int Tries;
-        public List<ScoredMove> Moves;
+        public ScoredMove[] Moves;
+        public long AiMs, AiTicks;
     }
 
-    public class GameHistory
+    [Serializable]
+    public class GameStats
     {
-        List<Position> history = new List<Position>();
-        int current = -1;
+        static string GetSettingsPath() =>
+            System.IO.Path.Combine(UnityEngine.Application.persistentDataPath,
+                "settings.json");
+
+        public static GameStats FromFile(string path = "")
+        {
+            try
+            {
+                if (path == "")
+                    path = GetSettingsPath();
+                var json = System.IO.File.ReadAllText(path);
+                return UnityEngine.JsonUtility.FromJson<GameStats>(json);
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static bool ToFile(GameStats history, string path = "")
+        {
+            try
+            {
+                if (path == "")
+                    path = GetSettingsPath();
+                var json = UnityEngine.JsonUtility.ToJson(history);
+                System.IO.File.WriteAllText(path, json);
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        public string[] PlayerNames = new string[]
+        {
+            "Player 1", "Player 2"
+        };
+        public PlayerType[] PlayerTypes = new PlayerType[]
+        {
+            PlayerType.Human, PlayerType.Human
+        };
+        public Position[] History = new Position[0];
+        public int Current = -1;
 
         public void Clear()
         {
-            history.Clear();
-            current = -1;
+            History = new Position[0];
+            Current = -1;
         }
 
         public void Add(Position pos)
         {
-            history.Add(pos);
-            current = history.Count - 1;
+            var oldHistory = History;
+            History = new Position[History.Length + 1];
+            Array.Copy(oldHistory, History, oldHistory.Length);
+            History[oldHistory.Length] = pos;
+            Current = History.Length - 1;
         }
 
         public void Update(Position pos)
         {
-            history[current] = pos;
+            History[Current] = pos;
         }
 
         public Position GetPreviousPosition(byte player, out bool foundIt)
         {
             foundIt = false;
-            if (history.Count > 0 && current == history.Count - 1)
-                for (int i = current; i > 0; i--)
+            if (History.Length > 0 && Current == History.Length - 1)
+                for (int i = Current; i > 0; i--)
                 {
-                    var p = history[i];
+                    var p = History[i];
                     if (p.Game.GetPlayer() != player)
                     {
                         foundIt = true;
@@ -124,6 +176,22 @@ namespace Quatrain
             return new Position();
         }
 
+        public void GoToTheEnd()
+        {
+            if (MainControl.waitingForAi)
+            {
+                MainControl.ShowError("wait for ai to finish");
+                return;
+            }
+            if (History.Length == 0)
+            {
+                MainControl.ShowError("empty game");
+                return;
+            }
+            Current = History.Length - 1;
+            UpdateGameFromHistory();
+        }
+
         public void GoBack()
         {
             if (MainControl.waitingForAi)
@@ -131,17 +199,17 @@ namespace Quatrain
                 MainControl.ShowError("wait for ai to finish");
                 return;
             }
-            if (current < 0 || MainControl.game.GameMode == GameMode.Lobby)
+            if (Current < 0 || MainControl.game.GameMode == GameMode.Lobby)
             {
                 MainControl.ShowError("no live game");
                 return;
             }
-            if (history.Count == 0 || current <= 0)
+            if (History.Length == 0 || Current <= 0)
             {
                 MainControl.ShowError("back to start");
                 return;
             }
-            current--;
+            Current--;
             UpdateGameFromHistory();
         }
 
@@ -152,47 +220,45 @@ namespace Quatrain
                 MainControl.ShowError("wait for ai to finish");
                 return;
             }
-            if (current < 0 || MainControl.game.GameMode == GameMode.Lobby)
+            if (Current < 0 || MainControl.game.GameMode == GameMode.Lobby)
             {
                 MainControl.ShowError("no live game");
                 return;
             }
-            if (history.Count == 0 || current >= history.Count - 1)
+            if (History.Length == 0 || Current >= History.Length - 1)
             {
                 MainControl.ShowError("already at the end");
                 return;
             }
-            current++;
+            Current++;
             UpdateGameFromHistory();
         }
 
         void UpdateGameFromHistory()
         {
             MainControl.paused = true;
-            var g = history[current];
+            var g = History[Current];
             MainControl.game = g.Game;
             Stone.UpdateStones();
             MainControl.Instance.UpdateUI();
-            MainControl.ShowInfo($"<color=#158>Game position:</color> {current + 1} of {history.Count}");
+            MainControl.ShowInfo($"<color=#158>Game position:</color> {Current + 1} of {History.Length}");
         }
 
         static string fstr(double f) => f.ToString("0.000000000000");
 
         public void ShowAiDebugInfo()
         {
-            if (current == -1)
+            if (Current == -1)
                 return;
-            var pos = history[current];
+            var pos = History[Current];
             if (pos.Moves == null)
                 return;
             var bests = pos.Moves.
                 OrderByDescending(v => v.Score).
                 Take(6).ToArray();
             var best = bests[0];
-            var ms = MainControl.aiTimer.ElapsedMilliseconds;
-            var ts = MainControl.aiTimer.ElapsedTicks;
             var stats = $"<color=#158>Move:</color>\t{best.Move}\n";
-            stats += $"<color=#158>Time:</color>\t{ms} ms ({ts} ticks)\n";
+            stats += $"<color=#158>Time:</color>\t{pos.AiMs} ms ({pos.AiTicks} ticks)\n";
             stats += $"<color=#158>Score:</color>\t{fstr(best.Score)}\n";
             stats += $"<color=#158>Moves:</color>\t{pos.Tries}\n\n";
             stats += $"<color=#158>Next best moves:</color>\n";
@@ -224,7 +290,7 @@ namespace Quatrain
         public double EvalVegas(byte depth, byte width, byte player, ref int totalTries)
         {
             double score = -10000;
-            if (aiDepth >= depth || GameMode == GameMode.GameOver)
+            if (this.depth >= depth || GameMode == GameMode.GameOver)
                 score = EvalCurrent(player);
             else
             {
@@ -234,13 +300,13 @@ namespace Quatrain
                 var moves = GetValidMoves().ToArray();
 
                 byte i = 0;
-                if (aiDepth > 1)
+                if (this.depth > 1)
                     i = (byte)Seed.Next(moves.Length);
                 UInt64 usedMoves = 0;
                 byte usedMovesNo = 0;
                 while (true)
                 {
-                    if (aiDepth > 1)
+                    if (this.depth > 1)
                         while ((usedMoves & ((UInt64)1 << i)) != 0)
                             i = (byte)Seed.Next(moves.Length);
 
@@ -256,7 +322,7 @@ namespace Quatrain
                         totalTries++;
                     }
 
-                    if (aiDepth > 1)
+                    if (this.depth > 1)
                     {
                         if (++usedMovesNo >= width)
                             break;
