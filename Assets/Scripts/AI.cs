@@ -92,16 +92,48 @@ namespace Quatrain
     [Serializable]
     public class GameStats
     {
-        static string GetSettingsPath() =>
-            System.IO.Path.Combine(UnityEngine.Application.persistentDataPath,
-                "settings.json");
+        static string GetBasePath() =>
+            UnityEngine.Application.persistentDataPath.
+                Replace('/', System.IO.Path.DirectorySeparatorChar);
+
+        static string GetSettingsPath(string fileName) =>
+            System.IO.Path.Combine(GetBasePath(), fileName);
 
         public static GameStats FromFile(ref string path)
         {
             try
             {
                 if (path == "")
-                    path = GetSettingsPath();
+                {
+                    var files = System.IO.Directory.GetFiles(
+                        GetBasePath(), "game_*.json");
+                    if (files.Length > 0)
+                    {
+                        Array.Sort(files, (f1, f2) =>
+                        {
+                            f1 = System.IO.Path.GetFileName(f1).Substring(5).
+                                Substring(0, fileNameFormat.Length);
+                            f2 = System.IO.Path.GetFileName(f2).Substring(5).
+                                Substring(0, fileNameFormat.Length);
+                            try
+                            {
+                                var d1 = DateTime.ParseExact(f1, fileNameFormat,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                var d2 = DateTime.ParseExact(f2, fileNameFormat,
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                return d1.CompareTo(d2);
+                            }
+                            catch (System.Exception)
+                            {
+                                return 0;
+                            }
+                        });
+                        path = files.LastOrDefault();
+                    }
+                    else
+                        MainControl.ShowError("no game saves found at\n" +
+                            GetBasePath());
+                }
                 var json = System.IO.File.ReadAllText(path);
                 return UnityEngine.JsonUtility.FromJson<GameStats>(json);
             }
@@ -112,13 +144,14 @@ namespace Quatrain
             }
         }
 
-        public static bool ToFile(GameStats history, ref string path)
+        public static bool ToFile(GameStats game, ref string path)
         {
             try
             {
+                game.Time = DateTime.Now;
                 if (path == "")
-                    path = GetSettingsPath();
-                var json = UnityEngine.JsonUtility.ToJson(history);
+                    path = GetSettingsPath(game.GetGameName());
+                var json = UnityEngine.JsonUtility.ToJson(game);
                 System.IO.File.WriteAllText(path, json);
                 return true;
             }
@@ -129,6 +162,18 @@ namespace Quatrain
             }
         }
 
+        static string fileNameFormat = "yy-MM-dd_HH-mm-ss";
+
+        public string GetGameName()
+        {
+            var name = "game_" + Time.ToString(fileNameFormat);
+            name += "_" + new string(PlayerNames[0].Take(10).ToArray());
+            name += "_vs_" + new string(PlayerNames[1].Take(10).ToArray());
+            name += ".json";
+            return name;
+        }
+
+        public DateTime Time;
         public string[] PlayerNames = new string[]
         {
             "Player 1", "Player 2"
