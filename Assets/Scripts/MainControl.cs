@@ -270,7 +270,8 @@ namespace Quatrain
                 yield break;
             }
 
-            if ((total == 0 && player == PlayerType.Carlos) || best.Score < -5)
+            if (((total == 0 && player == PlayerType.Carlos) || best.Score < -5) &&
+                game.GetStones(game.GetPlayer()) > 4)
             {
                 AiDialog("This is hopeless... I quit.");
                 game.GameOver();
