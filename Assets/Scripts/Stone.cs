@@ -8,37 +8,123 @@ namespace Quatrain
 
         const float StoneHeight = 0.3f;
 
+        static Stone[,,] stones = new Stone[4, 4, 4];
+
         public static Vector3 GetStonePos(byte x, byte y, byte h) =>
             new Vector3(-1.5f + x, StoneHeight / 2 + h * StoneHeight, -1.5f + y);
 
-        
-
-        public static Stone MakeStone(byte x, byte y, byte z, StoneType type,
+        public static void MakeStone(byte x, byte y, byte z, StoneType type,
             bool animation = false, bool sound = true)
         {
             var prefabPath = type == StoneType.White ?
                 MainControl.Instance.WhiteStoneVariants[MainControl.Variant] :
                 MainControl.Instance.BlackStoneVariants[MainControl.Variant];
             var prefab = MainControl.Load(prefabPath);
-            var pos = Stone.GetStonePos(x, y, z);
+            var pos = GetStonePos(x, y, z);
             if (animation)
-                pos.y += Stone.StoneHeight * 40 + pos.y * Random.Range(0f, 1f);
+                pos.y += StoneHeight * 40 + pos.y * Random.Range(0f, 1f);
             var go = GameObject.Instantiate(prefab,
                 pos, Quaternion.identity, MainControl.Instance.transform);
             var sc = go.GetComponentInChildren<Stone>();
             sc.Init(x, y, z, animation, sound);
-            return sc;
+            stones[x, y, z] = sc;
         }
 
-        public static void DestroyStone(Stone s)
+        public static void DestroyStone(byte x, byte y, byte z,
+            bool fallStack = false)
         {
+            var s = stones[x, y, z];
             GameObject.Destroy(s.transform.parent.gameObject);
+            stones[x, y, z] = null;
+            if (fallStack)
+            {
+                for (byte i = z; i < 4; i++)
+                    stones[x, y, i] = i >= 3 ? null :
+                        stones[x, y, i + 1];
+                for (byte i = z; i < 4; i++)
+                {
+                    var stone = stones[x, y, i];
+                    if (stone == null)
+                        break;
+                    stone.FallOneSlot();
+                }
+            }
+        }
+
+        public static void DestroyAllStones(bool addStartStones)
+        {
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        if (stones[x, y, z])
+                            DestroyStone(x, y, z);
+                        if (addStartStones)
+                            MakeStone(x, y, z,
+                                x < 2 ? StoneType.White : StoneType.Black,
+                                true, false);
+                    }
+        }
+
+        public static void UpdateStones()
+        {
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = stones[x, y, z];
+                        var g = MainControl.game.GetStoneAt(x, y, z);
+                        if (g == StoneAtPos.None)
+                        {
+                            if (s != null)
+                                DestroyStone(x, y, z);
+                            continue;
+                        }
+                        var gs = Game.StoneAtPos2Stone(g);
+                        if (s == null)
+                        {
+                            MakeStone(x, y, z, gs);
+                            continue;
+                        }
+                        if (s.StoneType == gs)
+                            continue;
+                        DestroyStone(x, y, z);
+                        MakeStone(x, y, z, gs);
+                    }
+        }
+
+        public static void HighlightStones(bool reset = false)
+        {
+            var last = MainControl.game.GetLastStone();
+            if (stones == null)
+                return;
+            for (byte x = 0; x < 4; x++)
+                for (byte y = 0; y < 4; y++)
+                    for (byte z = 0; z < 4; z++)
+                    {
+                        var s = stones[x, y, z];
+                        if (!s)
+                            break;
+                        if (reset)
+                            s.Highlighted = false;
+                        else if (MainControl.game.IsQuatrainStone(x, y, z))
+                            s.Highlighted = true;
+                        s.IsLastStone = (last.Stone != 0 &&
+                            last.X == x && last.Y == y && last.Z == z);
+                    }
+        }
+
+        public static void ShowError(string message, byte x, byte y, byte z)
+        {
+            if (Game.AiMode)
+                return;
+            var stone = stones[x, y, z];
+            if (stone)
+                stone.ShowError(message);
         }
 
         public float RotationSpeed;
-
         public StoneType StoneType;
-
         public AudioClip RemoveSound;
 
         public bool Highlighted { get; set; }

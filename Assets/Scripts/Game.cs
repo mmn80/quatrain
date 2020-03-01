@@ -253,19 +253,19 @@ namespace Quatrain
             if (ToRemove != st)
             {
                 if (!AiMode)
-                    MainControl.ShowStoneError("can't take your own stone", x, y, z);
+                    Stone.ShowError("can't take your own stone", x, y, z);
                 return false;
             }
             if (IsQuatrainStone(x, y, z))
             {
                 if (!AiMode)
-                    MainControl.ShowStoneError("can't take from quatrains", x, y, z);
+                    Stone.ShowError("can't take from quatrains", x, y, z);
                 return false;
             }
             if (TakeTopStonesOnly && !IsTopStone(x, y, z))
             {
                 if (!AiMode)
-                    MainControl.ShowStoneError("only top stones can be taken in classic mode", x, y, z);
+                    Stone.ShowError("only top stones can be taken in classic mode", x, y, z);
                 return false;
             }
             return true;

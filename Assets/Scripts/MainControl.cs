@@ -57,15 +57,6 @@ namespace Quatrain
 
         public static void ShowError(string message) => ShowMessage(message, true);
 
-        public static void ShowStoneError(string message, byte x, byte y, byte z)
-        {
-            if (Game.AiMode)
-                return;
-            var stone = stones[x, y, z];
-            if (stone)
-                stone.ShowError(message);
-        }
-
         public static void HideMessage() => ShowMessage("");
 
         public static bool AutoShowAiDebugInfo = false;
@@ -83,7 +74,6 @@ namespace Quatrain
         public static Game game = new Game(true);
         public static GameHistory history = new GameHistory();
 
-        static Stone[,,] stones = new Stone[4, 4, 4];
         static string[] PlayerNames = new string[]
         {
             "Player 1", "Player 2"
@@ -98,7 +88,7 @@ namespace Quatrain
             game = new Game(true);
             history.Clear();
 
-            DestroyAllStones(true);
+            Stone.DestroyAllStones(true);
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
                 "press <color=#158>V</color> or <color=#158>C</color> to play against AI");
@@ -134,7 +124,7 @@ namespace Quatrain
             Instance.UpdateUI();
             HideMessage();
 
-            DestroyAllStones(false);
+            Stone.DestroyAllStones(false);
 
             return true;
         }
@@ -159,113 +149,35 @@ namespace Quatrain
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
-        public static void RefreshStones()
-        {
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                    {
-                        var s = stones[x, y, z];
-                        var g = game.GetStoneAt(x, y, z);
-                        if (g == StoneAtPos.None)
-                        {
-                            if (s != null)
-                            {
-                                Stone.DestroyStone(s);
-                                stones[x, y, z] = null;
-                            }
-                            continue;
-                        }
-                        var gs = Game.StoneAtPos2Stone(g);
-                        if (s == null)
-                        {
-                            stones[x, y, z] = Stone.MakeStone(x, y, z, gs);
-                            continue;
-                        }
-                        if (s.StoneType == gs)
-                            continue;
-                        Stone.DestroyStone(s);
-                        stones[x, y, z] = Stone.MakeStone(x, y, z, gs);
-                    }
-        }
-
         public static void OnAfterAdd(byte x, byte y, byte z)
         {
-            stones[x, y, z] = Stone.MakeStone(x, y, z,
-                (StoneType)game.GetPlayer());
+            Stone.MakeStone(x, y, z, (StoneType)game.GetPlayer());
 
             Instance.UpdateUI();
 
-            HighlightStones();
+            Stone.HighlightStones();
         }
 
         public static void OnAfterRemove(byte x, byte y, byte z)
         {
-            Stone.DestroyStone(stones[x, y, z]);
-            stones[x, y, z] = null;
-            for (byte i = z; i < 4; i++)
-                stones[x, y, i] = i >= 3 ? null :
-                    stones[x, y, i + 1];
-            for (byte i = z; i < 4; i++)
-            {
-                var stone = stones[x, y, i];
-                if (stone == null)
-                    break;
-                stone.FallOneSlot();
-            }
-
-            HighlightStones(true);
+            Stone.DestroyStone(x, y, z, true);
+            Stone.HighlightStones(true);
             Instance.UpdateUI(true);
-            HighlightStones();
+            Stone.HighlightStones();
         }
 
         static string ToRemove() => game.ToRemove.ToString().ToLower();
 
+        const string qtr_str = "<color=#D9471A>....QUATRAIN....</color>";
+
         public static void OnTakeAStone() =>
-            ShowMessage($"....QUATRAIN....\ntake a {ToRemove()} stone");
+            ShowMessage($"{qtr_str}\ntake a {ToRemove()} stone");
 
         public static void OnTakingFreeStone() =>
-            ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone on board, taking a free one");
+            ShowMessage($"{qtr_str}\nno {ToRemove()} stone on board, taking a free one");
 
         public static void OnNoStoneToTake() =>
-            ShowMessage($"....QUATRAIN....\nno {ToRemove()} stone to take, next");
-
-        static void DestroyAllStones(bool addStartStones)
-        {
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                    {
-                        var s = stones[x, y, z];
-                        if (s)
-                            Stone.DestroyStone(s);
-                        stones[x, y, z] = !addStartStones ? null :
-                            Stone.MakeStone(x, y, z,
-                                x < 2 ? StoneType.White : StoneType.Black,
-                                true, false);
-                    }
-        }
-
-        static void HighlightStones(bool reset = false)
-        {
-            var last = game.GetLastStone();
-            if (stones == null)
-                return;
-            for (byte x = 0; x < 4; x++)
-                for (byte y = 0; y < 4; y++)
-                    for (byte z = 0; z < 4; z++)
-                    {
-                        var s = stones[x, y, z];
-                        if (!s)
-                            break;
-                        if (reset)
-                            s.Highlighted = false;
-                        else if (game.IsQuatrainStone(x, y, z))
-                            s.Highlighted = true;
-                        s.IsLastStone = (last.Stone != 0 &&
-                            last.X == x && last.Y == y && last.Z == z);
-                    }
-        }
+            ShowMessage($"{qtr_str}\nno {ToRemove()} stone to take, next");
 
         IEnumerator AiLoop()
         {
@@ -688,9 +600,9 @@ namespace Quatrain
             else if (Input.GetKeyUp(KeyCode.F9))
             {
                 Variant = Variant == 0 ? 1 : 0;
-                DestroyAllStones(game.GameMode == GameMode.Lobby);
+                Stone.DestroyAllStones(game.GameMode == GameMode.Lobby);
                 if (game.GameMode != GameMode.Lobby)
-                    RefreshStones();
+                    Stone.UpdateStones();
                 Stick.VariantChanged();
                 var r = transform.GetChild(0).gameObject.
                     GetComponent<MeshRenderer>();

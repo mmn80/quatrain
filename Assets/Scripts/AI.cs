@@ -171,7 +171,7 @@ namespace Quatrain
             MainControl.paused = true;
             var g = history[current];
             MainControl.game = g.Game;
-            MainControl.RefreshStones();
+            Stone.UpdateStones();
             MainControl.Instance.UpdateUI();
             MainControl.ShowInfo($"<color=#158>Game position:</color> {current + 1} of {history.Count}");
         }
