@@ -70,13 +70,12 @@ namespace Quatrain
         public static void HideInfo() => ShowInfo("");
 
         public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
-
-        public static Game game = new Game(true);
+        
         public static GameStats history = new GameStats();
 
         static bool NewGame()
         {
-            game = new Game(true);
+            history.game = new Game(true);
             history.Clear();
 
             Stone.DestroyAllStones(true);
@@ -89,27 +88,31 @@ namespace Quatrain
             return true;
         }
 
-        static bool StartGame(PlayerType player1, PlayerType player2)
+        static bool StartGame(PlayerType p1, PlayerType p2)
         {
             history.Clear();
 
-            if (history.PlayerTypes[0] != player1)
+            if (history.Player1.Type != p1 ||
+                string.IsNullOrEmpty(history.Player1.Name))
             {
-                history.PlayerTypes[0] = player1;
-                history.PlayerNames[0] = player1.ToString();
-                Instance.Player1.text = history.PlayerNames[0];
+                history.Player1.Type = p1;
+                history.Player1.Name = p1 == PlayerType.Human ? "Player 1" :
+                    p1.ToString();
+                Instance.Player1.text = history.Player1.Name;
             }
-            if (history.PlayerTypes[1] != player2)
+            if (history.Player2.Type != p2 ||
+                string.IsNullOrEmpty(history.Player2.Name))
             {
-                history.PlayerTypes[1] = player2;
-                history.PlayerNames[1] = player2.ToString();
-                Instance.Player2.text = history.PlayerNames[1];
+                history.Player2.Type = p2;
+                history.Player2.Name = p2 == PlayerType.Human ? "Player 2" :
+                    p2.ToString();
+                Instance.Player2.text = history.Player2.Name;
             }
 
-            game.GameMode = GameMode.Add;
+            history.game.GameMode = GameMode.Add;
             history.Add(new Position()
             {
-                Game = game, Move = new Move(),
+                Game = history.game, Move = new Move(),
                 Score = 0, Total = 0,
             });
 
@@ -123,27 +126,30 @@ namespace Quatrain
 
         public static void OnGameOver()
         {
-            var winner = game.GetWinner();
+            var winnerIdx = history.game.GetWinner();
+            var winner = winnerIdx == 0 ? history.Player1 : (
+                (winnerIdx == 1 ? history.Player2 : null)
+            );
             Instance.UpdateUI(true);
             HideMessage();
-            if (winner != 2 && (history.PlayerTypes[winner] == PlayerType.Human || (
-                history.PlayerTypes[0] != PlayerType.Human &&
-                history.PlayerTypes[1] != PlayerType.Human
+            if (winner != null && (winner.Type == PlayerType.Human || (
+                history.Player1.Type != PlayerType.Human &&
+                history.Player2.Type != PlayerType.Human
             )))
                 Instance.PlayAmenSound();
             else
                 Instance.PlayGameOverSound();
             ShowMessage("game over\nwinner is <color=#D9471A>" +
-                (winner == 2 ? "nobody" : history.PlayerNames[winner]) + "</color>\n");
-            if (winner != 2)
-                Instance.HighlightScore(5, winner);
+                (winner == null ? "nobody" : winner.Name) + "</color>\n");
+            if (winner != null)
+                Instance.HighlightScore(5, winnerIdx);
         }
 
         public static void OnPlayerSwitch() => Instance.UpdateUI();
 
         public static void OnAfterAdd(byte x, byte y, byte z)
         {
-            Stone.MakeStone(x, y, z, (StoneType)game.GetPlayer());
+            Stone.MakeStone(x, y, z, (StoneType)history.game.GetPlayer());
 
             Instance.UpdateUI();
 
@@ -158,7 +164,7 @@ namespace Quatrain
             Stone.HighlightStones();
         }
 
-        static string ToRemove() => game.ToRemove.ToString().ToLower();
+        static string ToRemove() => history.game.ToRemove.ToString().ToLower();
 
         const string qtr_str = "<color=#D9471A>....QUATRAIN....</color>";
 
@@ -176,11 +182,11 @@ namespace Quatrain
             while (true)
             {
                 yield return new WaitForSecondsRealtime(0.5f);
-                var player = history.PlayerTypes[game.GetPlayer()];
-                if (!waitingForAi && game.GameMode != GameMode.Lobby &&
-                    game.GameMode != GameMode.GameOver &&
-                    player != PlayerType.Human && !paused)
-                        MakeAiMove(player);
+                var player = history.GetCurrentPlayer();
+                if (!waitingForAi && history.game.GameMode != GameMode.Lobby &&
+                    history.game.GameMode != GameMode.GameOver &&
+                    player.Type != PlayerType.Human && !paused)
+                        MakeAiMove(player.Type);
             }
         }
 
@@ -193,8 +199,9 @@ namespace Quatrain
         IEnumerator MakeAiMoveAsync(PlayerType player,
             byte depth = 6, byte width = 4, byte playouts = 100)
         {
-            if (game.GameMode == GameMode.Lobby || game.GameMode == GameMode.GameOver)
-                yield break;
+            if (history.game.GameMode == GameMode.Lobby ||
+                history.game.GameMode == GameMode.GameOver)
+                    yield break;
 
             Game.Seed = new System.Random();
             var aiTimer = new System.Diagnostics.Stopwatch();
@@ -202,12 +209,13 @@ namespace Quatrain
             Game.AiMode = true;
             aiTimer.Start();
 
-            var movesArr = game.GetValidMoves().ToArray();
+            var movesArr = history.game.GetValidMoves().ToArray();
             var results = new NativeArray<double>(64, Allocator.Persistent);
             var tries = new NativeArray<int>(64, Allocator.Persistent);
             var moves = new NativeArray<Move>(movesArr, Allocator.Persistent);
 
-            var job = new GameAiJob() { game = game, player = game.GetPlayer(),
+            var job = new GameAiJob() { game = history.game,
+                player = history.game.GetPlayer(),
                 playerType = player, depth = depth, width = width,
                 playouts = playouts, moves = moves, results = results,
                 tries = tries };
@@ -255,23 +263,23 @@ namespace Quatrain
 
             if (paused)
                 yield break;
-            if (game.GameMode == GameMode.GameOver)
+            if (history.game.GameMode == GameMode.GameOver)
             {
                 OnGameOver();
                 yield break;
             }
 
             if (((total == 0 && player == PlayerType.Carlos) || best.Score < -5) &&
-                game.GetStones(game.GetPlayer()) > 4)
+                history.game.GetStones(history.game.GetPlayer()) > 4)
             {
                 AiDialog("This is hopeless... I quit.");
-                game.GameOver();
+                history.game.GameOver();
                 history.Add(new Position());
             }
             else
             {
                 bool found;
-                var last = history.GetPreviousPosition(game.GetPlayer(), out found);
+                var last = history.GetPreviousPosition(history.game.GetPlayer(), out found);
                 if (player == PlayerType.Carlos)
                 {
                     if (found && best.Score - last.Score > 0.2 &&
@@ -284,12 +292,12 @@ namespace Quatrain
                             best.Move.moveType == 0)
                         AiDialog("Gotcha!");
                 }
-                game.ApplyMove(best.Move);
+                history.game.ApplyMove(best.Move);
             }
 
             history.Update(new Position()
             {
-                Game = game, Move = best.Move, Moves = scoredMoves.ToArray(),
+                Game = history.game, Move = best.Move, Moves = scoredMoves.ToArray(),
                 Score = best.Score, Total = total, Tries = totalTries,
                 AiMs = aiTimer.ElapsedMilliseconds, AiTicks = aiTimer.ElapsedTicks
             });
@@ -303,7 +311,7 @@ namespace Quatrain
 
         public IEnumerator AiDialogAsync(string message)
         {
-            var player = history.PlayerTypes[game.GetPlayer()];
+            var player = history.GetCurrentPlayer().Type;
             var txt = Instance.AiDialogue;
             message = message.Replace("\\t", "\t");
             txt.text = $"<color=#158>{player}:</color> {message}";
@@ -340,14 +348,14 @@ namespace Quatrain
 
         public void UpdateUI(bool highlight = false)
         {
-            Player1.text = history.PlayerNames[0];
-            Player2.text = history.PlayerNames[1];
-            if (game.GameMode != GameMode.Lobby)
+            Player1.text = history.Player1.Name;
+            Player2.text = history.Player2.Name;
+            if (history.game.GameMode != GameMode.Lobby)
             {
-                var gameEnd = game.GameMode == GameMode.GameOver;
-                Player1.color = !gameEnd && game.GetPlayer() == 0 ?
+                var gameEnd = history.game.GameMode == GameMode.GameOver;
+                Player1.color = !gameEnd && history.game.GetPlayer() == 0 ?
                     selectedPlayer : origPlayer;
-                Player2.color = !gameEnd && game.GetPlayer() == 1 ?
+                Player2.color = !gameEnd && history.game.GetPlayer() == 1 ?
                     selectedPlayer : origPlayer;
                 if (!Player1.gameObject.activeSelf)
                 {
@@ -361,12 +369,12 @@ namespace Quatrain
                 Player2.gameObject.SetActive(false);
             }
 
-            var g = game.GameMode == GameMode.Add ||
-                game.GameMode == GameMode.Remove || highlight;
-            Player1Stones.text = MakeRows('○', g ? game.GetStones(0) : 0);
-            Player2Stones.text = MakeRows('●', g ? game.GetStones(1) : 0);
-            Player1Score.text = new System.String('●', g ? game.GetScore(0) : 0);
-            Player2Score.text = new System.String('○', g ? game.GetScore(1) : 0);
+            var g = history.game.GameMode == GameMode.Add ||
+                history.game.GameMode == GameMode.Remove || highlight;
+            Player1Stones.text = MakeRows('○', g ? history.game.GetStones(0) : 0);
+            Player2Stones.text = MakeRows('●', g ? history.game.GetStones(1) : 0);
+            Player1Score.text = new System.String('●', g ? history.game.GetScore(0) : 0);
+            Player2Score.text = new System.String('○', g ? history.game.GetScore(1) : 0);
 
             if (highlight && this.highlightScore <= 0)
                 HighlightScore();
@@ -376,7 +384,7 @@ namespace Quatrain
         {
             highlightSpeed = 1 / time;
             highlightScore = 1;
-            highlightPlayer = player < 2 ? player : game.GetPlayer();
+            highlightPlayer = player < 2 ? player : history.game.GetPlayer();
         }
 
         string MakeRows(char c, int no)
@@ -452,8 +460,6 @@ namespace Quatrain
         static Color highlightColor = Color.green;
         static Color origColor = new Color(0.4f, 0.4f, 0.4f);
 
-        byte renamingPlayer;
-
         void Update()
         {
             if (highlightScore > 0)
@@ -472,8 +478,8 @@ namespace Quatrain
                 }
                 else if (Input.GetKeyUp(KeyCode.Return))
                 {
-                    history.PlayerNames[renamingPlayer] = UserInput.text;
-                    (renamingPlayer == 0 ? Player1 : Player2).text =
+                    renamingPlayer.Name = UserInput.text;
+                    (renamingPlayer == history.Player1 ? Player1 : Player2).text =
                         UserInput.text;
                     UserInput.gameObject.SetActive(false);
                     HideMessage();
@@ -485,30 +491,30 @@ namespace Quatrain
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (game.GameMode == GameMode.Lobby)
+                if (history.game.GameMode == GameMode.Lobby)
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
 #else
                     Application.Quit();
 #endif
-                else if (game.GameMode == GameMode.GameOver)
+                else if (history.game.GameMode == GameMode.GameOver)
                     NewGame();
                 else
-                    game.GameOver();
+                    history.game.GameOver();
             }
-            else if (game.GameMode == GameMode.Lobby &&
+            else if (history.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.H))
                     StartGame(PlayerType.Human, PlayerType.Human);
-            else if (game.GameMode == GameMode.Lobby &&
+            else if (history.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.V))
                     StartGame(PlayerType.Human, PlayerType.Vegas);
-            else if (game.GameMode == GameMode.Lobby &&
+            else if (history.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.C))
                 StartGame(PlayerType.Human, PlayerType.Carlos);
-            else if (game.GameMode == GameMode.Lobby &&
+            else if (history.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.X))
                 StartGame(PlayerType.Vegas, PlayerType.Carlos);
-            else if (game.GameMode == GameMode.Lobby &&
+            else if (history.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.L))
             {
                 var path = "";
@@ -527,15 +533,9 @@ namespace Quatrain
                     ShowMessage($"game saved to:\n{path}");
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
-            {
-                renamingPlayer = 0;
-                StartRename();
-            }
+                StartRename(history.Player1);
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha2))
-            {
-                renamingPlayer = 1;
-                StartRename();
-            }
+                StartRename(history.Player2);
             else if (ctrl && Input.GetKeyUp(KeyCode.N))
             {
                 Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
@@ -614,8 +614,8 @@ namespace Quatrain
             else if (Input.GetKeyUp(KeyCode.F9))
             {
                 Variant = Variant == 0 ? 1 : 0;
-                Stone.DestroyAllStones(game.GameMode == GameMode.Lobby);
-                if (game.GameMode != GameMode.Lobby)
+                Stone.DestroyAllStones(history.game.GameMode == GameMode.Lobby);
+                if (history.game.GameMode != GameMode.Lobby)
                     Stone.UpdateStones();
                 Stick.VariantChanged();
                 var r = transform.GetChild(0).gameObject.
@@ -649,8 +649,11 @@ namespace Quatrain
 
         public static bool EffectsMuted = false;
 
-        void StartRename()
+        PlayerInfo renamingPlayer;
+
+        void StartRename(PlayerInfo player)
         {
+            renamingPlayer = player;
             ShowMessage($"new name for: {renamingPlayer}\npress ENTER when ready");
             UserInput.text = "";
             UserInput.gameObject.SetActive(true);

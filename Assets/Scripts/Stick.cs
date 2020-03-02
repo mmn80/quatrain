@@ -50,7 +50,7 @@ namespace Quatrain
         void Update()
         {
             if (selected && Input.GetMouseButtonDown(0))
-                MainControl.game.AddStone(PosX, PosY);
+                MainControl.history.game.AddStone(PosX, PosY);
         }
     }
 }
