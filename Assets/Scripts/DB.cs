@@ -208,6 +208,9 @@ namespace Quatrain
 
         [NonSerialized]
         public GameStats Game;
+
+        public override string ToString() =>
+            $"{Time} #{Moves}:\t{Player1} ({P1Score}) vs. {Player2} ({P2Score})";
     }
 
     [Serializable]
@@ -318,6 +321,75 @@ namespace Quatrain
                 MainControl.ShowError($"failed loading game: {ex.Message}");
                 return false;
             }
+        }
+
+        public static bool gamesListOpened = false;
+        static int pageStart, pageEnd, selected;
+        const int pageSize = 20;
+
+        public static void ActivateGamesList()
+        {
+            if (Data.It.Games.Length == 0)
+            {
+                MainControl.ShowError("no games to load");
+                return;
+            }
+            selected = 0;
+            pageStart = 0;
+            pageEnd = Math.Min(It.Games.Length - 1, pageSize - 1);
+            if (pageEnd >= 0)
+            {
+                ShowGamesList();
+                gamesListOpened = true;
+            }
+        }
+
+        public static void GamesListMoveDown()
+        {
+            if (selected >= It.Games.Length - 1)
+                return;
+            selected++;
+            if (selected > pageEnd)
+            {
+                pageStart++;
+                pageEnd++;
+            }
+            ShowGamesList();
+        }
+
+        public static void GamesListMoveUp()
+        {
+            if (selected <= 0)
+                return;
+            selected--;
+            if (selected < pageStart)
+            {
+                pageStart--;
+                pageEnd--;
+            }
+            ShowGamesList();
+        }
+
+        static void ShowGamesList()
+        {
+            var str = "<color=#158>select game to load:</color>\n\n";
+            for (int i = pageStart; i <= pageEnd; i++)
+            {
+                var g = It.Games[i];
+                if (i == selected)
+                    str += $"<color=green>{g}</color>\n";
+                else
+                    str += $"{g}\n";
+            }
+            MainControl.ShowInfo(str);
+        }
+
+        public static void LoadSelectedGame()
+        {
+            gamesListOpened = false;
+            MainControl.HideInfo();
+            if (selected >= 0 && selected < It.Games.Length)
+                LoadGame(It.Games[selected]);
         }
 
         public GameInfo[] Games = new GameInfo[0];

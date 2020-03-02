@@ -34,10 +34,10 @@ namespace Quatrain
                 cam.transform.RotateAround(Vector3.zero, Vector3.up, aSpeed * Time.deltaTime);
 
             var hMaxSpeed = AngularSpeed / 2;
-            if (!ctrl && (Input.GetKey(KeyCode.W) ||
+            if (!ctrl && !Data.gamesListOpened && (Input.GetKey(KeyCode.W) ||
                     Input.GetKey(KeyCode.UpArrow)))
                 hSpeed = -hMaxSpeed;
-            else if (!ctrl && (Input.GetKey(KeyCode.S) ||
+            else if (!ctrl && !Data.gamesListOpened && (Input.GetKey(KeyCode.S) ||
                     Input.GetKey(KeyCode.DownArrow)))
                 hSpeed = hMaxSpeed;
             else if (hSpeed < 0)

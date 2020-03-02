@@ -406,7 +406,7 @@ namespace Quatrain
 - <color=#158>Alt+Enter</color>: toggle full screen
 
 - <color=#158>Ctrl+12</color>\t: rename player 1 (or 2)
-- <color=#158>Ctrl+S</color>\t: seve current game
+- <color=#158>Ctrl+S</color>\t: save current game
 - <color=#158>Ctrl+N</color>\t: toggle classic game rules
 - <color=#158>Ctrl+R</color>\t: toggle slow rotation of stones
 - <color=#158>Ctrl+O</color>\t: toggle orthographic camera mode
@@ -424,9 +424,10 @@ namespace Quatrain
 - <color=#158>Space</color>: pause AI vs. AI game
 - <color=#158>Ctrl+←→</color>: navigate game history
 
-- <color=#158>H</color>\t: start new game against a human
-- <color=#158>VC</color>\t: start new game against Vegas or Carlos
-- <color=#158>Esc</color>\t: quit (current) game
+- <color=#158>H</color>: start new game against a human
+- <color=#158>VCX</color>: start new game against Vegas, Carlos, or both
+- <color=#158>L</color>: show saved games (select with <color=#158>↑↓</color> & load with <color=#158>Enter</color>)
+- <color=#158>Esc</color>: quit input, selection, game, or everything
 ";
 
         const string creditsInfo = @"<color=#158>ASSET FLIPS</color>
@@ -489,7 +490,12 @@ namespace Quatrain
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (Data.Current.game.GameMode == GameMode.Lobby)
+                if (Data.gamesListOpened)
+                {
+                    Data.gamesListOpened = false;
+                    HideInfo();
+                }
+                else if (Data.Current.game.GameMode == GameMode.Lobby)
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -508,18 +514,19 @@ namespace Quatrain
                     StartGame(PlayerType.Human, PlayerType.Vegas);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.C))
-                StartGame(PlayerType.Human, PlayerType.Carlos);
+                    StartGame(PlayerType.Human, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.X))
-                StartGame(PlayerType.Vegas, PlayerType.Carlos);
+                    StartGame(PlayerType.Vegas, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.L))
-            {
-                if (Data.It.Games.Length == 0)
-                    ShowError("no games to load");
-                else
-                    Data.LoadGame(Data.It.Games.Last());
-            }
+                    Data.ActivateGamesList();
+            else if (Data.gamesListOpened && Input.GetKey(KeyCode.UpArrow))
+                Data.GamesListMoveUp();
+            else if (Data.gamesListOpened && Input.GetKey(KeyCode.DownArrow))
+                Data.GamesListMoveDown();
+            else if (Data.gamesListOpened && Input.GetKey(KeyCode.Return))
+                Data.LoadSelectedGame();
             else if (ctrl && Input.GetKeyUp(KeyCode.S))
                 Data.SaveCurrent();
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
