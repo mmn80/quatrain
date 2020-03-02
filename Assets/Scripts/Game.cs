@@ -218,7 +218,7 @@ namespace Quatrain
             ProcessQuatrains(x, y, z);
 
             if (!AiMode)
-                MainControl.history.Add(new Position()
+                Data.Current.Add(new Position()
                 {
                     Game = this, Move = new Move(0, x, y, z),
                     Score = 0, Total = 0,
@@ -293,7 +293,7 @@ namespace Quatrain
             ProcessQuatrains(x, y, z, true);
 
             if (!AiMode)
-                MainControl.history.Add(new Position()
+                Data.Current.Add(new Position()
                 {
                     Game = this, Move = new Move(1, x, y, z),
                     Score = 0, Total = 0,

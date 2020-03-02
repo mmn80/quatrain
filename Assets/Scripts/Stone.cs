@@ -73,7 +73,7 @@ namespace Quatrain
                     for (byte z = 0; z < 4; z++)
                     {
                         var s = stones[x, y, z];
-                        var g = MainControl.history.game.GetStoneAt(x, y, z);
+                        var g = Data.Current.game.GetStoneAt(x, y, z);
                         if (g == StoneAtPos.None)
                         {
                             if (s != null)
@@ -95,7 +95,7 @@ namespace Quatrain
 
         public static void HighlightStones(bool reset = false)
         {
-            var last = MainControl.history.game.GetLastStone();
+            var last = Data.Current.game.GetLastStone();
             if (stones == null)
                 return;
             for (byte x = 0; x < 4; x++)
@@ -107,7 +107,7 @@ namespace Quatrain
                             break;
                         if (reset)
                             s.Highlighted = false;
-                        else if (MainControl.history.game.IsQuatrainStone(x, y, z))
+                        else if (Data.Current.game.IsQuatrainStone(x, y, z))
                             s.Highlighted = true;
                         s.IsLastStone = (last.Stone != 0 &&
                             last.X == x && last.Y == y && last.Z == z);
@@ -227,7 +227,7 @@ namespace Quatrain
             }
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
-                MainControl.history.game.RemoveStone(PosX, PosY, PosZ) &&
+                Data.Current.game.RemoveStone(PosX, PosY, PosZ) &&
                 !MainControl.EffectsMuted)
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
         }

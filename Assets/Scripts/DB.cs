@@ -25,95 +25,14 @@ namespace Quatrain
     [Serializable]
     public class GameStats
     {
-        static string GetBasePath() =>
-            UnityEngine.Application.persistentDataPath.
-                Replace('/', System.IO.Path.DirectorySeparatorChar);
-
-        static string GetSettingsPath(string fileName) =>
-            System.IO.Path.Combine(GetBasePath(), fileName);
-
-        public static GameStats FromFile(ref string path)
-        {
-            try
-            {
-                if (path == "")
-                {
-                    var files = System.IO.Directory.GetFiles(
-                        GetBasePath(), "game_*.json");
-                    if (files.Length > 0)
-                    {
-                        Array.Sort(files, (f1, f2) =>
-                        {
-                            f1 = System.IO.Path.GetFileName(f1).Substring(5).
-                                Substring(0, fileNameFormat.Length);
-                            f2 = System.IO.Path.GetFileName(f2).Substring(5).
-                                Substring(0, fileNameFormat.Length);
-                            try
-                            {
-                                var d1 = DateTime.ParseExact(f1, fileNameFormat,
-                                    System.Globalization.CultureInfo.InvariantCulture);
-                                var d2 = DateTime.ParseExact(f2, fileNameFormat,
-                                    System.Globalization.CultureInfo.InvariantCulture);
-                                return d1.CompareTo(d2);
-                            }
-                            catch (System.Exception)
-                            {
-                                return 0;
-                            }
-                        });
-                        path = files.LastOrDefault();
-                    }
-                    else
-                        MainControl.ShowError("no game saves found at\n" +
-                            GetBasePath());
-                }
-                var json = System.IO.File.ReadAllText(path);
-                return UnityEngine.JsonUtility.FromJson<GameStats>(json);
-            }
-            catch (System.Exception ex)
-            {
-                MainControl.ShowError($"Error: {ex.Message}");
-                return null;
-            }
-        }
-
-        public static bool ToFile(GameStats game, ref string path)
-        {
-            try
-            {
-                game.Time = DateTime.Now;
-                if (path == "")
-                    path = GetSettingsPath(game.GetGameName());
-                var json = UnityEngine.JsonUtility.ToJson(game);
-                System.IO.File.WriteAllText(path, json);
-                return true;
-            }
-            catch (System.Exception ex)
-            {
-                MainControl.ShowError($"Error: {ex.Message}");
-                return false;
-            }
-        }
-
-        static string fileNameFormat = "yy-MM-dd_HH-mm-ss";
-
-        public string GetGameName()
-        {
-            var name = "game_" + Time.ToString(fileNameFormat);
-            name += "_" + new string(Player1.Name.Take(10).ToArray());
-            name += "_vs_" + new string(Player2.Name.Take(10).ToArray());
-            name += ".json";
-            return name;
-        }
-
         [NonSerialized]
         public Game game = new Game(true);
 
-        public DateTime Time;
-        public PlayerInfo Player1 = new PlayerInfo();
-        public PlayerInfo Player2 = new PlayerInfo();
+        public string Time;
+        public Player Player1 = new Player();
+        public Player Player2 = new Player();
 
-        public PlayerInfo GetCurrentPlayer() =>
+        public Player GetCurrentPlayer() =>
             game.GetPlayer() == 0 ? Player1 : Player2;
 
         public Position[] History = new Position[0];
@@ -248,8 +167,16 @@ namespace Quatrain
     }
 
     [Serializable]
-    public class PlayerInfo
+    public class Player
     {
+        public Player() {}
+
+        public Player(Player src)
+        {
+            Name = src.Name;
+            Type = src.Type;
+        }
+
         public string Name;
         public PlayerType Type;
 
@@ -259,16 +186,140 @@ namespace Quatrain
     [Serializable]
     public class GameInfo
     {
-        public DateTime Time;
-        public PlayerInfo Player1, Player2;
+        public void UpdateFromGame(GameStats src)
+        {
+            Player1 = new Player(src.Player1);
+            Player2 = new Player(src.Player2);
+            Time = src.Time;
+            Moves = src.History.Length;
+            P1Score = src.game.GetScore(0);
+            P2Score = src.game.GetScore(1);
+            Finished = src.game.GameMode == GameMode.GameOver;
+
+            Game = src;
+        }
+
+        public string FileName;
+        public string Time;
+        public Player Player1, Player2;
         public int Moves;
         public bool Finished;
         public int P1Score, P2Score;
+
+        [NonSerialized]
+        public GameStats Game;
     }
 
     [Serializable]
-    public class Settings
+    public class Data
     {
-        public GameInfo[] Games;
+        public static Data It;
+
+        public static string GetBasePath() =>
+            UnityEngine.Application.persistentDataPath.
+                Replace('/', System.IO.Path.DirectorySeparatorChar);
+
+        public static string GetDataFilePath(string fileName) =>
+            System.IO.Path.Combine(GetBasePath(), fileName);
+
+        public static void Load()
+        {
+            try
+            {
+                var path = GetDataFilePath("Data.json");
+                if (System.IO.File.Exists(path))
+                {
+                    var json = System.IO.File.ReadAllText(path);
+                    It = UnityEngine.JsonUtility.FromJson<Data>(json);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"failed loading user data file:\n{ex.Message}");
+            }
+            if (It == null)
+                It = new Data();
+        }
+
+        static bool SaveHead()
+        {
+            try
+            {
+                var path = GetDataFilePath("Data.json");
+                var json = UnityEngine.JsonUtility.ToJson(It);
+                System.IO.File.WriteAllText(path, json);
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"failed saving user data file:\n{ex.Message}");
+                return false;
+            }
+        }
+
+        public static GameStats Current;
+
+        public static void SaveCurrent()
+        {
+            var gi = It.Games.FirstOrDefault(g => g.Game == Current);
+            if (gi == null)
+            {
+                gi = new GameInfo();
+                gi.FileName = $"game_{It.Games.Length}.json";
+
+                var oldGames = It.Games;
+                It.Games = new GameInfo[It.Games.Length + 1];
+                Array.Copy(oldGames, It.Games, oldGames.Length);
+                It.Games[oldGames.Length] = gi;
+            }
+            Current.Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            gi.UpdateFromGame(Current);
+
+            var path = GetDataFilePath(gi.FileName);
+            try
+            {
+                var json = UnityEngine.JsonUtility.ToJson(Current);
+                System.IO.File.WriteAllText(path, json);
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"failed saving game:\n{ex.Message}");
+                return;
+            }
+
+            if (SaveHead())
+                MainControl.ShowMessage("current game saved");
+        }
+
+        public static bool LoadGame(GameInfo game)
+        {
+            try
+            {
+                var path = GetDataFilePath(game.FileName);
+                if (!System.IO.File.Exists(path))
+                {
+                    MainControl.ShowError($"file not found:\n{path}");
+                    return false;
+                }
+                var json = System.IO.File.ReadAllText(path);
+                game.Game = UnityEngine.JsonUtility.FromJson<GameStats>(json);
+                if (game.Game == null)
+                {
+                    MainControl.ShowError($"failed loading game:\n{path}");
+                    return false;
+                }
+                Current = game.Game;
+                Current.GoToTheEnd();
+                MainControl.ShowMessage("game loaded");
+                return true;
+            }
+            catch (System.Exception ex)
+            {
+                MainControl.ShowError($"failed loading game: {ex.Message}");
+                return false;
+            }
+        }
+
+        public GameInfo[] Games = new GameInfo[0];
     }
 }
