@@ -171,7 +171,7 @@ namespace Quatrain
     [Serializable]
     public class Player
     {
-        public Player() {}
+        public Player(string name = "") => Name = name;
 
         public Player(Player src)
         {
@@ -477,7 +477,11 @@ namespace Quatrain
 
         public int Variant = 0;
 
-        public void VariantChanged()
+        public bool renderPostProcessing = true;
+        public bool allowMSAA = true;
+        public bool renderShadows = true;
+
+        public void SettingsChanged()
         {
             Stick.VariantChanged();
             var mc = MainControl.Instance;
@@ -494,10 +498,6 @@ namespace Quatrain
             camOpts.renderPostProcessing = Data.It.renderPostProcessing;
             camOpts.renderShadows = Data.It.renderShadows;
         }
-
-        public bool renderPostProcessing = true;
-        public bool allowMSAA = true;
-        public bool renderShadows = true;
 
         public GameInfo[] Games = new GameInfo[0];
     }

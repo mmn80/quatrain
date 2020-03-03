@@ -86,12 +86,13 @@ namespace Quatrain
         static bool StartGame(PlayerType p1, PlayerType p2)
         {
             Data.Current.Clear();
-
+            var g = Data.It?.Games.LastOrDefault();
             if (Data.Current.Player1.Type != p1 ||
                 string.IsNullOrEmpty(Data.Current.Player1.Name))
             {
                 Data.Current.Player1.Type = p1;
-                Data.Current.Player1.Name = p1 == PlayerType.Human ? "Player 1" :
+                Data.Current.Player1.Name = p1 == PlayerType.Human ? (
+                    g?.Player1.Name ?? "Player 1") :
                     p1.ToString();
                 Instance.Player1.text = Data.Current.Player1.Name;
             }
@@ -99,7 +100,8 @@ namespace Quatrain
                 string.IsNullOrEmpty(Data.Current.Player2.Name))
             {
                 Data.Current.Player2.Type = p2;
-                Data.Current.Player2.Name = p2 == PlayerType.Human ? "Player 2" :
+                Data.Current.Player2.Name = p2 == PlayerType.Human ? (
+                    g?.Player2.Name ?? "Player 2") :
                     p2.ToString();
                 Instance.Player2.text = Data.Current.Player2.Name;
             }
@@ -320,7 +322,7 @@ namespace Quatrain
         {
             camOpts = Camera.main.GetComponent<UniversalAdditionalCameraData>();
             Data.Load();
-            Data.It.VariantChanged();
+            Data.It.SettingsChanged();
             NewGame();
             StartCoroutine(AiLoop());
         }
@@ -620,7 +622,7 @@ namespace Quatrain
                 Stone.DestroyAllStones(Data.Current.game.GameMode == GameMode.Lobby);
                 if (Data.Current.game.GameMode != GameMode.Lobby)
                     Stone.UpdateStones();
-                Data.It.VariantChanged();
+                Data.It.SettingsChanged();
                 ShowMessage(Data.It.Variant == 0 ? "night" : "day");
                 Data.SaveHead();
             }
