@@ -486,9 +486,13 @@ namespace Quatrain
             r.material = mc.BoardVariants[Data.It.Variant];
             UnityEngine.Camera.main.backgroundColor =
                 mc.BackgroundVariants[Data.It.Variant];
+            UnityEngine.Camera.main.allowMSAA = Data.It.allowMSAA;
             for (int i = 0; i < mc.Lights.Length; i++)
                 mc.Lights[i].intensity = mc.LightsIntensities[i] *
                     (Data.It.Variant == 0 ? 1 : 1.25f);
+            var camOpts = UnityEngine.Camera.main.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            camOpts.renderPostProcessing = Data.It.renderPostProcessing;
+            camOpts.renderShadows = Data.It.renderShadows;
         }
 
         public bool renderPostProcessing = true;
