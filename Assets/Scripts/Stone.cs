@@ -83,13 +83,13 @@ namespace Quatrain
                         var gs = Game.StoneAtPos2Stone(g);
                         if (s == null)
                         {
-                            MakeStone(x, y, z, gs);
+                            MakeStone(x, y, z, gs, false, false);
                             continue;
                         }
                         if (s.StoneType == gs)
                             continue;
                         DestroyStone(x, y, z);
-                        MakeStone(x, y, z, gs);
+                        MakeStone(x, y, z, gs, false, false);
                     }
         }
 
