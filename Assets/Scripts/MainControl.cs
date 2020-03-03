@@ -79,7 +79,7 @@ namespace Quatrain
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
                 "press <color=#158>V</color>, <color=#158>C</color> or <color=#158>X</color> to play against AI\n" +
-                "press <color=#158>L</color> to load last game");
+                "press <color=#158>L</color> to load a game");
             Instance.UpdateUI();
 
             return true;
@@ -412,7 +412,7 @@ namespace Quatrain
 - <color=#158>Ctrl+O</color>\t: toggle orthographic camera mode
 - <color=#158>Ctrl+P</color>\t: toggle rendering of post processing effects
 - <color=#158>Ctrl+A</color>\t: toggle MSAA
-- <color=#158>Ctrl+H</color>\t: toggle rendering of shadows
+- <color=#158>Ctrl+D</color>\t: toggle rendering of shadows
 - <color=#158>Ctrl+M</color>\t: (un)mute music
 - <color=#158>Ctrl+E</color>\t: (un)mute effects
 
@@ -521,11 +521,11 @@ namespace Quatrain
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 Input.GetKeyUp(KeyCode.L))
                     Data.ActivateGamesList();
-            else if (Data.gamesListOpened && Input.GetKey(KeyCode.UpArrow))
+            else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.UpArrow))
                 Data.GamesListMoveUp();
-            else if (Data.gamesListOpened && Input.GetKey(KeyCode.DownArrow))
+            else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.DownArrow))
                 Data.GamesListMoveDown();
-            else if (Data.gamesListOpened && Input.GetKey(KeyCode.Return))
+            else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.Return))
                 Data.LoadSelectedGame();
             else if (ctrl && Input.GetKeyUp(KeyCode.S))
                 Data.SaveCurrent();
@@ -564,7 +564,7 @@ namespace Quatrain
                 ShowMessage("MSAA " +
                     (Camera.main.allowMSAA ? "enabled" : "disabled"));
             }
-            else if (ctrl && Input.GetKeyUp(KeyCode.H))
+            else if (ctrl && Input.GetKeyUp(KeyCode.D))
             {
                 camOpts.renderShadows = !camOpts.renderShadows;
                 ShowMessage("shadows " +

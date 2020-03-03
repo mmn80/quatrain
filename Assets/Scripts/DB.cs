@@ -87,7 +87,7 @@ namespace Quatrain
                 return;
             }
             Current = History.Length - 1;
-            UpdateGameFromHistory();
+            UpdateGameFromHistory(false);
         }
 
         public void GoBack()
@@ -132,14 +132,15 @@ namespace Quatrain
             UpdateGameFromHistory();
         }
 
-        void UpdateGameFromHistory()
+        void UpdateGameFromHistory(bool showInfo = true)
         {
             MainControl.paused = true;
             var g = History[Current];
             game = g.Game;
             Stone.UpdateStones();
             MainControl.Instance.UpdateUI();
-            MainControl.ShowInfo($"<color=#158>Game position:</color> {Current + 1} of {History.Length}");
+            if (showInfo)
+                MainControl.ShowInfo($"<color=#158>Game position:</color> {Current + 1} of {History.Length}");
         }
 
         static string fstr(double f) => f.ToString("0.000000000000");
