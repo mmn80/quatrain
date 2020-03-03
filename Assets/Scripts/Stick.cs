@@ -18,8 +18,8 @@ namespace Quatrain
         {
             foreach (var stick in Instances)
                 stick.ownRenderer.material = stick.selected ?
-                    stick.HighlightVariants[MainControl.Variant] :
-                    stick.NormalVariants[MainControl.Variant];
+                    stick.HighlightVariants[Data.It.Variant] :
+                    stick.NormalVariants[Data.It.Variant];
         }
 
         void Start()
@@ -28,14 +28,14 @@ namespace Quatrain
             ownSound = GetComponent<AudioSource>();
             ownRenderer = GetComponent<Renderer>();
             if (ownRenderer)
-                ownRenderer.material = NormalVariants[MainControl.Variant];
+                ownRenderer.material = NormalVariants[Data.It.Variant];
         }
 
         void OnMouseEnter()
         {
             selected = true;
             if (ownRenderer)
-                ownRenderer.material = HighlightVariants[MainControl.Variant];
+                ownRenderer.material = HighlightVariants[Data.It.Variant];
             if (ownSound && !MainControl.EffectsMuted)
                 ownSound.Play();
         }
@@ -44,7 +44,7 @@ namespace Quatrain
         {
             selected = false;
             if (ownRenderer)
-                ownRenderer.material = NormalVariants[MainControl.Variant];
+                ownRenderer.material = NormalVariants[Data.It.Variant];
         }
 
         void Update()

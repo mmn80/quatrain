@@ -40,8 +40,6 @@ namespace Quatrain
 #endif
         }
 
-        public static int Variant = 0;
-
         public static void ShowMessage(string message, bool error = false, bool reflectInUnity = true)
         {
             var txt = Instance.Messages;
@@ -322,6 +320,7 @@ namespace Quatrain
         {
             camOpts = Camera.main.GetComponent<UniversalAdditionalCameraData>();
             Data.Load();
+            Data.It.VariantChanged();
             NewGame();
             StartCoroutine(AiLoop());
         }
@@ -555,22 +554,27 @@ namespace Quatrain
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.P))
             {
-                camOpts.renderPostProcessing = !camOpts.renderPostProcessing;
+                Data.It.renderPostProcessing = !Data.It.renderPostProcessing;
+                camOpts.renderPostProcessing = Data.It.renderPostProcessing;
                 ShowMessage("post processing " +
-                    (camOpts.renderPostProcessing ?
+                    (Data.It.renderPostProcessing ?
                         "enabled" : "disabled"));
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.A))
             {
-                Camera.main.allowMSAA = !Camera.main.allowMSAA;
+                Data.It.allowMSAA = !Data.It.allowMSAA;
+                Camera.main.allowMSAA = Data.It.allowMSAA;
                 ShowMessage("MSAA " +
-                    (Camera.main.allowMSAA ? "enabled" : "disabled"));
+                    (Data.It.allowMSAA ? "enabled" : "disabled"));
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.D))
             {
-                camOpts.renderShadows = !camOpts.renderShadows;
+                Data.It.renderShadows = !Data.It.renderShadows;
+                camOpts.renderShadows = Data.It.renderShadows;
                 ShowMessage("shadows " +
-                    (camOpts.renderShadows ? "enabled" : "disabled"));
+                    (Data.It.renderShadows ? "enabled" : "disabled"));
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.M))
             {
@@ -612,19 +616,13 @@ namespace Quatrain
             }
             else if (Input.GetKeyUp(KeyCode.F9))
             {
-                Variant = Variant == 0 ? 1 : 0;
+                Data.It.Variant = Data.It.Variant == 0 ? 1 : 0;
                 Stone.DestroyAllStones(Data.Current.game.GameMode == GameMode.Lobby);
                 if (Data.Current.game.GameMode != GameMode.Lobby)
                     Stone.UpdateStones();
-                Stick.VariantChanged();
-                var r = transform.GetChild(0).gameObject.
-                    GetComponent<MeshRenderer>();
-                r.material = BoardVariants[Variant];
-                Camera.main.backgroundColor = BackgroundVariants[Variant];
-                for (int i = 0; i < Lights.Length; i++)
-                    Lights[i].intensity = LightsIntensities[i] *
-                        (Variant == 0 ? 1 : 1.25f);
-                ShowMessage(Variant == 0 ? "night" : "day");
+                Data.It.VariantChanged();
+                ShowMessage(Data.It.Variant == 0 ? "night" : "day");
+                Data.SaveHead();
             }
             else if (Input.GetMouseButtonUp(0))
                 HideInfo();

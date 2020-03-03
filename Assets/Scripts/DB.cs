@@ -222,7 +222,7 @@ namespace Quatrain
     [Serializable]
     public class Data
     {
-        public static Data It;
+        public static Data It = new Data();
 
         public static string GetBasePath() =>
             UnityEngine.Application.persistentDataPath.
@@ -250,7 +250,7 @@ namespace Quatrain
                 It = new Data();
         }
 
-        static bool SaveHead()
+        public static bool SaveHead()
         {
             try
             {
@@ -328,6 +328,8 @@ namespace Quatrain
                 return false;
             }
         }
+
+        #region Games List
 
         public static bool gamesListOpened = false;
         static int pageStart, pageEnd, selected;
@@ -470,6 +472,28 @@ namespace Quatrain
                     LoadGame(It.Games[selected]);
             }
         }
+
+        #endregion
+
+        public int Variant = 0;
+
+        public void VariantChanged()
+        {
+            Stick.VariantChanged();
+            var mc = MainControl.Instance;
+            var r = mc.transform.GetChild(0).gameObject.
+                GetComponent<UnityEngine.MeshRenderer>();
+            r.material = mc.BoardVariants[Data.It.Variant];
+            UnityEngine.Camera.main.backgroundColor =
+                mc.BackgroundVariants[Data.It.Variant];
+            for (int i = 0; i < mc.Lights.Length; i++)
+                mc.Lights[i].intensity = mc.LightsIntensities[i] *
+                    (Data.It.Variant == 0 ? 1 : 1.25f);
+        }
+
+        public bool renderPostProcessing = true;
+        public bool allowMSAA = true;
+        public bool renderShadows = true;
 
         public GameInfo[] Games = new GameInfo[0];
     }

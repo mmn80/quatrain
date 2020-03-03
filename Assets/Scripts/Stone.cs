@@ -17,8 +17,8 @@ namespace Quatrain
             bool animation = false, bool sound = true)
         {
             var prefabPath = type == StoneType.White ?
-                MainControl.Instance.WhiteStoneVariants[MainControl.Variant] :
-                MainControl.Instance.BlackStoneVariants[MainControl.Variant];
+                MainControl.Instance.WhiteStoneVariants[Data.It.Variant] :
+                MainControl.Instance.BlackStoneVariants[Data.It.Variant];
             var prefab = MainControl.Load(prefabPath);
             var pos = GetStonePos(x, y, z);
             if (animation)
