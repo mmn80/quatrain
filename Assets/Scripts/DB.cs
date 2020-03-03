@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Quatrain
@@ -211,7 +212,11 @@ namespace Quatrain
         public GameStats Game;
 
         public override string ToString() =>
-            $"{Time} #{Moves}:\t{Player1} ({P1Score}) vs. {Player2} ({P2Score})";
+            $"{Time}. {Moves} moves, " +
+             (Finished ? (P1Score == P2Score ? "a draw" : (
+                 (P2Score > P1Score ? Player2.Name : Player1.Name) + " won")
+            ) : "unfinished") +
+            $".\n\t{Player1} ({P1Score}) vs. {Player2} ({P2Score})";
     }
 
     [Serializable]
@@ -347,6 +352,12 @@ namespace Quatrain
 
         public static void GamesListMoveDown()
         {
+            if (deleting)
+            {
+                deleteConfirmed = !deleteConfirmed;
+                ShowGamesList();
+                return;
+            }
             if (selected >= It.Games.Length - 1)
                 return;
             selected++;
@@ -360,6 +371,12 @@ namespace Quatrain
 
         public static void GamesListMoveUp()
         {
+            if (deleting)
+            {
+                deleteConfirmed = !deleteConfirmed;
+                ShowGamesList();
+                return;
+            }
             if (selected <= 0)
                 return;
             selected--;
@@ -371,26 +388,87 @@ namespace Quatrain
             ShowGamesList();
         }
 
-        static void ShowGamesList()
+        static bool deleting;
+        static bool deleteConfirmed;
+
+        public static void GamesListDelete()
         {
-            var str = "<color=#158>select game to load:</color>\n\n";
-            for (int i = pageStart; i <= pageEnd; i++)
-            {
-                var g = It.Games[i];
-                if (i == selected)
-                    str += $"<color=green>{g}</color>\n";
-                else
-                    str += $"{g}\n";
-            }
-            MainControl.ShowInfo(str);
+            if (selected <= 0 || selected > It.Games.Length - 1)
+                return;
+            deleting = true;
+            deleteConfirmed = false;
+            ShowGamesList();
         }
 
-        public static void LoadSelectedGame()
+        static void ShowGamesList()
         {
-            gamesListOpened = false;
-            MainControl.HideInfo();
-            if (selected >= 0 && selected < It.Games.Length)
-                LoadGame(It.Games[selected]);
+            if (deleting)
+            {
+                var str = "<color=red>sure you want to delete this game?</color>\n\n";
+                var g = It.Games[selected];
+                str += g.ToString() + "\n\n";
+                str += (deleteConfirmed ? "" : "<color=green>");
+                str += "Nevermind";
+                str += (deleteConfirmed ? "" : "</color>");
+                str += "\n";
+                str += (deleteConfirmed ? "<color=green>" : "");
+                str += "Yes, wipe it from history";
+                str += (deleteConfirmed ? "</color>" : "");
+                MainControl.ShowInfo(str);
+            }
+            else
+            {
+                var str = "<color=#158>select game to load:</color>\n\n";
+                for (int i = pageStart; i <= pageEnd; i++)
+                {
+                    var g = It.Games[i];
+                    if (i == selected)
+                        str += $"<color=green>{g}</color>\n";
+                    else
+                        str += $"{g}\n";
+                }
+                MainControl.ShowInfo(str);
+            }
+        }
+
+        public static void GamesListSelected()
+        {
+            if (deleting)
+            {
+                if (deleteConfirmed)
+                {
+                    var g = It.Games[selected];
+                    var gameFile = g.FileName;
+                    try
+                    {
+                        if (System.IO.File.Exists(gameFile))
+                            System.IO.File.Delete(gameFile);
+                        var lst = new List<GameInfo>(It.Games);
+                        lst.RemoveAt(selected);
+                        It.Games = lst.ToArray();
+                        SaveHead();
+                        MainControl.ShowInfo($"{gameFile} deleted.");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        MainControl.ShowError($"failed deleting game: {ex.Message}");
+                    }
+                    gamesListOpened = false;
+                    deleting = false;
+                }
+                else
+                {
+                    deleting = false;
+                    ShowGamesList();
+                }
+            }
+            else
+            {
+                gamesListOpened = false;
+                MainControl.HideInfo();
+                if (selected >= 0 && selected < It.Games.Length)
+                    LoadGame(It.Games[selected]);
+            }
         }
 
         public GameInfo[] Games = new GameInfo[0];

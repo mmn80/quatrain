@@ -526,7 +526,9 @@ namespace Quatrain
             else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.DownArrow))
                 Data.GamesListMoveDown();
             else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.Return))
-                Data.LoadSelectedGame();
+                Data.GamesListSelected();
+            else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.Delete))
+                Data.GamesListDelete();
             else if (ctrl && Input.GetKeyUp(KeyCode.S))
                 Data.SaveCurrent();
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha1))
