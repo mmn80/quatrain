@@ -333,23 +333,32 @@ namespace Quatrain
 
         public static bool gamesListOpened = false;
         static int pageStart, pageEnd, selected;
-        const int pageSize = 20;
+        const int pageSize = 10;
 
         public static void ActivateGamesList()
         {
-            if (Data.It.Games.Length == 0)
+            if (It.Games.Length == 0)
             {
                 MainControl.ShowError("no games to load");
                 return;
             }
-            selected = 0;
-            pageStart = 0;
-            pageEnd = Math.Min(It.Games.Length - 1, pageSize - 1);
+            selected = It.Games.Length - 1;
+            pageStart = Math.Max(0, It.Games.Length - pageSize);
+            pageEnd = selected;
             if (pageEnd >= 0)
             {
                 ShowGamesList();
                 gamesListOpened = true;
+                MainControl.Instance.InfoBg.gameObject.SetActive(true);
             }
+        }
+
+        public static void HideGamesList()
+        {
+            gamesListOpened = false;
+            deleting = false;
+            MainControl.HideInfo();
+            MainControl.Instance.InfoBg.gameObject.SetActive(false);
         }
 
         public static void GamesListMoveDown()
@@ -455,8 +464,7 @@ namespace Quatrain
                     {
                         MainControl.ShowError($"failed deleting game: {ex.Message}");
                     }
-                    gamesListOpened = false;
-                    deleting = false;
+                    HideGamesList();
                 }
                 else
                 {
@@ -466,8 +474,7 @@ namespace Quatrain
             }
             else
             {
-                gamesListOpened = false;
-                MainControl.HideInfo();
+                HideGamesList();
                 if (selected >= 0 && selected < It.Games.Length)
                     LoadGame(It.Games[selected]);
             }

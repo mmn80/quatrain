@@ -337,6 +337,7 @@ namespace Quatrain
         public Text Player1Stones, Player2Stones;
         public Text Player1Score, Player2Score;
         public Text Messages, Info, AiDialogue;
+        public Image InfoBg;
 
         public InputField UserInput;
 
@@ -492,10 +493,7 @@ namespace Quatrain
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (Data.gamesListOpened)
-                {
-                    Data.gamesListOpened = false;
-                    HideInfo();
-                }
+                    Data.HideGamesList();
                 else if (Data.Current.game.GameMode == GameMode.Lobby)
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;
