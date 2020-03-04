@@ -4,8 +4,6 @@ namespace Quatrain
 {
     public class Stone : MonoBehaviour
     {
-        public static bool RotateRandomly = true;
-
         const float StoneHeight = 0.3f;
 
         static Stone[,,] stones = new Stone[4, 4, 4];
@@ -164,13 +162,13 @@ namespace Quatrain
 
         public void PlayPlaceSound()
         {
-            if (!MainControl.EffectsMuted)
+            if (!Data.It.EffectsMuted)
                 GetComponents<AudioSource>()[0].Play();
         }
 
         void PlayErrorSound()
         {
-            if (!MainControl.EffectsMuted)
+            if (!Data.It.EffectsMuted)
                 GetComponents<AudioSource>()[1].Play();
         }
 
@@ -211,7 +209,7 @@ namespace Quatrain
                 transform.parent.position = pos;
             }
 
-            if (RotateRandomly || Highlighted || mouseIsOver)
+            if (Data.It.RotateRandomly || Highlighted || mouseIsOver)
             {
                 var speed = RotationSpeed;
                 if (!Highlighted && !mouseIsOver)
@@ -228,7 +226,7 @@ namespace Quatrain
 
             if (mouseIsOver && Input.GetMouseButtonDown(0) &&
                 Data.Current.game.RemoveStone(PosX, PosY, PosZ) &&
-                !MainControl.EffectsMuted)
+                !Data.It.EffectsMuted)
                     AudioSource.PlayClipAtPoint(RemoveSound, transform.parent.position);
         }
 

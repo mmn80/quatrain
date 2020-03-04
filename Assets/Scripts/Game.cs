@@ -14,7 +14,6 @@ namespace Quatrain
         public static StoneType StoneAtPos2Stone(StoneAtPos val) =>
             val == StoneAtPos.Black ? StoneType.Black : StoneType.White;
 
-        public static bool TakeTopStonesOnly = true;
         public static bool AiMode = false;
 
         public Game(ref Game src)
@@ -263,7 +262,7 @@ namespace Quatrain
                     Stone.ShowError("can't take from quatrains", x, y, z);
                 return false;
             }
-            if (TakeTopStonesOnly && !IsTopStone(x, y, z))
+            if (Data.It.TakeTopStonesOnly && !IsTopStone(x, y, z))
             {
                 if (!AiMode)
                     Stone.ShowError("only top stones can be taken in classic mode", x, y, z);
@@ -325,7 +324,7 @@ namespace Quatrain
                             break;
                         if (s == ToRemove &&
                             !IsQuatrainStone(x, y, z) &&
-                            (!TakeTopStonesOnly || IsTopStone(x, y, z)))
+                            (!Data.It.TakeTopStonesOnly || IsTopStone(x, y, z)))
                             return true;
                     }
             return false;

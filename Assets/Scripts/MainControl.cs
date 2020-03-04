@@ -506,19 +506,19 @@ namespace Quatrain
                     Data.Current.game.GameOver();
             }
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                Input.GetKeyUp(KeyCode.H))
+                !ctrl && Input.GetKeyUp(KeyCode.H))
                     StartGame(PlayerType.Human, PlayerType.Human);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                Input.GetKeyUp(KeyCode.V))
+                !ctrl && Input.GetKeyUp(KeyCode.V))
                     StartGame(PlayerType.Human, PlayerType.Vegas);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                Input.GetKeyUp(KeyCode.C))
+                !ctrl && Input.GetKeyUp(KeyCode.C))
                     StartGame(PlayerType.Human, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                Input.GetKeyUp(KeyCode.X))
+                !ctrl && Input.GetKeyUp(KeyCode.X))
                     StartGame(PlayerType.Vegas, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                Input.GetKeyUp(KeyCode.L))
+                !ctrl && Input.GetKeyUp(KeyCode.L))
                     Data.ActivateGamesList();
             else if (Data.gamesListOpened && Input.GetKeyUp(KeyCode.UpArrow))
                 Data.GamesListMoveUp();
@@ -536,21 +536,26 @@ namespace Quatrain
                 StartRename(Data.Current.Player2);
             else if (ctrl && Input.GetKeyUp(KeyCode.N))
             {
-                Game.TakeTopStonesOnly = !Game.TakeTopStonesOnly;
-                ShowMessage(Game.TakeTopStonesOnly ?
+                Data.It.TakeTopStonesOnly = !Data.It.TakeTopStonesOnly;
+                ShowMessage(Data.It.TakeTopStonesOnly ?
                     "classic mode activated\ncan only take top stones" :
                     "neo mode activated\ncan take stones from bellow");
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.R))
-                Stone.RotateRandomly = !Stone.RotateRandomly;
+            {
+                Data.It.RotateRandomly = !Data.It.RotateRandomly;
+                Data.SaveHead();
+            }
             else if (ctrl && Input.GetKeyUp(KeyCode.O))
             {
-                CameraControl.Orthographic = !CameraControl.Orthographic;
-                if (CameraControl.Orthographic)
+                Data.It.Orthographic = !Data.It.Orthographic;
+                if (Data.It.Orthographic)
                     Camera.main.orthographicSize = 4;
-                Camera.main.orthographic = CameraControl.Orthographic;
-                ShowMessage(CameraControl.Orthographic ?
+                Camera.main.orthographic = Data.It.Orthographic;
+                ShowMessage(Data.It.Orthographic ?
                     "orthgraphic" : "perspective");
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.P))
             {
@@ -559,6 +564,7 @@ namespace Quatrain
                 ShowMessage("post processing " +
                     (Data.It.renderPostProcessing ?
                         "enabled" : "disabled"));
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.A))
             {
@@ -578,15 +584,18 @@ namespace Quatrain
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.M))
             {
+                Data.It.MusicMuted = !Data.It.MusicMuted;
                 var m = GetComponents<AudioSource>()[0];
-                m.mute = !m.mute;
+                m.mute = Data.It.MusicMuted;
                 ShowMessage("music " + (m.mute ? "muted" : "enabled"));
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.E))
             {
-                EffectsMuted = !EffectsMuted;
+                Data.It.EffectsMuted = !Data.It.EffectsMuted;
                 ShowMessage("sound effects " +
-                    (EffectsMuted ? "muted" : "enabled"));
+                    (Data.It.EffectsMuted ? "muted" : "enabled"));
+                Data.SaveHead();
             }
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha0))
             {
@@ -630,7 +639,7 @@ namespace Quatrain
 
         public void PlayGameOverSound()
         {
-            if (EffectsMuted)
+            if (Data.It.EffectsMuted)
                 return;
             var s = GetComponents<AudioSource>()[1];
             s.Play();
@@ -638,13 +647,11 @@ namespace Quatrain
 
         public void PlayAmenSound()
         {
-            if (EffectsMuted)
+            if (Data.It.EffectsMuted)
                 return;
             var s = GetComponents<AudioSource>()[2];
             s.Play();
         }
-
-        public static bool EffectsMuted = false;
 
         Player renamingPlayer;
 

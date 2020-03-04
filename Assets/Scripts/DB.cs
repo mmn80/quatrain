@@ -488,6 +488,13 @@ namespace Quatrain
         public bool allowMSAA = true;
         public bool renderShadows = true;
 
+        public bool TakeTopStonesOnly = true;
+        public bool RotateRandomly = true;
+        public bool Orthographic = false;
+
+        public bool MusicMuted = false;
+        public bool EffectsMuted = false;
+
         public void SettingsChanged()
         {
             Stick.VariantChanged();
@@ -495,15 +502,20 @@ namespace Quatrain
             var r = mc.transform.GetChild(0).gameObject.
                 GetComponent<UnityEngine.MeshRenderer>();
             r.material = mc.BoardVariants[Data.It.Variant];
-            UnityEngine.Camera.main.backgroundColor =
-                mc.BackgroundVariants[Data.It.Variant];
-            UnityEngine.Camera.main.allowMSAA = Data.It.allowMSAA;
+            var cam = UnityEngine.Camera.main;
+            cam.backgroundColor = mc.BackgroundVariants[Data.It.Variant];
+            cam.allowMSAA = Data.It.allowMSAA;
             for (int i = 0; i < mc.Lights.Length; i++)
                 mc.Lights[i].intensity = mc.LightsIntensities[i] *
                     (Data.It.Variant == 0 ? 1 : 1.25f);
-            var camOpts = UnityEngine.Camera.main.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            cam.orthographic = Orthographic;
+            if (Orthographic)
+                cam.orthographicSize = 4;
+            var camOpts = cam.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
             camOpts.renderPostProcessing = Data.It.renderPostProcessing;
             camOpts.renderShadows = Data.It.renderShadows;
+            var m = mc.GetComponents<UnityEngine.AudioSource>()[0];
+            m.mute = MusicMuted;
         }
 
         public GameInfo[] Games = new GameInfo[0];

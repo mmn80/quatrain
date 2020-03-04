@@ -36,7 +36,7 @@ namespace Quatrain
             selected = true;
             if (ownRenderer)
                 ownRenderer.material = HighlightVariants[Data.It.Variant];
-            if (ownSound && !MainControl.EffectsMuted)
+            if (ownSound && !Data.It.EffectsMuted)
                 ownSound.Play();
         }
 

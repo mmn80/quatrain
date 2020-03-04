@@ -10,8 +10,6 @@ namespace Quatrain
         float aSpeed, hSpeed, zSpeed;
         Camera cam;
 
-        public static bool Orthographic = false;
-
         void Start() => cam = GetComponent<Camera>();
 
         void Update()
@@ -57,7 +55,7 @@ namespace Quatrain
                 zSpeed = Mathf.Max(zSpeed - ZoomAcceleration * Time.deltaTime, 0);
             if (zSpeed != 0 && cam)
             {
-                if (Orthographic)
+                if (Data.It.Orthographic)
                 {
                     var scale = cam.orthographicSize;
                     if (scale > 1 || zSpeed < 0)
