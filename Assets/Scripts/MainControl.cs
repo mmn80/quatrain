@@ -129,10 +129,7 @@ namespace Quatrain
             );
             Instance.UpdateUI(true);
             HideMessage();
-            if (winner != null && (winner.Type == PlayerType.Human || (
-                Data.Current.Player1.Type != PlayerType.Human &&
-                Data.Current.Player2.Type != PlayerType.Human
-            )))
+            if (winner != null && (winner.Type == PlayerType.Human))
                 Instance.PlayAmenSound();
             else
                 Instance.PlayGameOverSound();

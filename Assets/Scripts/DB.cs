@@ -319,7 +319,7 @@ namespace Quatrain
                 }
                 Current = game.Game;
                 Current.GoToTheEnd();
-                MainControl.ShowMessage("game loaded");
+                MainControl.ShowMessage(Data.It.GetPvPStats(true));
                 return true;
             }
             catch (System.Exception ex)
@@ -520,7 +520,7 @@ namespace Quatrain
 
         public GameInfo[] Games = new GameInfo[0];
 
-        public string GetPvPStats()
+        public string GetPvPStats(bool showDate = false)
         {
             var p1 = Current.Player1.Name;
             var p2 = Current.Player2.Name;
@@ -536,7 +536,12 @@ namespace Quatrain
                 g.P1Score : g.P2Score);
             var p2pts = games.Sum(g => g.Player1.Name == p1 ?
                 g.P2Score : g.P1Score);
-            var stats = $"<color=#158>{p1}</color> vs <color=#158>{p2}</color>\n" +
+            var w = Current.game.GetWinner();
+            var stats = (showDate ? $"<size=10>{Current.Time}</size>\n" : "") +
+                $"<color=#D9471A>{p1}</color>" + (
+                    showDate ? " " + (w == 0 ? "won" :
+                        (w == 1 ? "lost" : "tied")) : ""
+                ) + $" vs <color=#D9471A>{p2}</color>\n" +
                 $"<size=15>{p1w} wins : {draws} draws : {p2w} losses</size>\n" +
                 $"<size=15>{p1pts} points : {p2pts} points</size>";
             return stats;
