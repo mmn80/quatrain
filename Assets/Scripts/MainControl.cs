@@ -114,7 +114,7 @@ namespace Quatrain
             });
 
             Instance.UpdateUI();
-            HideMessage();
+            ShowMessage(Data.It.GetPvPStats());
 
             Stone.DestroyAllStones(false);
 

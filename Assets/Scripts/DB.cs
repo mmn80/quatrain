@@ -519,5 +519,27 @@ namespace Quatrain
         }
 
         public GameInfo[] Games = new GameInfo[0];
+
+        public string GetPvPStats()
+        {
+            var p1 = Current.Player1.Name;
+            var p2 = Current.Player2.Name;
+            var games = Games.Where(g =>
+                (g.Player1.Name == p1 && g.Player2.Name == p2) ||
+                (g.Player1.Name == p2 && g.Player2.Name == p1)).ToArray();
+            var p1w = games.Where(g =>
+                (g.Player1.Name == p1 && g.P1Score > g.P2Score) ||
+                (g.Player2.Name == p1 && g.P1Score > g.P2Score)).Count();
+            var draws = games.Where(g => g.P1Score == g.P2Score).Count();
+            var p2w = games.Length - p1w - draws;
+            var p1pts = games.Sum(g => g.Player1.Name == p1 ?
+                g.P1Score : g.P2Score);
+            var p2pts = games.Sum(g => g.Player1.Name == p1 ?
+                g.P2Score : g.P1Score);
+            var stats = $"<color=#158>{p1}</color> vs <color=#158>{p2}</color>\n" +
+                $"<size=15>{p1w} wins : {draws} draws : {p2w} losses</size>\n" +
+                $"<size=15>{p1pts} points : {p2pts} points</size>";
+            return stats;
+        }
     }
 }
