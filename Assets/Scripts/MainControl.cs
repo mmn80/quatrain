@@ -643,7 +643,7 @@ namespace Quatrain
             else if (alt && Input.GetKeyUp(KeyCode.Alpha4))
                 Data.It.SetCurrentAiLevel(4);
             else if (alt && Input.GetKeyUp(KeyCode.Alpha5))
-                Data.It.SetCurrentAiLevel(4);
+                Data.It.SetCurrentAiLevel(5);
             else if ((Input.GetKeyUp(KeyCode.LeftArrow) && ctrl) ||
                     Input.GetKeyUp(KeyCode.Backspace))
                 Data.Current.GoBack();
