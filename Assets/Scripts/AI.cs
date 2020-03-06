@@ -73,7 +73,7 @@ namespace Quatrain
     {
         public static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
-        static double SmallNoise() => (Seed.Next(100) - 50) * 0.00000001f;
+        static double SmallNoise() => (Seed.Next(100) - 50) * 0.0000000000001d;
 
         double EvalCurrent(byte player) => SmallNoise() +
             (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
@@ -144,7 +144,8 @@ namespace Quatrain
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;
-            while (tries < (2 ^ ai_level) * 100 * 64 && lastTries != tries)
+            while (tries < (2 ^ (byte)(ai_level - 1)) * 100 * 64 &&
+                lastTries != tries)
             {
                 lastTries = tries;
                 var g = this;
