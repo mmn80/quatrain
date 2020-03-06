@@ -83,28 +83,52 @@ namespace Quatrain
             return true;
         }
 
+        static Dictionary<PlayerType, string[]> aiNames =
+            new Dictionary<PlayerType, string[]>()
+            {
+                {
+                    PlayerType.Vegas, new string[]
+                    {
+                        "Mini Vegas", "Las Vegas", "Maxi Vegas",
+                        "Minimax Vegas", "Too Big to Fail Vegas"
+                    }
+                },
+                {
+                    PlayerType.Carlos, new string[]
+                    {
+                        "Carlito", "Carlos Primero", "Carlos Segundo",
+                        "Carlos III", "Carlos Grande"
+                    }
+                }
+            };
+
         static bool StartGame(PlayerType p1, PlayerType p2)
         {
             Data.Current.Clear();
             var g = Data.It?.Games.LastOrDefault();
             if (Data.Current.Player1.Type != p1 ||
+                Data.Current.Player1.Level != (byte)Data.It.CurrentAiLevel ||
                 string.IsNullOrEmpty(Data.Current.Player1.Name))
             {
                 Data.Current.Player1.Type = p1;
                 Data.Current.Player1.Name = p1 == PlayerType.Human ? (
                     g?.Player1.Name ?? "Player 1") :
-                    p1.ToString();
+                    aiNames[p1][Data.It.CurrentAiLevel];
                 Instance.Player1.text = Data.Current.Player1.Name;
             }
+            if (Data.Current.Player1.Type != PlayerType.Human)
+                Data.Current.Player1.Level = (byte)Data.It.CurrentAiLevel;
             if (Data.Current.Player2.Type != p2 ||
                 string.IsNullOrEmpty(Data.Current.Player2.Name))
             {
                 Data.Current.Player2.Type = p2;
                 Data.Current.Player2.Name = p2 == PlayerType.Human ? (
                     g?.Player2.Name ?? "Player 2") :
-                    p2.ToString();
+                    aiNames[p2][Data.It.CurrentAiLevel];
                 Instance.Player2.text = Data.Current.Player2.Name;
             }
+            if (Data.Current.Player2.Type != PlayerType.Human)
+                Data.Current.Player2.Level = (byte)Data.It.CurrentAiLevel;
 
             Data.Current.game.GameMode = GameMode.Add;
             Data.Current.Add(new Position()
@@ -180,18 +204,17 @@ namespace Quatrain
                 if (!waitingForAi && Data.Current.game.GameMode != GameMode.Lobby &&
                     Data.Current.game.GameMode != GameMode.GameOver &&
                     player.Type != PlayerType.Human && !paused)
-                        MakeAiMove(player.Type);
+                        MakeAiMove(player.Type, player.Level);
             }
         }
 
-        void MakeAiMove(PlayerType player) =>
-            StartCoroutine(MakeAiMoveAsync(player));
+        void MakeAiMove(PlayerType player, byte ai_level = 1) =>
+            StartCoroutine(MakeAiMoveAsync(player, ai_level));
 
         public static bool waitingForAi = false;
         public static bool paused = false;
 
-        IEnumerator MakeAiMoveAsync(PlayerType player,
-            byte depth = 6, byte width = 4, byte playouts = 100)
+        IEnumerator MakeAiMoveAsync(PlayerType player, byte ai_level)
         {
             if (Data.Current.game.GameMode == GameMode.Lobby ||
                 Data.Current.game.GameMode == GameMode.GameOver)
@@ -210,9 +233,8 @@ namespace Quatrain
 
             var job = new GameAiJob() { game = Data.Current.game,
                 player = Data.Current.game.GetPlayer(),
-                playerType = player, depth = depth, width = width,
-                playouts = playouts, moves = moves, results = results,
-                tries = tries };
+                playerType = player, ai_level = ai_level,
+                moves = moves, results = results, tries = tries };
             var handle = job.Schedule(movesArr.Length, 2);
 
             waitingForAi = true;
@@ -419,6 +441,7 @@ namespace Quatrain
 - <color=#158>F2</color>\t: show credits
 - <color=#158>F3</color>\t: show AI info
 - <color=#158>F5 F6</color>\t: make Vegas or Carlos AI move
+- <color=#158>Alt+12345</color>\t: change current AI level
 
 - <color=#158>Space</color>: pause AI vs. AI game
 - <color=#158>Ctrl+←→</color>: navigate game history
@@ -486,6 +509,7 @@ namespace Quatrain
             }
 
             var ctrl = Input.GetKey(KeyCode.LeftControl);
+            var alt = Input.GetKey(KeyCode.LeftAlt);
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
@@ -607,9 +631,19 @@ namespace Quatrain
             else if (Input.GetKeyUp(KeyCode.F3))
                 Data.Current.ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
-                MakeAiMove(PlayerType.Vegas);
+                MakeAiMove(PlayerType.Vegas, (byte)Data.It.CurrentAiLevel);
             else if (Input.GetKeyUp(KeyCode.F6))
-                MakeAiMove(PlayerType.Carlos);
+                MakeAiMove(PlayerType.Carlos, (byte)Data.It.CurrentAiLevel);
+            else if (alt && Input.GetKeyUp(KeyCode.Alpha1))
+                Data.It.SetCurrentAiLevel(1);
+            else if (alt && Input.GetKeyUp(KeyCode.Alpha2))
+                Data.It.SetCurrentAiLevel(2);
+            else if (alt && Input.GetKeyUp(KeyCode.Alpha3))
+                Data.It.SetCurrentAiLevel(3);
+            else if (alt && Input.GetKeyUp(KeyCode.Alpha4))
+                Data.It.SetCurrentAiLevel(4);
+            else if (alt && Input.GetKeyUp(KeyCode.Alpha5))
+                Data.It.SetCurrentAiLevel(4);
             else if ((Input.GetKeyUp(KeyCode.LeftArrow) && ctrl) ||
                     Input.GetKeyUp(KeyCode.Backspace))
                 Data.Current.GoBack();

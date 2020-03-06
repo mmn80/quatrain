@@ -11,8 +11,7 @@ namespace Quatrain
     public struct GameAiJob : IJobParallelFor
     {
         public PlayerType playerType;
-        public byte depth, width;
-        public int playouts;
+        public byte ai_level;
         public Game game;
         public byte player;
         public NativeArray<Move> moves;
@@ -26,9 +25,9 @@ namespace Quatrain
             if (next.ApplyMove(moves[i]))
             {
                 if (playerType == PlayerType.Vegas)
-                    results[i] = next.EvalVegas(depth, width, player, ref totalTries);
+                    results[i] = next.EvalVegas(ai_level, player, ref totalTries);
                 else if (playerType == PlayerType.Carlos)
-                    results[i] = next.EvalCarlos(playouts, player, out totalTries);
+                    results[i] = next.EvalCarlos(ai_level, player, out totalTries);
                 else
                     results[i] = -10000;
             }
@@ -89,10 +88,10 @@ namespace Quatrain
                 return false;
         }
 
-        public double EvalVegas(byte depth, byte width, byte player, ref int totalTries)
+        public double EvalVegas(byte ai_level, byte player, ref int totalTries)
         {
             double score = -10000;
-            if (this.depth >= depth || GameMode == GameMode.GameOver)
+            if (this.depth >= 6 || GameMode == GameMode.GameOver)
                 score = EvalCurrent(player);
             else
             {
@@ -116,7 +115,7 @@ namespace Quatrain
                     double scoreNext = -10000;
                     var next = new Game(ref this);
                     if (next.ApplyMove(move))
-                        scoreNext = next.EvalVegas(depth, width, player, ref totalTries);
+                        scoreNext = next.EvalVegas(ai_level, player, ref totalTries);
                     if (scoreNext > -1000)
                     {
                         total += scoreNext;
@@ -126,7 +125,7 @@ namespace Quatrain
 
                     if (this.depth > 1)
                     {
-                        if (++usedMovesNo >= width)
+                        if (++usedMovesNo >= ai_level + 3)
                             break;
                     }
                     else if (++i >= moves.Length)
@@ -141,11 +140,11 @@ namespace Quatrain
             return score;
         }
 
-        public double EvalCarlos(int playouts, byte player, out int tries)
+        public double EvalCarlos(byte ai_level, byte player, out int tries)
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;
-            while (tries < playouts * 64 && lastTries != tries)
+            while (tries < (50 + ai_level * 50) * 64 && lastTries != tries)
             {
                 lastTries = tries;
                 var g = this;

@@ -171,16 +171,18 @@ namespace Quatrain
     [Serializable]
     public class Player
     {
-        public Player(string name = "") => Name = name;
+        public Player() {}
 
         public Player(Player src)
         {
             Name = src.Name;
             Type = src.Type;
+            Level = src.Level;
         }
 
         public string Name;
         public PlayerType Type;
+        public byte Level = 1;
 
         public override string ToString() => Name;
     }
@@ -482,16 +484,15 @@ namespace Quatrain
 
         #endregion
 
-        public int Variant = 0;
+        public bool TakeTopStonesOnly = true;
+        public int CurrentAiLevel = 1;
 
+        public int Variant = 0;
         public bool renderPostProcessing = true;
         public bool allowMSAA = true;
         public bool renderShadows = true;
-
-        public bool TakeTopStonesOnly = true;
         public bool RotateRandomly = true;
         public bool Orthographic = false;
-
         public bool MusicMuted = false;
         public bool EffectsMuted = false;
 
@@ -516,6 +517,13 @@ namespace Quatrain
             camOpts.renderShadows = Data.It.renderShadows;
             var m = mc.GetComponents<UnityEngine.AudioSource>()[0];
             m.mute = MusicMuted;
+        }
+
+        public void SetCurrentAiLevel(int level)
+        {
+            CurrentAiLevel = level;
+            MainControl.ShowMessage($"AI set to <color=#158>Level {level}</color> for the next game.");
+            SaveHead();
         }
 
         public GameInfo[] Games = new GameInfo[0];
