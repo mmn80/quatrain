@@ -144,7 +144,7 @@ namespace Quatrain
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;
-            while (tries < (50 + ai_level * 50) * 64 && lastTries != tries)
+            while (tries < (2 ^ ai_level) * 100 * 64 && lastTries != tries)
             {
                 lastTries = tries;
                 var g = this;
