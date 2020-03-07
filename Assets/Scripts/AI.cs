@@ -22,15 +22,11 @@ namespace Quatrain
         {
             var totalTries = 0;
             var next = new Game(ref game);
-            if (next.ApplyMove(moves[i]))
-            {
-                if (playerType == PlayerType.Neumann)
-                    results[i] = next.EvalVegas(ai_level, player, ref totalTries);
-                else if (playerType == PlayerType.Carlos)
-                    results[i] = next.EvalCarlos(ai_level, player, out totalTries);
-                else
-                    results[i] = -10000;
-            }
+            next.ApplyMove(moves[i]);
+            if (playerType == PlayerType.Neumann)
+                results[i] = next.EvalVegas(ai_level, player, ref totalTries);
+            else if (playerType == PlayerType.Carlos)
+                results[i] = next.EvalCarlos(ai_level, player, out totalTries);
             else
                 results[i] = -10000;
             tries[i] = totalTries;
@@ -78,14 +74,26 @@ namespace Quatrain
         double EvalCurrent(byte player) => SmallNoise() +
             (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
 
-        public bool ApplyMove(Move move)
+        void ThrowErr(string err)
+        {
+            MainControl.ShowError(err);
+            throw new Exception(err);   
+        }
+
+        public void ApplyMove(Move move)
         {
             if (move.moveType == 0)
-                return AddStone(move.x, move.y);
+            {
+                if (!AddStone(move.x, move.y))
+                    ThrowErr($"Invalid add move: {move}");
+            }
             else if (move.moveType == 1)
-                return RemoveStone(move.x, move.y, move.z);
+            {
+                if (!RemoveStone(move.x, move.y, move.z))
+                    ThrowErr($"Invalid remove move: {move}");
+            }
             else
-                return false;
+                ThrowErr($"Invalid move type '{move.moveType}' in move {move}.");
         }
 
         static int[][] VegasConfig = new int[][] {
@@ -118,14 +126,17 @@ namespace Quatrain
                 while (true)
                 {
                     if (cfg[depth] != 0)
+                    {
                         while ((usedMoves & ((UInt64)1 << i)) != 0)
                             i = (byte)Seed.Next(moves.Length);
+                        usedMoves &= ((UInt64)1 << i);
+                    }
 
                     var move = moves[i];
-                    double scoreNext = -10000;
                     var next = new Game(ref this);
-                    if (next.ApplyMove(move))
-                        scoreNext = next.EvalVegas(ai_level, player, ref totalTries);
+                    next.ApplyMove(move);
+                    var scoreNext = next.EvalVegas(ai_level, player,
+                        ref totalTries);
                     if (scoreNext > -1000)
                     {
                         if ((myMove && best < scoreNext) ||
@@ -134,7 +145,6 @@ namespace Quatrain
                         tried = true;
                         totalTries++;
                     }
-
                     if (cfg[depth] != 0)
                     {
                         if (++usedMovesNo >= cfg[depth])
@@ -166,8 +176,7 @@ namespace Quatrain
                     var moves = g.GetValidMoves().ToArray();
                     var move = moves[(byte)Seed.Next(moves.Length)];
                     g = new Game(ref g);
-                    if (!g.ApplyMove(move))
-                        break;
+                    g.ApplyMove(move);
                     tries++;
                 }
                 if (g.GameMode != GameMode.GameOver)
