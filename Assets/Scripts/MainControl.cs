@@ -87,10 +87,10 @@ namespace Quatrain
             new Dictionary<PlayerType, string[]>()
             {
                 {
-                    PlayerType.Vegas, new string[]
+                    PlayerType.Neumann, new string[]
                     {
-                        "Mini Vegas", "Las Vegas", "Maxi Vegas",
-                        "Minimax Vegas", "Too Big to Fail Vegas"
+                        "Johnny Neumann", "Mini Neumann", "Mid Neumann",
+                        "Max Neumann", "John von Neumann"
                     }
                 },
                 {
@@ -302,7 +302,7 @@ namespace Quatrain
                             best.Move.moveType == 0)
                         AiDialog("I bet you didn't see this comming!");
                 }
-                else if (player == PlayerType.Vegas)
+                else if (player == PlayerType.Neumann)
                 {
                     if (found && best.Score - last.Score > 1 &&
                             best.Move.moveType == 0)
@@ -531,13 +531,13 @@ namespace Quatrain
                     StartGame(PlayerType.Human, PlayerType.Human);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 !ctrl && Input.GetKeyUp(KeyCode.V))
-                    StartGame(PlayerType.Human, PlayerType.Vegas);
+                    StartGame(PlayerType.Human, PlayerType.Neumann);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 !ctrl && Input.GetKeyUp(KeyCode.C))
                     StartGame(PlayerType.Human, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 !ctrl && Input.GetKeyUp(KeyCode.X))
-                    StartGame(PlayerType.Vegas, PlayerType.Carlos);
+                    StartGame(PlayerType.Neumann, PlayerType.Carlos);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 !ctrl && Input.GetKeyUp(KeyCode.L))
                     Data.ActivateGamesList();
@@ -631,7 +631,7 @@ namespace Quatrain
             else if (Input.GetKeyUp(KeyCode.F3))
                 Data.Current.ShowAiDebugInfo();
             else if (Input.GetKeyUp(KeyCode.F5))
-                MakeAiMove(PlayerType.Vegas, (byte)Data.It.CurrentAiLevel);
+                MakeAiMove(PlayerType.Neumann, (byte)Data.It.CurrentAiLevel);
             else if (Input.GetKeyUp(KeyCode.F6))
                 MakeAiMove(PlayerType.Carlos, (byte)Data.It.CurrentAiLevel);
             else if (alt && Input.GetKeyUp(KeyCode.Alpha1))

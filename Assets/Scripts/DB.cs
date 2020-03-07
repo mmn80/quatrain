@@ -185,6 +185,43 @@ namespace Quatrain
         public byte Level = 1;
 
         public override string ToString() => Name;
+
+        public override bool Equals(object obj) => this.Equals(obj as Player);
+
+        public bool Equals(Player p)
+        {
+            if (object.ReferenceEquals(p, null))
+                return false;
+            if (object.ReferenceEquals(this, p))
+                return true;
+            if (this.Type != p.Type)
+                return false;
+            if (this.Level != p.Level)
+                return false;
+            if (this.Type == PlayerType.Human && this.Name != p.Name)
+                return false;
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            if (Type != PlayerType.Human)
+                return Type.GetHashCode() + Level.GetHashCode();
+            return Name.GetHashCode();
+        }
+
+        public static bool operator ==(Player lhs, Player rhs)
+        {
+            if (object.ReferenceEquals(lhs, null))
+            {
+                if (object.ReferenceEquals(rhs, null))
+                    return true;
+                return false;
+            }
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(Player lhs, Player rhs) => !(lhs == rhs);
     }
 
     [Serializable]
@@ -530,19 +567,19 @@ namespace Quatrain
 
         public string GetPvPStats(bool showDate = false)
         {
-            var p1 = Current.Player1.Name;
-            var p2 = Current.Player2.Name;
+            var p1 = Current.Player1;
+            var p2 = Current.Player2;
             var games = Games.Where(g =>
-                (g.Player1.Name == p1 && g.Player2.Name == p2) ||
-                (g.Player1.Name == p2 && g.Player2.Name == p1)).ToArray();
+                (g.Player1 == p1 && g.Player2 == p2) ||
+                (g.Player1 == p2 && g.Player2 == p1)).ToArray();
             var p1w = games.Where(g =>
-                (g.Player1.Name == p1 && g.P1Score > g.P2Score) ||
-                (g.Player2.Name == p1 && g.P1Score > g.P2Score)).Count();
+                (g.Player1 == p1 && g.P1Score > g.P2Score) ||
+                (g.Player2 == p1 && g.P1Score > g.P2Score)).Count();
             var draws = games.Where(g => g.P1Score == g.P2Score).Count();
             var p2w = games.Length - p1w - draws;
-            var p1pts = games.Sum(g => g.Player1.Name == p1 ?
+            var p1pts = games.Sum(g => g.Player1 == p1 ?
                 g.P1Score : g.P2Score);
-            var p2pts = games.Sum(g => g.Player1.Name == p1 ?
+            var p2pts = games.Sum(g => g.Player1 == p1 ?
                 g.P2Score : g.P1Score);
             var w = Current.game.GetWinner();
             var stats = (showDate ? $"<size=10>{Current.Time}</size>\n" : "") +
