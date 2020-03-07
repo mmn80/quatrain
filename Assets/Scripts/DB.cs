@@ -291,6 +291,10 @@ namespace Quatrain
 
         public static bool SaveHead()
         {
+            if (Current.Player1.Type == PlayerType.Human)
+                It.LastHumanPlayer1 = Current.Player1.Name;
+            if (Current.Player2.Type == PlayerType.Human)
+                It.LastHumanPlayer2 = Current.Player2.Name;
             try
             {
                 var path = GetDataFilePath("Data.json");
@@ -523,6 +527,7 @@ namespace Quatrain
 
         public bool TakeTopStonesOnly = true;
         public int CurrentAiLevel = 1;
+        public string LastHumanPlayer1, LastHumanPlayer2;
 
         public int Variant = 0;
         public bool renderPostProcessing = true;
