@@ -88,10 +88,19 @@ namespace Quatrain
                 return false;
         }
 
+        static int[][] VegasConfig = new int[][] {
+            new int[] { 0, 0, 4, 4, 4, 4 },
+            new int[] { 0, 0, 6, 6, 4, 4 },
+            new int[] { 0, 0, 8, 8, 4, 4 },
+            new int[] { 0, 0, 8, 8, 4, 4, 4 },
+            new int[] { 0, 0, 10, 8, 6, 4, 4 }
+        };
+
         public double EvalVegas(byte ai_level, byte player, ref int totalTries)
         {
             double score = -10000;
-            if (this.depth >= 6 || GameMode == GameMode.GameOver)
+            var cfg = VegasConfig[ai_level - 1];
+            if (this.depth >= cfg.Length || GameMode == GameMode.GameOver)
                 score = EvalCurrent(player);
             else
             {
@@ -101,13 +110,13 @@ namespace Quatrain
                 var moves = GetValidMoves().ToArray();
 
                 byte i = 0;
-                if (this.depth > 1)
+                if (cfg[this.depth] != 0)
                     i = (byte)Seed.Next(moves.Length);
                 UInt64 usedMoves = 0;
                 byte usedMovesNo = 0;
                 while (true)
                 {
-                    if (this.depth > 1)
+                    if (cfg[this.depth] != 0)
                         while ((usedMoves & ((UInt64)1 << i)) != 0)
                             i = (byte)Seed.Next(moves.Length);
 
@@ -123,9 +132,9 @@ namespace Quatrain
                         totalTries++;
                     }
 
-                    if (this.depth > 1)
+                    if (cfg[this.depth] != 0)
                     {
-                        if (++usedMovesNo >= ai_level + 3)
+                        if (++usedMovesNo >= cfg[this.depth])
                             break;
                     }
                     else if (++i >= moves.Length)
@@ -144,7 +153,7 @@ namespace Quatrain
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;
-            while (tries < (2 ^ (byte)(ai_level - 1)) * 100 * 64 &&
+            while (tries < ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64 &&
                 lastTries != tries)
             {
                 lastTries = tries;

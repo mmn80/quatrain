@@ -144,7 +144,7 @@ namespace Quatrain
                 MainControl.ShowInfo($"<color=#158>Game position:</color> {Current + 1} of {History.Length}");
         }
 
-        static string fstr(double f) => f.ToString("0.000000000000");
+        static string fstr(double f) => f.ToString("0.0000000000000000");
 
         public void ShowAiDebugInfo()
         {
