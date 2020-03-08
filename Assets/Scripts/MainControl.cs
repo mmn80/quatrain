@@ -427,7 +427,7 @@ namespace Quatrain
 
 - <color=#158>Ctrl+12</color>\t: rename player 1 (or 2)
 - <color=#158>Ctrl+S</color>\t: save current game
-- <color=#158>Ctrl+N</color>\t: toggle classic game rules
+- <color=#158>Ctrl+G</color>\t: toggle classic game rules
 - <color=#158>Ctrl+R</color>\t: toggle slow rotation of stones
 - <color=#158>Ctrl+O</color>\t: toggle orthographic camera mode
 - <color=#158>Ctrl+P</color>\t: toggle rendering of post processing effects
@@ -439,14 +439,14 @@ namespace Quatrain
 - <color=#158>F1</color>\t: show this help
 - <color=#158>F2</color>\t: show credits
 - <color=#158>F3</color>\t: show AI info
-- <color=#158>F5 F6</color>\t: make Vegas or Carlos AI move
+- <color=#158>F5 F6</color>\t: make Neumann or Carlos AI move
 - <color=#158>Alt+12345</color>\t: change current AI level
 
 - <color=#158>Space</color>: pause AI vs. AI game
 - <color=#158>Ctrl+←→</color>: navigate game history
 
 - <color=#158>H</color>: start new game against a human
-- <color=#158>VCX</color>: start new game against Vegas, Carlos, or both
+- <color=#158>NCX</color>: start new game against Neumann, Carlos, or both
 - <color=#158>L</color>: show saved games (select with <color=#158>↑↓</color> & load with <color=#158>Enter</color>)
 - <color=#158>Esc</color>: quit input, selection, game, or everything
 ";
@@ -530,7 +530,7 @@ namespace Quatrain
                 !ctrl && Input.GetKeyUp(KeyCode.H))
                     StartGame(PlayerType.Human, PlayerType.Human);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
-                !ctrl && Input.GetKeyUp(KeyCode.V))
+                !ctrl && Input.GetKeyUp(KeyCode.N))
                     StartGame(PlayerType.Human, PlayerType.Neumann);
             else if (Data.Current.game.GameMode == GameMode.Lobby &&
                 !ctrl && Input.GetKeyUp(KeyCode.C))
@@ -555,7 +555,7 @@ namespace Quatrain
                 StartRename(Data.Current.Player1);
             else if (ctrl && Input.GetKeyUp(KeyCode.Alpha2))
                 StartRename(Data.Current.Player2);
-            else if (ctrl && Input.GetKeyUp(KeyCode.N))
+            else if (ctrl && Input.GetKeyUp(KeyCode.G))
             {
                 Data.It.TakeTopStonesOnly = !Data.It.TakeTopStonesOnly;
                 ShowMessage(Data.It.TakeTopStonesOnly ?

@@ -24,7 +24,7 @@ namespace Quatrain
             var next = new Game(ref game);
             next.ApplyMove(moves[i]);
             if (playerType == PlayerType.Neumann)
-                results[i] = next.EvalVegas(ai_level, player, ref totalTries);
+                results[i] = next.EvalNeumann(ai_level, player, 0, ref totalTries);
             else if (playerType == PlayerType.Carlos)
                 results[i] = next.EvalCarlos(ai_level, player, out totalTries);
             else
@@ -96,36 +96,41 @@ namespace Quatrain
                 ThrowErr($"Invalid move type '{move.moveType}' in move {move}.");
         }
 
-        static int[][] VegasConfig = new int[][] {
-            new int[] { 0, 0,  9,  8, 5 },
-            new int[] { 0, 0, 12,  8, 8 },
-            new int[] { 0, 0,  0, 12, 9 },
-            new int[] { 0, 0,  0, 10, 6, 4 },
-            new int[] { 0, 0,  0, 12, 8, 5 }
+        static int[][] nmnCfg = new int[][] {
+            new int[] { 0, 0,  5,  4 },
+            new int[] { 0, 0,  8,  6 },
+            new int[] { 0, 0, 12, 10 },
+            new int[] { 0, 0,  0,  4, 4 },
+            new int[] { 0, 0,  0,  7, 4 }
         };
 
-        public double EvalVegas(byte ai_level, byte player, ref int totalTries)
+        public double EvalNeumann(byte ai_level, byte player, byte fstLevelCredit,
+            ref int totalTries)
         {
-            double score = -10000;
-            var cfg = VegasConfig[ai_level - 1];
-            if (this.depth >= cfg.Length || GameMode == GameMode.GameOver)
-                score = EvalCurrent(player);
+            var cfg = nmnCfg[ai_level - 1];
+            if (depth >= cfg.Length + 1 || GameMode == GameMode.GameOver)
+                return EvalCurrent(player);
             else
             {
-                var tried = false;
+                var width = cfg[depth - 1];
                 var myMove = player == GetPlayer();
                 double best = myMove ? double.MinValue : double.MaxValue;
 
                 var moves = GetValidMoves().ToArray();
+                if (depth == 1 && GameMode == GameMode.Add)
+                    fstLevelCredit = (byte)(Math.Max(0, 16 - moves.Length));
 
+                var maxWidth = width + (depth >= cfg.Length - 2 ?
+                    Math.Max(0, Math.Floor(
+                        Math.Pow(fstLevelCredit, 1.1d) - 1.0d)) : 0);
                 byte i = 0;
-                if (cfg[depth] != 0)
+                if (width != 0)
                     i = (byte)Seed.Next(moves.Length);
                 UInt64 usedMoves = 0;
                 byte usedMovesNo = 0;
                 while (true)
                 {
-                    if (cfg[depth] != 0)
+                    if (width != 0)
                     {
                         while ((usedMoves & ((UInt64)1 << i)) != 0)
                             i = (byte)Seed.Next(moves.Length);
@@ -135,31 +140,25 @@ namespace Quatrain
                     var move = moves[i];
                     var next = new Game(ref this);
                     next.ApplyMove(move);
-                    var scoreNext = next.EvalVegas(ai_level, player,
-                        ref totalTries);
-                    if (scoreNext > -1000)
+                    var scoreNext = next.EvalNeumann(ai_level, player,
+                        fstLevelCredit, ref totalTries);
+                    if (scoreNext <= -1000)
+                        ThrowErr($"Invalid score: {scoreNext}");
+                    if ((myMove && best < scoreNext) ||
+                        (!myMove && best > scoreNext))
+                        best = scoreNext;
+                    totalTries++;
+                    if (width != 0)
                     {
-                        if ((myMove && best < scoreNext) ||
-                            (!myMove && best > scoreNext))
-                            best = scoreNext;
-                        tried = true;
-                        totalTries++;
-                    }
-                    if (cfg[depth] != 0)
-                    {
-                        if (++usedMovesNo >= cfg[depth])
+                        if (++usedMovesNo >= maxWidth)
                             break;
                     }
                     else if (++i >= moves.Length)
                         break;
                 }
 
-                if (!tried)
-                    score = EvalCurrent(player);
-                else
-                    score = best + SmallNoise();
+                return best + SmallNoise();
             }
-            return score;
         }
 
         public double EvalCarlos(byte ai_level, byte player, out int tries)
