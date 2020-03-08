@@ -23,10 +23,13 @@ namespace Quatrain
             var totalTries = 0;
             var next = new Game(ref game);
             next.ApplyMove(moves[i]);
+            var rnd = new System.Random(i);
             if (playerType == PlayerType.Neumann)
-                results[i] = next.EvalNeumann(ai_level, player, 0, ref totalTries);
+                results[i] = next.EvalNeumann(ai_level, player, 0,
+                    rnd, ref totalTries);
             else if (playerType == PlayerType.Carlos)
-                results[i] = next.EvalCarlos(ai_level, player, out totalTries);
+                results[i] = next.EvalCarlos(ai_level, player,
+                    rnd, out totalTries);
             else
                 results[i] = -10000;
             tries[i] = totalTries;
@@ -67,12 +70,14 @@ namespace Quatrain
 
     public partial struct Game
     {
-        public static System.Random Seed = new System.Random();
-        static byte Rnd4() => (byte)Seed.Next(4);
-        static double SmallNoise() => (Seed.Next(10000) - 5000) * double.Epsilon;
+        static double AddSmallNoise(System.Random Seed, double number) =>
+            number - 0.000000000005d + Seed.NextDouble() * 0.00000000001d;
+        static double AddFixedSmallNoise(System.Random Seed, double number) =>
+            number - 0.0005d + Seed.NextDouble() * 0.001d;
 
-        double EvalCurrent(byte player) => SmallNoise() +
-            (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
+        double EvalCurrent(System.Random Seed, byte player) =>
+            AddSmallNoise(Seed,
+            (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0))));
 
         void ThrowErr(string err)
         {
@@ -105,11 +110,11 @@ namespace Quatrain
         };
 
         public double EvalNeumann(byte ai_level, byte player, byte fstLevelCredit,
-            ref int totalTries)
+            System.Random Seed, ref int totalTries)
         {
             var cfg = nmnCfg[ai_level - 1];
             if (depth >= cfg.Length + 1 || GameMode == GameMode.GameOver)
-                return EvalCurrent(player);
+                return EvalCurrent(Seed, player);
             else
             {
                 var width = cfg[depth - 1];
@@ -141,9 +146,10 @@ namespace Quatrain
                     var next = new Game(ref this);
                     next.ApplyMove(move);
                     var scoreNext = next.EvalNeumann(ai_level, player,
-                        fstLevelCredit, ref totalTries);
+                        fstLevelCredit, Seed, ref totalTries);
                     if (scoreNext <= -1000)
                         ThrowErr($"Invalid score: {scoreNext}");
+                    scoreNext = AddFixedSmallNoise(Seed, scoreNext);
                     if ((myMove && best < scoreNext) ||
                         (!myMove && best > scoreNext))
                         best = scoreNext;
@@ -157,11 +163,12 @@ namespace Quatrain
                         break;
                 }
 
-                return best + SmallNoise();
+                return best;
             }
         }
 
-        public double EvalCarlos(byte ai_level, byte player, out int tries)
+        public double EvalCarlos(byte ai_level, byte player,
+            System.Random Seed, out int tries)
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;

@@ -219,7 +219,6 @@ namespace Quatrain
                 Data.Current.game.GameMode == GameMode.GameOver)
                     yield break;
 
-            Game.Seed = new System.Random();
             var aiTimer = new System.Diagnostics.Stopwatch();
 
             Game.AiMode = true;
