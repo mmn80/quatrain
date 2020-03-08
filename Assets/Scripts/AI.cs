@@ -28,12 +28,18 @@ namespace Quatrain
             {
                 var maxTries = ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64;
                 byte maxDepth = 2;
-                while (totalTries < maxTries)
+                var lastTotalTries = totalTries;
+                while (true)
                 {
                     results[i] = next.EvalNeumann(maxTries, maxDepth, player,
                         double.MinValue, double.MaxValue,
                         rnd, ref totalTries);
                     maxDepth++;
+                    if (totalTries >= maxTries)
+                        break;
+                    if (lastTotalTries == totalTries)
+                        break;
+                    lastTotalTries = totalTries;
                 }
             }
             else if (playerType == PlayerType.Carlos)
