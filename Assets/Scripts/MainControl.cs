@@ -72,6 +72,18 @@ namespace Quatrain
         static bool NewGame()
         {
             Data.Current = new GameStats();
+            Data.Current.Player1.Name =
+                string.IsNullOrEmpty(Data.It.LastHumanPlayer1) ?
+                    "Player 1" :
+                    Data.It.LastHumanPlayer1;
+            Data.Current.Player1.Type = PlayerType.Human;
+            Instance.Player1.text = Data.Current.Player1.Name;
+            Data.Current.Player2.Name =
+                string.IsNullOrEmpty(Data.It.LastHumanPlayer2) ?
+                    "Player 2" :
+                    Data.It.LastHumanPlayer2;
+            Data.Current.Player2.Type = PlayerType.Human;
+            Instance.Player2.text = Data.Current.Player2.Name;
 
             Stone.DestroyAllStones(true);
 
@@ -105,29 +117,20 @@ namespace Quatrain
         static bool StartGame(PlayerType p1, PlayerType p2)
         {
             Data.Current.Clear();
-            if (Data.Current.Player1.Type != p1 ||
-                Data.Current.Player1.Level != (byte)Data.It.CurrentAiLevel ||
-                string.IsNullOrEmpty(Data.Current.Player1.Name))
+            if (p1 != PlayerType.Human)
             {
                 Data.Current.Player1.Type = p1;
-                Data.Current.Player1.Name = p1 == PlayerType.Human ? (
-                    Data.It.LastHumanPlayer1 ?? "Player 1") :
-                    aiNames[p1][Data.It.CurrentAiLevel - 1];
+                Data.Current.Player1.Name = aiNames[p1][Data.It.CurrentAiLevel - 1];
                 Instance.Player1.text = Data.Current.Player1.Name;
-            }
-            if (Data.Current.Player1.Type != PlayerType.Human)
                 Data.Current.Player1.Level = (byte)Data.It.CurrentAiLevel;
-            if (Data.Current.Player2.Type != p2 ||
-                string.IsNullOrEmpty(Data.Current.Player2.Name))
+            }
+            if (p2 != PlayerType.Human)
             {
                 Data.Current.Player2.Type = p2;
-                Data.Current.Player2.Name = p2 == PlayerType.Human ? (
-                    Data.It.LastHumanPlayer2 ?? "Player 2") :
-                    aiNames[p2][Data.It.CurrentAiLevel - 1];
+                Data.Current.Player2.Name = aiNames[p2][Data.It.CurrentAiLevel - 1];
                 Instance.Player2.text = Data.Current.Player2.Name;
-            }
-            if (Data.Current.Player2.Type != PlayerType.Human)
                 Data.Current.Player2.Level = (byte)Data.It.CurrentAiLevel;
+            }
 
             Data.Current.game.GameMode = GameMode.Add;
             Data.Current.Add(new Position()
