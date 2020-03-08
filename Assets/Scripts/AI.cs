@@ -69,7 +69,7 @@ namespace Quatrain
     {
         public static System.Random Seed = new System.Random();
         static byte Rnd4() => (byte)Seed.Next(4);
-        static double SmallNoise() => (Seed.Next(100) - 50) * 0.0000000000001d;
+        static double SmallNoise() => (Seed.Next(10000) - 5000) * double.Epsilon;
 
         double EvalCurrent(byte player) => SmallNoise() +
             (double)(GetScore(player) - GetScore((byte)(player == 0 ? 1 : 0)));
