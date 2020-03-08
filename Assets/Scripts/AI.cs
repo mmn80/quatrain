@@ -25,11 +25,23 @@ namespace Quatrain
             next.ApplyMove(moves[i]);
             var rnd = new System.Random(i);
             if (playerType == PlayerType.Neumann)
-                results[i] = next.EvalNeumann(ai_level, player, 0,
-                    rnd, ref totalTries);
+            {
+                var maxTries = ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64;
+                byte maxDepth = 2;
+                while (totalTries < maxTries)
+                {
+                    results[i] = next.EvalNeumann(maxTries, maxDepth, player,
+                        double.MinValue, double.MaxValue,
+                        rnd, ref totalTries);
+                    maxDepth++;
+                }
+            }
             else if (playerType == PlayerType.Carlos)
-                results[i] = next.EvalCarlos(ai_level, player,
+            {
+                var maxTries = ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64;
+                results[i] = next.EvalCarlos(maxTries, player,
                     rnd, out totalTries);
+            }
             else
                 results[i] = -10000;
             tries[i] = totalTries;
@@ -101,78 +113,51 @@ namespace Quatrain
                 ThrowErr($"Invalid move type '{move.moveType}' in move {move}.");
         }
 
-        static int[][] nmnCfg = new int[][] {
-            new int[] { 0, 0,  5,  4 },
-            new int[] { 0, 0,  8,  6 },
-            new int[] { 0, 0, 12, 10 },
-            new int[] { 0, 0,  0,  4, 4 },
-            new int[] { 0, 0,  0,  7, 4 }
-        };
-
-        public double EvalNeumann(byte ai_level, byte player, byte fstLevelCredit,
+        public double EvalNeumann(int maxTries, byte maxDepth, byte player,
+            double alpha, double beta,
             System.Random Seed, ref int totalTries)
         {
-            var cfg = nmnCfg[ai_level - 1];
-            if (depth >= cfg.Length + 1 || GameMode == GameMode.GameOver)
+            if (depth >= maxDepth || GameMode == GameMode.GameOver ||
+                    (totalTries > maxTries && depth >= maxDepth - 1))
                 return EvalCurrent(Seed, player);
             else
             {
-                var width = cfg[depth - 1];
                 var myMove = player == GetPlayer();
                 double best = myMove ? double.MinValue : double.MaxValue;
-
                 var moves = GetValidMoves().ToArray();
-                if (depth == 1 && GameMode == GameMode.Add)
-                    fstLevelCredit = (byte)(Math.Max(0, 16 - moves.Length));
-
-                var maxWidth = width + (depth >= cfg.Length - 2 ?
-                    Math.Max(0, Math.Floor(
-                        Math.Pow(fstLevelCredit, 1.1d) - 1.0d)) : 0);
-                byte i = 0;
-                if (width != 0)
-                    i = (byte)Seed.Next(moves.Length);
-                UInt64 usedMoves = 0;
-                byte usedMovesNo = 0;
-                while (true)
+                for (byte i = 0; i < moves.Length; i++)
                 {
-                    if (width != 0)
-                    {
-                        while ((usedMoves & ((UInt64)1 << i)) != 0)
-                            i = (byte)Seed.Next(moves.Length);
-                        usedMoves &= ((UInt64)1 << i);
-                    }
-
                     var move = moves[i];
                     var next = new Game(ref this);
                     next.ApplyMove(move);
-                    var scoreNext = next.EvalNeumann(ai_level, player,
-                        fstLevelCredit, Seed, ref totalTries);
-                    if (scoreNext <= -1000)
-                        ThrowErr($"Invalid score: {scoreNext}");
+                    var scoreNext = next.EvalNeumann(maxTries, maxDepth, player,
+                        alpha, beta, Seed, ref totalTries);
                     scoreNext = AddFixedSmallNoise(Seed, scoreNext);
-                    if ((myMove && best < scoreNext) ||
-                        (!myMove && best > scoreNext))
-                        best = scoreNext;
                     totalTries++;
-                    if (width != 0)
+                    if (myMove)
                     {
-                        if (++usedMovesNo >= maxWidth)
+                        best = Math.Max(best, scoreNext);
+                        alpha = Math.Max(alpha, best);
+                        if (alpha >= beta)
                             break;
                     }
-                    else if (++i >= moves.Length)
-                        break;
+                    else
+                    {
+                        best = Math.Min(best, scoreNext);
+                        beta = Math.Min(beta, best);
+                        if (alpha >= beta)
+                            break;
+                    }
                 }
-
                 return best;
             }
         }
 
-        public double EvalCarlos(byte ai_level, byte player,
+        public double EvalCarlos(int maxTries, byte player,
             System.Random Seed, out int tries)
         {
             tries = 0;
             int wins = 0, losses = 0, draws = 0, lastTries = -1;
-            var maxTries = ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64;
             while (tries < maxTries && lastTries != tries)
             {
                 lastTries = tries;
