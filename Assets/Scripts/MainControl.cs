@@ -88,7 +88,7 @@ namespace Quatrain
             Stone.DestroyAllStones(true);
 
             ShowMessage("press <color=#158>H</color> to play against a human\n" +
-                "press <color=#158>V</color>, <color=#158>C</color> or <color=#158>X</color> to play against AI\n" +
+                "press <color=#158>N</color>, <color=#158>C</color> or <color=#158>X</color> to play against AI\n" +
                 "press <color=#158>L</color> to load a game");
             Instance.UpdateUI();
 
