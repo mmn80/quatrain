@@ -119,6 +119,31 @@ namespace Quatrain
                 ThrowErr($"Invalid move type '{move.moveType}' in move {move}.");
         }
 
+        struct GameComparer : IComparer<Game>
+        {
+            public GameComparer(byte player, bool maximizing)
+            {
+                this.player = player;
+                this.other = (byte)(player == 0 ? 1 : 0);
+                this.maximizing = maximizing;
+            }
+
+            byte player, other;
+            bool maximizing;
+
+            public int Compare(Game x, Game y)
+            {
+                var s0 = x.GetScore(player) - x.GetScore(other);
+                var s1 = y.GetScore(player) - y.GetScore(other);
+                if (s0 == s1)
+                    return 0;
+                if (maximizing)
+                    return s0 > s1 ? -1 : 1;
+                else
+                    return s0 > s1 ? 1 : -1;
+            }
+        }
+
         public double EvalNeumann(int maxTries, byte maxDepth, byte player,
             double alpha, double beta,
             System.Random Seed, ref int totalTries)
@@ -131,11 +156,17 @@ namespace Quatrain
                 var myMove = player == GetPlayer();
                 double best = myMove ? double.MinValue : double.MaxValue;
                 var moves = GetValidMoves().ToArray();
+                var nexts = new NativeArray<Game>(moves.Length, Allocator.Temp);
                 for (byte i = 0; i < moves.Length; i++)
                 {
-                    var move = moves[i];
                     var next = new Game(ref this);
-                    next.ApplyMove(move);
+                    next.ApplyMove(moves[i]);
+                    nexts[i] = next;
+                }
+                nexts.Sort(new GameComparer(player, myMove));
+                for (byte i = 0; i < nexts.Length; i++)
+                {
+                    var next = nexts[i];
                     var scoreNext = next.EvalNeumann(maxTries, maxDepth, player,
                         alpha, beta, Seed, ref totalTries);
                     scoreNext = AddFixedSmallNoise(Seed, scoreNext);
@@ -155,6 +186,7 @@ namespace Quatrain
                             break;
                     }
                 }
+                nexts.Dispose();
                 return best;
             }
         }
