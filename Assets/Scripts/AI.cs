@@ -31,7 +31,7 @@ namespace Quatrain
                 var lastTotalTries = totalTries;
                 while (true)
                 {
-                    results[i] = next.EvalNeumann(maxTries, maxDepth, player,
+                    results[i] = next.EvalMinimax(maxTries, maxDepth, player,
                         double.MinValue, double.MaxValue,
                         rnd, ref totalTries);
                     maxDepth++;
@@ -45,7 +45,7 @@ namespace Quatrain
             else if (playerType == PlayerType.Carlos)
             {
                 var maxTries = ((int)Math.Pow(2.1d, ai_level - 1)) * 100 * 64;
-                results[i] = next.EvalCarlos(maxTries, player,
+                results[i] = next.EvalMonteCarlo(maxTries, player,
                     rnd, out totalTries);
             }
             else
@@ -144,7 +144,7 @@ namespace Quatrain
             }
         }
 
-        public double EvalNeumann(int maxTries, byte maxDepth, byte player,
+        public double EvalMinimax(int maxTries, byte maxDepth, byte player,
             double alpha, double beta,
             System.Random Seed, ref int totalTries)
         {
@@ -155,19 +155,11 @@ namespace Quatrain
             {
                 var myMove = player == GetPlayer();
                 double best = myMove ? double.MinValue : double.MaxValue;
-                var moves = GetValidMoves().ToArray();
-                var nexts = new NativeArray<Game>(moves.Length, Allocator.Temp);
-                for (byte i = 0; i < moves.Length; i++)
+                foreach (var move in GetValidMoves())
                 {
                     var next = new Game(ref this);
-                    next.ApplyMove(moves[i]);
-                    nexts[i] = next;
-                }
-                nexts.Sort(new GameComparer(player, myMove));
-                for (byte i = 0; i < nexts.Length; i++)
-                {
-                    var next = nexts[i];
-                    var scoreNext = next.EvalNeumann(maxTries, maxDepth, player,
+                    next.ApplyMove(move);
+                    var scoreNext = next.EvalMinimax(maxTries, maxDepth, player,
                         alpha, beta, Seed, ref totalTries);
                     scoreNext = AddFixedSmallNoise(Seed, scoreNext);
                     totalTries++;
@@ -186,12 +178,11 @@ namespace Quatrain
                             break;
                     }
                 }
-                nexts.Dispose();
                 return best;
             }
         }
 
-        public double EvalCarlos(int maxTries, byte player,
+        public double EvalMonteCarlo(int maxTries, byte player,
             System.Random Seed, out int tries)
         {
             tries = 0;
