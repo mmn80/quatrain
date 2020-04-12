@@ -1,7 +1,12 @@
 # Quatrain
 
-A free Unity 2019.3 game using URP for rendering and ECS jobs for AI.
-It's a form of 3D mill.
+3D mill implemented in Unity 2019.3 using URP for rendering and ECS jobs for AI.
+
+Features 2 types of AI with 5 difficulty levels:
+- minimax with α-β pruning
+- Monte Carlo tree search
+
+![Quatrain screenshot](quatrain.png?raw=true "Quatrain")
 
 ## Free assets used
 
