@@ -65,7 +65,11 @@ namespace Quatrain
             txt.text = message.Replace("\\t", "\t");
         }
 
-        public static void HideInfo() => ShowInfo("");
+        public static void HideInfo()
+        {
+            ShowInfo("");
+            Instance.ControlsInfo.Hide();
+        }
 
         public static bool IsInputOn() => Instance.UserInput.gameObject.activeSelf;
         
@@ -358,6 +362,7 @@ namespace Quatrain
         public Text Player1Score, Player2Score;
         public Text Messages, Info, AiDialogue;
         public Image InfoBg;
+        public TwoColumns ControlsInfo;
 
         public InputField UserInput;
 
@@ -438,10 +443,10 @@ namespace Quatrain
 - <color=#158>Ctrl+M</color>\t: (un)mute music
 - <color=#158>Ctrl+E</color>\t: (un)mute effects
 
-- <color=#158>F1 F2 F3</color>\t: show this help, credits, or AI info
-- <color=#158>F5 F6</color>\t: make Neumann or Carlos AI move
-- <color=#158>F9</color>\t\t\t: day / night mode
-- <color=#158>Alt+12345</color>\t: change current AI level
+- <color=#158>F1 F2 F3</color>: show help / credits / AI info
+- <color=#158>F5 F6</color>: make Neumann / Carlos AI move
+- <color=#158>F9</color>: day / night mode
+- <color=#158>Alt+12345</color>: change current AI level
 
 - <color=#158>Space</color>: pause AI vs. AI game
 - <color=#158>Ctrl+←→</color>: navigate game history
@@ -626,7 +631,7 @@ namespace Quatrain
                     " AI debug info");
             }
             else if (Input.GetKeyUp(KeyCode.F1))
-                ShowInfo(helpInfo);
+                ControlsInfo.Show(helpInfo);
             else if (Input.GetKeyUp(KeyCode.F2))
                 ShowInfo(creditsInfo);
             else if (Input.GetKeyUp(KeyCode.F3))
