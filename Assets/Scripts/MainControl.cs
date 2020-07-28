@@ -438,10 +438,9 @@ namespace Quatrain
 - <color=#158>Ctrl+M</color>\t: (un)mute music
 - <color=#158>Ctrl+E</color>\t: (un)mute effects
 
-- <color=#158>F1</color>\t: show this help
-- <color=#158>F2</color>\t: show credits
-- <color=#158>F3</color>\t: show AI info
+- <color=#158>F1 F2 F3</color>\t: show this help, credits, or AI info
 - <color=#158>F5 F6</color>\t: make Neumann or Carlos AI move
+- <color=#158>F9</color>\t\t\t: day / night mode
 - <color=#158>Alt+12345</color>\t: change current AI level
 
 - <color=#158>Space</color>: pause AI vs. AI game
